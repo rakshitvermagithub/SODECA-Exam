@@ -1,0 +1,9 @@
+students.db
+.env
+flask_session/
+__pycache__/
+*.pyc
+venv/
+.vscode/
+static/certificates_folder
+credentials/

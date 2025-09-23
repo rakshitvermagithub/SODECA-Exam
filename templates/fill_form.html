@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    {{ form_to_show["title"] }} Form
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            {% if success %}
+
+                <!-- Submission Success Message -->
+                <div class="card mb-3 shadow-sm border-dark rounded-1">
+                    <div class="card-body p-4">
+                        <h3 class="card-title mb-3 fw-bold text-dark">
+                            Your entry for {{ form_to_show["title"] }} has been submitted! ✅
+                        </h3>
+                        <a href="/fill_form"><button class="btn btn-primary">
+                            Continue
+                        </button></a>
+                    </div>
+                </div>
+
+            {% else %}
+
+                <!-- Forms to be filled -->
+                <div class="card shadow-sm border-dark rounded-1 position-relative">
+                    <div class="card-header text-center">
+                        <h4>{{ form_to_show["title"] }}</h4>
+                    </div>
+                    <div class="card-body p-4">   
+                        <form action="/fill_form" method="post" enctype="multipart/form-data">
+                            {% for field in form_to_show["fields"] %}
+                                {% if field["field_name"] == "from_date" %}
+                                {% set to_date_field = form_to_show["fields"][loop.index] %}
+                                <!-- Date Range Fields (From and To Date) -->
+                                <div class="mb-3">
+                                    <div class="row g-3">
+                                        <!-- From Date -->
+                                        <div class="col-md-6">
+                                            <label class="form-label mb-1">{{ field["field_label"] }}</label>
+                                            {% if field["help_text"] %}
+                                            <div class="form-text mb-2">{{ field["help_text"] }}</div>
+                                            {% endif %}
+                                            <input type="{{ field["field_type"] }}" class="form-control" 
+                                                id="field{{ loop.index }}" name="{{ field["field_name"] }}" 
+                                                placeholder="{{ field["placeholder"] | default('') }}" 
+                                                {% if field["required"] %}required{% endif %}>
+                                        </div>
+                                        
+                                        <!-- To Date -->
+                                        <div class="col-md-6">
+                                            <label class="form-label mb-1">{{ to_date_field["field_label"] }}</label>
+                                            {% if to_date_field["help_text"] %}
+                                            <div class="form-text mb-2">{{ to_date_field["help_text"] }}</div>
+                                            {% endif %}
+                                            <input type="{{ to_date_field["field_type"] }}" class="form-control" 
+                                                id="field{{ loop.index + 1 }}" name="{{ to_date_field["field_name"] }}" 
+                                                placeholder="{{ to_date_field["placeholder"] | default('') }}" 
+                                                {% if to_date_field["required"] %}required{% endif %}>
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                {% elif field["field_name"] == "to_date" %}
+                                    <!-- Skip to_date as it's already rendered with from_date -->
+                                    
+                                {% else %}
+                                <div class="mb-3">
+                                    <label class="form-label mb-1">{{ field["field_label"] | default("Field Title") }}</label>
+                                    {% if field["help_text"] %}
+                                    <div class="form-text mb-2">{{ field["help_text"] }}</div>
+                                    {% endif %}
+
+                                    {% if field["field_type"] == "radio" %}
+                                        {% include 'partials/radio_field.html' %}
+                                    {% elif field["field_type"] == "select" %}
+                                        {% include 'partials/select_field.html' %}
+                                    {% elif field["field_type"] == "checkbox" %}
+                                        {% include 'partials/checkbox_field.html' %}
+                                    {% else %}
+                                        <div class="mb-3">
+                                            <input type="{{ field["field_type"] }}" class="form-control" 
+                                            id="field{{ loop.index }}" name="{{ field["field_name"] }}" 
+                                            placeholder="{{ field["placeholder"] }}" 
+                                            {% if field["required"] %}required{% endif %}">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            <!-- Submit form button -->
+                            <button class="btn btn-primary" type="submit">Submit and Continue</button>   
+                        </form>
+                    </div>
+                </div>  
+            
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

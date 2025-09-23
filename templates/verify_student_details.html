@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Verify Student Details
+{% endblock %}
+
+{% block main %}
+
+{% include 'message.html' %}
+ <!-- Verify Student Details Card -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            <div class="card">
+
+                <!-- Form heading -->
+                <div class="card-header text-center">
+                    <h4>Verify Student Details</h4>
+                </div>
+
+                <div class="card-body">
+
+                    <!-- <div class="mb-3">
+                        <label for="universityRollNo" class="form-label">University Roll No.</label>
+                        <input class="form-control" type="text" id="universityRollNo" 
+                            value="{{ details.university_roll_no | default('')}}" disabled>
+                    </div> -->
+
+                    <div class="mb-3">
+                        <label for="stdName" class="form-label">Name of the Student</label>
+                        <input class="form-control" type="text" id="stdName"
+                            value="{{ details.student_name | default('')}}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="branch" class="form-label">Branch</label>
+                        <input class="form-control" type="text" id="branch" 
+                            value="{{ details.branch | default('') }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="semester" class="form-label">Semester</label>
+                        <input class="form-control" type="text" id="semester" 
+                            value="{{ details.semester | default('') }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="section" class="form-label">Section</label>
+                        <input class="form-control" type="text" id="section" 
+                            value="{{ details.section | default('') }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="groupNo" class="form-label">Group</label>
+                        <input class="form-control" type="text" id="groupNo" 
+                            value="{{ details.class_group | default('') }}" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="batchCounselor" class="form-label">Name of the Batch Counselor</label>
+                        <input type="text" class="form-control" id="batchCounselor" 
+                            value="{{ details.batch_counselor | default('') }}" disabled>
+                    </div>
+
+                    <form action="/verify_student_details" method="post">
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="True" id="checkDefault" name="verified_details">
+                            <label class="form-check-label" for="checkDefault">
+                                <span class="text-bg-info">I have verified that above details are correct</span><span class="text-danger">*</span>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-center mb-3">
+                            <button type="submit" class="btn btn-primary w-25" value="Submit">Continue</button>
+                        </div>
+
+                    </form>
+
+                </div> 
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

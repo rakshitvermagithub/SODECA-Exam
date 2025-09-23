@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Check Submissions
+{% endblock %}
+
+{% block main %}
+
+<!-- Table for forms name list -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4>Forms list</h4>
+                </div>
+                <table class="table mb-3">
+                    {% for name in form_title_list %}
+                    <tr>
+                        <td>{{loop.index}}. {{ name }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table for each form created dynamically -->
+<!-- forms_data is a list of list of dits(forms)-->
+{% for form in forms_data %}
+{% set form_name = form_names[(loop.index-1)] %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-11">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4>{{ form_title_list[(loop.index-1)] }}</h4>
+                </div>
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                            <!-- Getting fields in a form as headers corresponding with table data -->
+                            {% for keys in form[0].keys() %}
+                                <th>{{ keys }}</th>
+                            {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loop for rows in a table like blood_donor -->
+                            {% for rows in form %}
+                            <tr data-form_name="{{ form_name }}" data-student_id = "{{ rows["student_id"] }}"> 
+
+                            <!-- Get values from each row now -->
+                            {% for value in rows.values() %}
+                                {% if value == 'pending' %}
+                                <td> 
+                                    <button class="btn btn-success process-btn">Accept</button>
+                                    <span> OR </span>
+                                    <button class="btn btn-danger">Reject</button>
+                                </td>
+                                {% elif value == 'accepted' %}
+                                <td>
+                                    <button class="btn btn-success" disabled>{{ value }}</button>
+                                </td>
+                                {% else %}
+                                <td>
+                                    <span>{{ value }}</span>
+                                </td>
+                                
+                                {% endif %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}       
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
