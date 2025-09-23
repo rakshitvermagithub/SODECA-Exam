@@ -26,8 +26,12 @@ UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
 
 # TODO: Are session setting configured?
 
+db_path = app.config['DATABASE_FILE']
+with open(db_path, 'a'):
+    pass  
+  
 # Database configuration
-db = SQL(f"sqlite:///{app.config['DATABASE_FILE']}")
+db = SQL(f"sqlite:///{db_path}")
 
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
@@ -496,12 +500,6 @@ def student_details():
 
     # If user is logged in, give access to page
     if session["user_id"]:
-        
-        # Get student details if already present
-        # Variable stores a list of dictionaries 
-        student_details_row = db.execute(
-                    "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
-                    ) 
 
         # If user wants to insert or update data
         if request.method == "POST":
@@ -579,6 +577,12 @@ def student_details():
             return redirect("/sodeca_forms") 
          
         else:
+
+            # Get student details if already present
+            # Variable stores a list of dictionaries 
+            student_details_row = db.execute(
+                "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
+            ) 
 
             # If details are already available
             if student_details_row:
