@@ -29,7 +29,7 @@ UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
 db_path = app.config['DATABASE_FILE']
 with open(db_path, 'a'):
     pass  
-  
+
 # Database configuration
 db = SQL(f"sqlite:///{db_path}")
 
@@ -899,4 +899,4 @@ if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
 
-    app.run(debug=False)
+    app.run(host="0.0.0.0", debug=False)
