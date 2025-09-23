@@ -414,7 +414,8 @@ def login():
         if len(rows) != 1 or not check_password_hash(
             rows[0]["hash_password"], password
             ):
-            return redirect("/login")
+            flash("Fill your student details before login.")
+            return redirect("/student_details")
 
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
