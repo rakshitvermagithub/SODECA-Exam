@@ -517,37 +517,37 @@ def student_details():
             # Get University Roll No.
             university_roll_no = request.form.get("university_roll_no")
             if not university_roll_no:
-                return render_template("student_details.html")
+                return redirect("/student_details")
             
             # Get 
             student_name = request.form.get("student_name")
             if not student_name:
-                return render_template("student_details.html")
+                return redirect("/student_details")
 
             # Get Branch 
             selected_branch = request.form.get("branch_option")
             if not selected_branch:
-                return render_template("student_details.html")
+                return redirect("/student_details")
             
             # Get Semester
             selected_semester = request.form.get("semester_option")
             if not selected_semester:
-                return render_template("student_details.html")
+                return redirect("/student_details")
             
             # Get Section
             selected_section = request.form.get("section_option")
             if not selected_section:
-                return render_template("student_details.html")
+                return redirect("/student_details")
             
             # Get Group
             selected_group = request.form.get("group_option")
             if not selected_group:
-                return render_template("student_details.html")
+                return redirect("/student_details")
             
             # Get Batch Counselor name
             batch_counselor = request.form.get("batch_counselor")
             if not batch_counselor:
-                return render_template("student_details.html")
+                return redirect("/student_details")
             
             # If all entries are filled successfuly
             
