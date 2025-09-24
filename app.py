@@ -20,25 +20,8 @@ app.secret_key = app.config["SECRET_KEY"]
 
 GOOGLE_CLIENT_ID = app.config["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = app.config["GOOGLE_CLIENT_SECRET"]
-
-# To upload certificates
-UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
-
-# TODO: Are session setting configured?
-
-db_path = app.config['DATABASE_FILE']
-with open(db_path, 'a'):
-    pass  
-
-# Database configuration
-db = SQL(f"sqlite:///{db_path}")
-
-# Allowed extensions for the certificate upload
-ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
-
 # OAuth Setup
 oauth = OAuth(app)
-
 google = oauth.register(
     name='google',
     client_id=app.config['GOOGLE_CLIENT_ID'],
@@ -46,6 +29,15 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'},
 )
+
+# To upload certificates
+UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
+# Allowed extensions for the certificate upload
+ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
+def allowed_file(filename):
+    """Checks if the file extension is allowed."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Form Fields Defined
 FORM_DEFINITIONS = {
@@ -289,6 +281,28 @@ form_title = []
 for form in FORM_DEFINITIONS:
     form_title.append(FORM_DEFINITIONS[form]["title"])
 
+db_path = app.config['DATABASE_FILE']
+with open(db_path, 'a'):
+    pass  
+
+# Database configuration
+db = SQL(f"sqlite:///{db_path}")
+# Initialise some required tables, when app is loaded for the first time
+# Initialise table to store student login details
+db.execute("""
+    CREATE TABLE IF NOT EXISTS students (user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+    email TEXT UNIQUE NOT NULL, hash_password TEXT, google_id TEXT UNIQUE, 
+    auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT, 
+    first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)
+""")    
+# Initialise table to store student details
+db.execute("""
+    CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL, 
+    university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL, 
+    semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL, 
+    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES students(user_id))
+""")
 # Create tables for all the forms in FORM_DEFINITIONS
 # Iterate through all forms defined
 for form in form_name_list:
@@ -322,11 +336,6 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'approved', 'rejected'))
             )"""
         )
-
-def allowed_file(filename):
-    """Checks if the file extension is allowed."""
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Register
 @app.route("/", methods=["GET", "POST"])
