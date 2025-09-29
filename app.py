@@ -4,6 +4,7 @@ from config import Config
 from datetime import datetime, date
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory
 from flask_session import Session
+from functools import wraps
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -12,6 +13,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 import sys
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -50,18 +52,26 @@ UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
 PARENT_FOLDER_ID = "1cllojwiiMV2_YtZ93eadi0rrHf6Lg6_-" # Your target Google Drive folder
 db = SQL(f"sqlite:///{app.config['DATABASE_FILE']}")
 
+def login_required(f):
+    """
+    Decorate routes to require login.
+    https://flask.palletsprojects.com/en/3.0.x/patterns/viewdecorators/
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            flash("Please log in to access this page.", "warning")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
 def allowed_file(filename):
     """Checks if the file extension is allowed."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def get_drive_credentials():
-    """Helper function to get Google Drive credentials from the session."""
-    if 'drive_credentials' not in session:
-        return None
-    return Credentials(**session['drive_credentials'])
 
 # Form Fields Defined
 FORM_DEFINITIONS = {
@@ -405,7 +415,7 @@ def local_delete(full_path):
         return redirect(url_for('faculty_dashboard'))
 
 # Register
-@app.route("/", methods=["GET", "POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     
     # If POST request
@@ -415,30 +425,30 @@ def register():
         email = request.form.get("email")
         if not email or '@' not in email:
             # Flash error message
-            flash("Please enter a valid email address", "error")
-            return redirect("/")
+            flash("Please enter a valid email address", "danger")
+            return redirect("/register")
         
         # password
         password = request.form.get("password")
         if not password:
             # Flash error message
-            return redirect("/")
+            return redirect("/register")
         
         # confirm password
         confirm_password = request.form.get("confirm_password")
         if not confirm_password:
             # Flash error message
-            return redirect("/")
+            return redirect("/register")
         
         # if pass = confirm pass
         if password != confirm_password:
             # Flash error message
-            return redirect("/")
+            return redirect("/register")
         
         # Check if email already exists
         existing_user = db.execute("SELECT * FROM users WHERE email = ? AND role = 'student'", email)
         if existing_user:
-            flash("Email already registered", "error")
+            flash("Email already registered", "danger")
             return render_template("register.html")
         
         # If form was filled successfully
@@ -449,7 +459,7 @@ def register():
         db.execute(
             "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password 
             )
-        return redirect("/login")
+        return redirect("/student_details")
     else:
         return render_template("register.html")
 
@@ -503,8 +513,9 @@ def login_callback():
                     """, email, google_id, profile_picture, first_name, last_name)
                     session["user_id"] = user_id
                     flash("Welcome! Account created with Google!", "success")
+                    return redirect("/student_details")
                     
-            return redirect("/sodeca_forms") # Or wherever users go after login
+            return redirect("/") # Or wherever users go after login
         else:
             flash("Could not fetch user info from Google.", "danger")
             return redirect("/login")
@@ -521,12 +532,12 @@ def login():
 
         email = request.form.get("email")
         if not email or '@' not in email:
-            flash("Invalid email")
-            return redirect("/")
+            flash("Invalid email", "danger")
+            return redirect("/register")
 
         password = request.form.get("password")
         if not password:
-            flash("Password is required")
+            flash("Password is required", "danger")
             return redirect("/login")
         
         rows = db.execute(
@@ -536,14 +547,14 @@ def login():
         if len(rows) != 1 or not check_password_hash(
             rows[0]["hash_password"], password
             ):
-            flash("Fill your student details before login.")
-            return redirect("/student_details")
+            flash("Invalid email or password", "danger")
+            return redirect("/register")
 
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
         session["auth_provider"] = "local"
 
-        return redirect("/student_details")
+        return redirect("/")
     else:
         return render_template("login.html")
 
@@ -569,6 +580,7 @@ def drive_callback():
     return redirect(url_for('faculty_dashboard'))
 
 @app.route("/logout")
+@login_required
 def logout():
     # Always clear session - this is safe even if session is empty
     session.clear()
@@ -576,110 +588,104 @@ def logout():
     return redirect("/login")
 
 @app.route("/student_details", methods=["GET", "POST"])
+@login_required
 def student_details():
 
-    # If user is logged in, give access to page
-    if session["user_id"]:
+    # If user wants to insert or update data
+    if request.method == "POST":
 
-        # If user wants to insert or update data
-        if request.method == "POST":
+        # Get University Roll No.
+        university_roll_no = request.form.get("university_roll_no")
+        if not university_roll_no:
+            return redirect("/student_details")
+        
+        # Get 
+        student_name = request.form.get("student_name")
+        if not student_name:
+            return redirect("/student_details")
 
-            # Get University Roll No.
-            university_roll_no = request.form.get("university_roll_no")
-            if not university_roll_no:
-                return redirect("/student_details")
-            
-            # Get 
-            student_name = request.form.get("student_name")
-            if not student_name:
-                return redirect("/student_details")
-
-            # Get Branch 
-            selected_branch = request.form.get("branch_option")
-            if not selected_branch:
-                return redirect("/student_details")
-            
-            # Get Semester
-            selected_semester = request.form.get("semester_option")
-            if not selected_semester:
-                return redirect("/student_details")
-            
-            # Get Section
-            selected_section = request.form.get("section_option")
-            if not selected_section:
-                return redirect("/student_details")
-            
-            # Get Group
-            selected_group = request.form.get("group_option")
-            if not selected_group:
-                return redirect("/student_details")
-            
-            # Get Batch Counselor name
-            batch_counselor = request.form.get("batch_counselor")
-            if not batch_counselor:
-                return redirect("/student_details")
-            
-            # If all entries are filled successfuly
-            
-            # Create student_details table if not there
-            # roll no. columns is not unique because if one student makes any mistake
-            # that will create hurdles for others
-            db.execute(
-                "CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL, " \
-                "university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL, " \
-                "semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL, " \
-                "batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) " \
-                "REFERENCES users(user_id))"
-                )
-            
-            # Store detail using UPSERT query
-            # The corrected and robust "UPSERT" command
-            db.execute(
-                """
-                INSERT INTO student_details (
-                    student_user_id, university_roll_no, student_name, branch, 
-                    semester, section, class_group, batch_counselor
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(student_user_id) DO UPDATE SET
-                    university_roll_no = excluded.university_roll_no,
-                    student_name = excluded.student_name,
-                    branch = excluded.branch,
-                    semester = excluded.semester,
-                    section = excluded.section,
-                    class_group = excluded.class_group,
-                    batch_counselor = excluded.batch_counselor
-                """,
-                session["user_id"], university_roll_no, student_name, selected_branch, 
-                selected_semester, selected_section, selected_group, batch_counselor
+        # Get Branch 
+        selected_branch = request.form.get("branch_option")
+        if not selected_branch:
+            return redirect("/student_details")
+        
+        # Get Semester
+        selected_semester = request.form.get("semester_option")
+        if not selected_semester:
+            return redirect("/student_details")
+        
+        # Get Section
+        selected_section = request.form.get("section_option")
+        if not selected_section:
+            return redirect("/student_details")
+        
+        # Get Group
+        selected_group = request.form.get("group_option")
+        if not selected_group:
+            return redirect("/student_details")
+        
+        # Get Batch Counselor name
+        batch_counselor = request.form.get("batch_counselor")
+        if not batch_counselor:
+            return redirect("/student_details")
+        
+        # If all entries are filled successfuly
+        
+        # Create student_details table if not there
+        # roll no. columns is not unique because if one student makes any mistake
+        # that will create hurdles for others
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL, " \
+            "university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL, " \
+            "semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL, " \
+            "batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) " \
+            "REFERENCES users(user_id))"
             )
+        
+        # Store detail using UPSERT query
+        # The corrected and robust "UPSERT" command
+        db.execute(
+            """
+            INSERT INTO student_details (
+                student_user_id, university_roll_no, student_name, branch, 
+                semester, section, class_group, batch_counselor
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(student_user_id) DO UPDATE SET
+                university_roll_no = excluded.university_roll_no,
+                student_name = excluded.student_name,
+                branch = excluded.branch,
+                semester = excluded.semester,
+                section = excluded.section,
+                class_group = excluded.class_group,
+                batch_counselor = excluded.batch_counselor
+            """,
+            session["user_id"], university_roll_no, student_name, selected_branch, 
+            selected_semester, selected_section, selected_group, batch_counselor
+        )
 
-            return redirect("/sodeca_forms") 
-         
-        else:
-
-            # Get student details if already present
-            # Variable stores a list of dictionaries 
-            student_details_row = db.execute(
-                "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
-            ) 
-
-            # If details are already available
-            if student_details_row:
-                filled_details = student_details_row[0]
-
-                # Show the page with filled details
-                return render_template(
-                    "student_details.html", details = filled_details 
-                    )
-            else:
-                return render_template("student_details.html", details=None)
-    
+        return redirect("/sodeca_forms") 
+        
     else:
-        # Login first
-        return redirect("/login")
+
+        # Get student details if already present
+        # Variable stores a list of dictionaries 
+        student_details_row = db.execute(
+            "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
+        ) 
+
+        # If details are already available
+        if student_details_row:
+            filled_details = student_details_row[0]
+
+            # Show the page with filled details
+            return render_template(
+                "student_details.html", details = filled_details 
+                )
+        else:
+            return render_template("student_details.html", details=None)
     
-@app.route("/sodeca_forms", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 def sodeca_forms():
 
     if request.method == "POST":
@@ -695,6 +701,7 @@ def sodeca_forms():
         return render_template("sodeca_forms.html")
     
 @app.route("/verify_student_details", methods=["GET", "POST"])
+@login_required
 def verify_student_details():
 
     if session["user_id"]:
@@ -729,6 +736,7 @@ def verify_student_details():
                 return render_template("verify_student_details.html", details=None)
 
 @app.route("/fill_form", methods=["GET", "POST"])
+@login_required
 def fill_form():
 
     user_id = session["user_id"]
@@ -922,6 +930,7 @@ def fill_form():
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
 @app.route("/faculty_dashboard", methods=["GET"])
+@login_required
 def faculty_dashboard(): 
           
         if request.method == "GET":
@@ -953,6 +962,7 @@ def faculty_dashboard():
             return redirect("/sodeca_forms")
         
 @app.route('/view_submission/<path:filename>')
+@login_required
 def view_submission(filename):
 
     """Securely serves a file from the local upload folder for faculty to view."""
