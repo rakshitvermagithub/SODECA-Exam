@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Check Submissions
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+{% if not is_authorized %}
+    <p>To approve and upload submissions, you must first authorize this application to access your Google Drive.</p>
+    <a href="{{ url_for('authorize_drive') }}"><button>Login with Google to Manage Files</button></a>
+{% else %}
+    <!-- Table for forms name list -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h4>Forms list</h4>
+                    </div>
+                    <table class="table mb-3">
+                        {% for name in form_title_list %}
+                        <tr>
+                            <td>{{loop.index}}. {{ name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Table for each form created dynamically -->
+        <!-- forms_data is a list of list of dicts(forms)-->
+        {% for form in forms_data %}
+        {% set outer_loop = loop %}
+        <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-11">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h4>{{ form_title_list[(outer_loop.index0)] }}</h4>
+                    </div>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                <!-- Getting fields in a form as headers corresponding with table data -->
+                                {% for key in form[0].keys() %}
+                                    {% if key != 'full_path' %}
+                                    <th>{{ key }}</th>
+                                    {% endif %}
+                                {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <!-- Loop for rows in a table like blood_donor -->
+                            {% for row in form %}
+
+                                <tr> 
+                                <!-- For keys and value in each row of entries -->
+                                {% for key, value in row.items() %}
+                                
+                                    {% if key == 'certificate' %}
+                                    <td>
+                                        <a href="{{ url_for('view_submission', filename=value) }}" target="_blank">{{ value }}</a>
+                                    </td>
+                                    {% elif key == 'status' %}
+                                        {% if value == 'approved' %}
+                                        <td>
+                                            <button class="btn btn-success" disabled>Approved</button>
+                                        </td>
+                                        {% elif value == 'rejected' %}
+                                        <td>
+                                            <button class="btn btn-danger" disabled>Rejected</button>
+                                        </td>
+                                        {% else %} 
+                                        <td>
+                                            <form action="{{ url_for('upload_to_drive') }}" method="POST" style="display: inline;">
+                                            <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
+                                            <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
+                                            <input type="hidden" name="filename" value="{{ row['certificate'] }}">
+                                            
+                                            <button type="submit" class="btn btn-success">Approve</button>
+                                            </form>
+
+                                            <form action="{{ url_for('reject_entry') }}" method="POST" style="display: inline;">
+                                                <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
+                                                <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
+                                                <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
+
+                                                <button type="submit" class="btn btn-danger">Reject</button>
+                                            </form>
+                                        </td>
+                                        {% endif %}  
+                                    
+                                    {% elif key == 'google_file_id' and value != 'pending' %}
+                                    <td>
+                                        <a href="https://drive.google.com/file/d/{{ value }}/view">View</a>
+                                        <a href="https://drive.google.com/uc?id={{ value }}&export=download">Download</a>
+                                    </td>
+                                    {% elif key == 'full_path' %}
+                                    {% else %}
+                                    <td>
+                                        <span>{{ value }}</span>
+                                    </td>
+                                    {% endif %}
+
+                                {% endfor %}
+                                </tr>  
+                            {% endfor %}       
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+proof

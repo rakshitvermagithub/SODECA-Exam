@@ -24,5 +24,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = 3600  # Same as above
     
     # OAuth credentials
-    GOOGLE_CLIENT_ID = os.getenv('OAUTH_CLIENT_ID')
-    GOOGLE_CLIENT_SECRET = os.getenv('OAUTH_CLIENT_SECRET')
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+    DRIVE_CLIENT_ID = os.getenv('DRIVE_CLIENT_ID')
+    DRIVE_CLIENT_SECRET = os.getenv('DRIVE_CLIENT_SECRET')

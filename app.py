@@ -1,16 +1,17 @@
 from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
 from config import Config
-from datetime import datetime
-from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify
+from datetime import datetime, date
+from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory
 from flask_session import Session
-from google.oauth2.service_account import Credentials
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
-import csv
 import os
+import sys
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -20,24 +21,47 @@ app.secret_key = app.config["SECRET_KEY"]
 
 GOOGLE_CLIENT_ID = app.config["GOOGLE_CLIENT_ID"]
 GOOGLE_CLIENT_SECRET = app.config["GOOGLE_CLIENT_SECRET"]
-# OAuth Setup
+
+DRIVE_CLIENT_ID = app.config["DRIVE_CLIENT_ID"]
+DRIVE_CLIENT_SECRET = app.config["DRIVE_CLIENT_SECRET"]
+
+# --- UNIFIED OAUTH 2.0 SETUP (USING AUTHLIB ONLY) ---
 oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=app.config['GOOGLE_CLIENT_ID'],
-    client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+
+# Client 1: For User Login (Students & Faculty) - Minimal Permissions
+google_login_client = oauth.register(
+    name='google_login', # A unique name for this client
+    client_id = GOOGLE_CLIENT_ID,
+    client_secret = GOOGLE_CLIENT_SECRET,
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'},
 )
+# Client 2: For Faculty Drive Access - Specific, Powerful Permission
+google_drive_client = oauth.register(
+    name='google_drive', # A unique name for this client
+    client_id = DRIVE_CLIENT_ID, # IMPORTANT: Use a SEPARATE Client ID
+    client_secret = DRIVE_CLIENT_SECRET,
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'https://www.googleapis.com/auth/drive.file'},
+)
 
-# To upload certificates
-UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
+# --- General App Configuration ---
+UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"] 
+PARENT_FOLDER_ID = "1cllojwiiMV2_YtZ93eadi0rrHf6Lg6_-" # Your target Google Drive folder
+db = SQL(f"sqlite:///{app.config['DATABASE_FILE']}")
+
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
 def allowed_file(filename):
     """Checks if the file extension is allowed."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_drive_credentials():
+    """Helper function to get Google Drive credentials from the session."""
+    if 'drive_credentials' not in session:
+        return None
+    return Credentials(**session['drive_credentials'])
 
 # Form Fields Defined
 FORM_DEFINITIONS = {
@@ -274,37 +298,29 @@ FORM_DEFINITIONS = {
 }
 
 # List of technical names of forms defined
-form_name_list = FORM_DEFINITIONS.keys()
-
+form_name_list = list(FORM_DEFINITIONS.keys())
 # List of title names of forms defined
 form_title = []
 for form in FORM_DEFINITIONS:
     form_title.append(FORM_DEFINITIONS[form]["title"])
 
-db_path = app.config['DATABASE_FILE']
-with open(db_path, 'a'):
-    pass  
-
-# Database configuration
-db = SQL(f"sqlite:///{db_path}")
-# Initialise some required tables, when app is loaded for the first time
 # Initialise table to store student login details
 db.execute("""
-    CREATE TABLE IF NOT EXISTS students (user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+    CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
     email TEXT UNIQUE NOT NULL, hash_password TEXT, google_id TEXT UNIQUE, 
     auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT, 
     first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, role TEXT NOT NULL DEFAULT 'student' 
+    CHECK (role IN ('student', 'faculty', 'admin')))
 """)    
 # Initialise table to store student details
 db.execute("""
     CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL, 
     university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL, 
     semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL, 
-    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES students(user_id))
+    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id))
 """)
 # Create tables for all the forms in FORM_DEFINITIONS
-# Iterate through all forms defined
 for form in form_name_list:
 
     # Check if table named the form exists
@@ -331,11 +347,62 @@ for form in form_name_list:
             f"""CREATE TABLE IF NOT EXISTS {form}(
             student_id INTEGER PRIMARY KEY NOT NULL,
             {field_cols_sql},
-            status TEXT DEFAULT 'pending' NOT NULL, 
+            full_path TEXT NOT NULL,
+            google_file_id TEXT NOT NULL DEFAULT 'pending', 
+            status TEXT DEFAULT 'pending' NOT NULL,
             FOREIGN KEY (student_id) REFERENCES student_details(student_user_id),
             CHECK (status IN ('pending', 'approved', 'rejected'))
             )"""
         )
+
+# Returns if user is student, faculty or admin
+def role(user_id):
+    role = db.execute("SELECT role FROM users WHERE user_id = ?", user_id)[0]['role']
+    return role
+
+def local_delete(full_path):
+    try:
+        # Security check - ensure the file is within UPLOAD_FOLDER
+        # This prevents directory traversal attacks
+        if not os.path.abspath(full_path).startswith(os.path.abspath(UPLOAD_FOLDER)):
+            print(f"Security violation: Attempted to delete file outside upload folder: {full_path}")
+            return redirect("/faculty_dashboard")
+        
+        # Check if file exists before attempting deletion
+        if not os.path.exists(full_path):
+            print(f"File does not exist: {full_path}")
+            return redirect("/faculty_dashboard")
+        
+        # Check if it's actually a file (not a directory)
+        if not os.path.isfile(full_path):
+            print(f"Path is not a file: {full_path}")
+            return redirect("/faculty_dashboard")
+        
+        # Delete the file
+        os.remove(full_path)
+        print(f"Entry rejected and successfully deleted file: {full_path}")
+        flash("Entry rejected", "danger")
+        return redirect("/faculty_dashboard")
+    
+    except IndexError:
+        print(f"No record found or invalid data structure for in form {form}")
+        flash("Database error: Record not found.", "danger")
+        return redirect(url_for('faculty_dashboard'))
+    
+    except PermissionError:
+        print(f"Permission denied when trying to delete file: {full_path}")
+        flash("Permission denied: Cannot delete the file.", "danger")
+        return redirect(url_for('faculty_dashboard'))
+    
+    except OSError as e:
+        print(f"OS error when deleting file {full_path}: {e}")
+        flash("System error occurred while deleting the file.", "danger")
+        return redirect(url_for('faculty_dashboard'))
+    
+    except Exception as e:
+        print(f"Unexpected error in local_delete: {e}")
+        flash("An unexpected error occurred. Please try again.", "danger")
+        return redirect(url_for('faculty_dashboard'))
 
 # Register
 @app.route("/", methods=["GET", "POST"])
@@ -369,8 +436,8 @@ def register():
             return redirect("/")
         
         # Check if email already exists
-        existing_student = db.execute("SELECT * FROM students WHERE email = ?", email)
-        if existing_student:
+        existing_user = db.execute("SELECT * FROM users WHERE email = ? AND role = 'student'", email)
+        if existing_user:
             flash("Email already registered", "error")
             return render_template("register.html")
         
@@ -378,17 +445,9 @@ def register():
         # Convert plain password into a complex string 
         hash_password = generate_password_hash(password)
 
-        # Create "students" table if it is not there
-        db.execute(
-            "CREATE TABLE IF NOT EXISTS students (" \
-            "user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, email TEXT UNIQUE NOT NULL, " \
-            "hash_password TEXT, google_id TEXT UNIQUE, auth_provider TEXT DEFAULT 'local' NOT NULL, " \
-            "profile_picture TEXT, first_name TEXT, last_name TEXT, " \
-            "created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
-            )
         # Store Student's login details in the table
         db.execute(
-            "INSERT INTO students (email, hash_password) VALUES (?, ?)", email, hash_password 
+            "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password 
             )
         return redirect("/login")
     else:
@@ -396,8 +455,62 @@ def register():
 
 @app.route("/auth/google")
 def google_login():
-    redirect_uri = url_for('callback', _external=True)
-    return google.authorize_redirect(redirect_uri)
+    """Handles user LOGIN. Asks only for profile information."""
+    redirect_uri = url_for('login_callback', _external=True)
+    return google_login_client.authorize_redirect(redirect_uri)
+
+@app.route("/auth/google/callback")
+def login_callback():
+    """Handles the callback for the user LOGIN flow."""
+    try:
+        token = google_login_client.authorize_access_token()
+        # The user's login info is now in token['userinfo']
+        user_info = token.get('userinfo')
+
+        if user_info:
+            # --- Your existing logic to handle user creation/login ---
+            google_id = user_info['sub']
+            email = user_info['email']
+            first_name = user_info.get('given_name', '')
+            last_name = user_info.get('family_name', '')
+            profile_picture = user_info.get('picture', '')
+
+            # Check if user already exists with this Google ID
+            existing_user = db.execute("SELECT * FROM users WHERE google_id = ?", google_id)
+            
+            if existing_user:
+                # User exists, log them into the application session
+                session["user_id"] = existing_user[0]["user_id"]
+                session["auth_provider"] = "google"
+                flash("Logged in successfully with Google!", "success")
+            else:
+                # No user with this Google ID, check if the email is already registered
+                email_user = db.execute("SELECT * FROM users WHERE email = ?", email)
+                if email_user:
+                    # Email exists, link this Google ID to the existing account
+                    db.execute("""
+                        UPDATE users SET google_id = ?, profile_picture = ?, first_name = ?, last_name = ?, 
+                        auth_provider = 'google', updated_at = CURRENT_TIMESTAMP
+                        WHERE email = ?
+                    """, google_id, profile_picture, first_name, last_name, email)
+                    session["user_id"] = email_user[0]["user_id"]
+                    flash("Google account linked successfully!", "success")
+                else:
+                    # New user, create a new account in the database
+                    user_id = db.execute("""
+                        INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name)
+                        VALUES (?, ?, 'google', ?, ?, ?)
+                    """, email, google_id, profile_picture, first_name, last_name)
+                    session["user_id"] = user_id
+                    flash("Welcome! Account created with Google!", "success")
+                    
+            return redirect("/sodeca_forms") # Or wherever users go after login
+        else:
+            flash("Could not fetch user info from Google.", "danger")
+            return redirect("/login")
+    except Exception as e:
+        flash(f"Authentication failed: {e}", "danger")
+        return redirect("/login")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -417,7 +530,7 @@ def login():
             return redirect("/login")
         
         rows = db.execute(
-            "SELECT * FROM students WHERE email=? AND auth_provider = 'local'", email
+            "SELECT * FROM users WHERE email=? AND auth_provider = 'local'", email
             )
         
         if len(rows) != 1 or not check_password_hash(
@@ -433,70 +546,27 @@ def login():
         return redirect("/student_details")
     else:
         return render_template("login.html")
-    
-@app.route("/auth/google/callback")
-def callback():
-    """Handle Google OAuth callback"""
+
+@app.route('/authorize_drive')
+def authorize_drive():
+    """Handles Drive AUTHORIZATION for faculty. Asks only for Drive permission."""
+    redirect_uri = url_for('drive_callback', _external=True)
+    return google_drive_client.authorize_redirect(redirect_uri)
+
+@app.route('/auth/google/drive_callback')
+def drive_callback():
+    """Handles the callback for the faculty DRIVE authorization flow."""
     try:
-        token = google.authorize_access_token()
-
-        user_info_url = 'https://openidconnect.googleapis.com/v1/userinfo'
-        resp = google.get(user_info_url, token=token)
-        user_info = resp.json()
+        # 1. Fetch the token from Google.
+        token = google_drive_client.authorize_access_token()
         
-        if user_info:
-            google_id = user_info['sub']
-            email = user_info['email']
-            first_name = user_info.get('given_name', '')
-            last_name = user_info.get('family_name', '')
-            profile_picture = user_info.get('picture', '')
-
-            # Check if student already exists with Google ID
-            existing_student = db.execute("SELECT * FROM students WHERE google_id = ?", google_id)
-            
-            if existing_student:
-                # Student exists, log them in
-                session["user_id"] = existing_student[0]["user_id"]
-                session["auth_provider"] = "google"
-                flash("Logged in successfully with Google!", "success")
-                return redirect("/sodeca_forms")
-            else:
-                # Check if student exists with same email but different auth provider
-                email_student = db.execute("SELECT * FROM students WHERE email = ?", email)
-                
-                if email_student:
-                    # Link Google account to existing account
-                    db.execute("""
-                        UPDATE students 
-                        SET google_id = ?, profile_picture = ?, first_name = ?, last_name = ?, 
-                            auth_provider = 'google', updated_at = CURRENT_TIMESTAMP
-                        WHERE email = ?
-                    """, google_id, profile_picture, first_name, last_name, email)
-                    
-                    session["user_id"] = email_student[0]["user_id"]
-                    session["auth_provider"] = "google"
-                    flash("Google account linked successfully!", "success")
-                    return redirect("/sodeca_forms")
-                else:
-                    # Create new student
-                    user_id = db.execute("""
-                        INSERT INTO students (email, google_id, auth_provider, profile_picture, first_name, last_name)
-                        VALUES (?, ?, 'google', ?, ?, ?)
-                    """, email, google_id, profile_picture, first_name, last_name)
-                    
-                    session["user_id"] = user_id
-                    session["auth_provider"] = "google"
-
-                    flash("Welcome! Account created successfully with Google!", "success")
-                    flash("You may fill your details", "info")
-                    return redirect("/student_details")
-        else:
-            flash("Failed to get user information from Google", "error")
-            return redirect("/login")
-            
+        # 2. Explicitly save the token into our own custom session key.
+        session['drive_auth_token'] = token
+        flash("Google Drive has been successfully authorized.", "success")
     except Exception as e:
-        flash(f"Authentication failed: {str(e)}", "error")
-        return redirect("/login")
+        flash(f"Drive authorization failed: {e}", "danger")
+    
+    return redirect(url_for('faculty_dashboard'))
 
 @app.route("/logout")
 def logout():
@@ -559,7 +629,7 @@ def student_details():
                 "university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL, " \
                 "semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL, " \
                 "batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) " \
-                "REFERENCES students(user_id))"
+                "REFERENCES users(user_id))"
                 )
             
             # Store detail using UPSERT query
@@ -661,7 +731,9 @@ def verify_student_details():
 @app.route("/fill_form", methods=["GET", "POST"])
 def fill_form():
 
-    if session["user_id"]:
+    user_id = session["user_id"]
+
+    if user_id:
 
         # If not selected any forms, first go and select
         if "selected_forms" not in session:
@@ -691,20 +763,23 @@ def fill_form():
             flash("Kindly check your submissions and their approval status on the hompeage", "success")
             return redirect("/sodeca_forms")
 
-        # current_form_key is the key coressponding to dict "selected_forms" defined in the start
+        # current_form_index is the key in dict "selected_forms" defined in the start
         current_form = selected_forms[current_form_index]
         form_to_show = FORM_DEFINITIONS[current_form]
 
         if request.method == "POST":
 
+            # Initialise dict for text and radio inputs
+            form_inputs = {}
+            
+            # Initialise in this scope the google_file_id
+            save_path = ""
+            
             # Check if certificate was submitted
             if 'certificate' not in request.files:
                 flash("No file part", "danger")
                 return redirect(request.url)
 
-            # Dict for text and radio inputs
-            form_inputs = {}
-            
             # Iterating through all input fields
             for field in form_to_show["fields"]:
 
@@ -715,14 +790,16 @@ def fill_form():
                 # If input field is a date
                 if field_type == "date":
                     date_string = request.form.get(field_name)
-                    
                     try:
                         # Parse the date string into a datetime object
                         date_object = datetime.strptime(date_string, '%Y-%m-%d').date()
 
-                        # TODO: Error checking using "date_object" 
-                        
-                        # After succesful parsing only, Append in dict form_inputs
+                        if field_name == "to_date":
+                            to_date = date_object 
+                        if field_name == "from_date":
+                            from_date = date_object
+
+                        # After succesful parsing only, Append in form_inputs
                         form_inputs[field_name] = date_string
 
                     except ValueError:
@@ -745,7 +822,7 @@ def fill_form():
                         # Get student_name and unversity_roll_no
                         student_details = db.execute(
                             """SELECT university_roll_no, student_name FROM 
-                            student_details WHERE student_user_id = ?""", session["user_id"]
+                            student_details WHERE student_user_id = ?""", user_id
                         )
 
                         # Get file extension eg. ".pdf"
@@ -760,17 +837,15 @@ def fill_form():
 
                         # Secure the filename to prevent security risks (e.g., directory traversal)
                         filename = secure_filename(certificate.filename)
-
                         # Save filename in form_inputs
                         form_inputs[field_name] = filename 
 
-                        # TODO: Upload certificate to G-Drive
-
-                        # Print file name if saved
-                        print(f"File named: {filename} saved successfully!")
+                        save_path = os.path.join(UPLOAD_FOLDER, filename)
+            
+                        # Save the file to the local server
+                        certificate.save(save_path)
 
                     else:
-
                         flash("Invalid file type. Allowed types are: pdf", "danger")
                         return redirect(request.url)
 
@@ -790,27 +865,46 @@ def fill_form():
 
                     # TODO: Error Handling
 
-            # If everything went good
-            # Make a list of inputs separated by ","
-            form_fields = form_inputs.keys()
-            form_fields_sql = ",".join(form_fields)
+            # Error checking using "date_object"
+            if from_date > to_date:
+                print(f"from_date: {from_date} > to_date: {to_date} ")
+                flash("Error: From date is greater than To date", "danger")
+                return redirect(request.url)
+            today = date.today()
+            if from_date > today or to_date > today:
+                print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
+                flash("Error: Dates cannot be for in future activites", "danger")
+                return redirect(request.url)
 
-            # eg. "?,?,?..."
-            placeholder_sql = ",".join(["?"]*len(form_inputs))
+            if save_path:
 
-            # eg. ["Value1", "Value2"...]
-            values_list = list(form_inputs.values())
+                form_fields = form_inputs.keys()
+                form_fields_sql = ",".join(form_fields) # Make a list of inputs separated by ","
+                placeholder_sql = ",".join(["?"]*len(form_inputs)) # eg. "?,?,?..."
+                values_list = list(form_inputs.values()) # eg. ["Value1", "Value2"...]
+                # eg. "field1 = excluded.field1, field2 = excluded.field2..." 
+                update_clause = ", ".join([f"{field} = excluded.{field}" for field in form_fields])
 
-            # eg. "field1 = excluded.field1, field2 = excluded.field2..." 
-            update_clause = ", ".join([f"{field} = excluded.{field}" for field in form_fields])
+                try:
+                    # Dynamically store form entries in respective tables in database
+                    db.execute(f"""
+                        INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status) 
+                        VALUES(?, {placeholder_sql}, ?, ?, ?)
+                        ON CONFLICT(student_id) DO UPDATE SET {update_clause}, 
+                        full_path = EXCLUDED.full_path,
+                        google_file_id = EXCLUDED.google_file_id,
+                        status = EXCLUDED.status 
+                    """, session["user_id"], *values_list, # *values_list gives a string eg. "Value1", "Value2"...
+                    save_path, "pending", "pending", )
 
-            # Dynamically store form entries in respective tables in database
-            db.execute(f"""
-                INSERT INTO {current_form} (student_id, {form_fields_sql}, status) 
-                VALUES(?, {placeholder_sql}, ?)
-                ON CONFLICT(student_id) DO UPDATE SET {update_clause} 
-            """, session["user_id"], *values_list, 'pending') # *values_list gives a string eg. "Value1", "Value2"...
-            
+                except Exception as e:
+                    print(f"Database error: {e}", file=sys.stderr)
+                    flash("A database error occurred while saving the form. Please try again.", "danger")
+
+                    # IMPORTANT: If the DB save fails, we should delete the file we just uploaded
+
+                    return redirect(request.url)
+
             # Update form number
             session["current_form_index"] += 1
 
@@ -824,14 +918,22 @@ def fill_form():
 
         flash("Please Login/Register first")
         return redirect("/login")
-    
+
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
-@app.route("/check_submissions", methods=["GET", "POST"])
-def check_submissions():
-        # On get request
+@app.route("/faculty_dashboard", methods=["GET"])
+def faculty_dashboard(): 
+          
         if request.method == "GET":
-            # Show all submissions of a particular batch
+
+            if role(session["user_id"]) != 'faculty':
+                return "Access Denied!", 400 
+
+            is_authorized = 'drive_auth_token' in session
+            print(session.get('drive_auth_token'))
+            print(is_authorized)
+            if not is_authorized:
+                flash("Drive authorization is required. Please authorize your account first", "warning")
 
             # Empty list to store data from each form in db
             all_forms_data = []
@@ -843,70 +945,115 @@ def check_submissions():
                 # Append it in list of differnet forms' with data
                 all_forms_data.append(form_data)
 
-            return render_template("check_submission.html", forms_data=all_forms_data, form_title_list=form_title, form_names=form_name_list)            
-
-        # On post request
-        # Change value of approved or declined in a column
+            return render_template("faculty_dashboard.html", forms_data=all_forms_data, 
+                                   form_title_list=form_title, 
+                                   form_names=form_name_list, 
+                                   is_authorized=is_authorized)            
         else:
             return redirect("/sodeca_forms")
+        
+@app.route('/view_submission/<path:filename>')
+def view_submission(filename):
 
-@app.route("/update_sheets", methods=["POST"])
-def update_sheets():
-    flash("Entry updated", "success")
-    return redirect(request.url)
+    """Securely serves a file from the local upload folder for faculty to view."""
+    if role(session["user_id"]) != 'faculty':
+        return "Access Denied: You must be a faculty member to view submissions.", 403
 
-@app.route("/blood_donation", methods=["GET", "POST"])
-def blood_donation():
+    try:
+        # send_from_directory is the secure way to send files.
+        # It prevents users from accessing files outside the LOCAL_UPLOAD_FOLDER.
+        return send_from_directory(
+            UPLOAD_FOLDER,
+            filename,
+            as_attachment=False  # False = view in browser, True = force download
+        )
+    except FileNotFoundError:
+        flash("Error: The requested file could not be found on the server.", "danger")
+        return redirect(url_for('faculty_dashboard'))
 
-    if request.method == "POST":
+@app.route("/upload_to_drive", methods=["POST"])
+def upload_to_drive():
+    """Uploads a file using the authorized Drive client."""
+    token = session.get('drive_auth_token')
+    if not token:
+        flash("Drive authorization required. Please authorize your account first.", "warning")
+        return redirect(url_for('faculty_dashboard'))
 
-        # Get the values filled by student
-        variables = ["event", "from_date", "to_date", "organizer", "venue", "certificate"]
-        form_data = {variable: request.form.get(variable) for variable in variables}
+    filename = request.form.get('filename')
+    student_id = request.form.get('student_id')
+    form_name = request.form.get('form_name')
+    print(filename)
+    print(UPLOAD_FOLDER)
+    full_path = os.path.join(UPLOAD_FOLDER, filename)
 
-        # TODO: Rename pdf 
+    if not os.path.exists(full_path):
+        flash(f"Error: Local file not found at {full_path}", "danger")
+        return redirect(url_for('faculty_dashboard'))
 
-        # Store the values directly into csv or maybe sql then csv
-        csv_file_path = "blood_donation.csv"
+    try:
+        creds_data = token.copy()
+        if 'access_token' in creds_data:
+            creds_data['token'] = creds_data.pop('access_token')
+        creds_data.pop('scope', None)
+        creds_data.pop('userinfo', None)
+        creds_data.pop('expires_at', None)
+        creds_data.pop('expires_in', None)
+        creds_data.pop('token_type', None)
 
-        new_row = [form_data[keys] for keys in variables]
+        credentials = Credentials(**creds_data)
+        
+        drive_service = build('drive', 'v3', credentials=credentials)
+        
+        file_metadata = {'name': filename, 'parents': [PARENT_FOLDER_ID]}
+        media = MediaFileUpload(full_path, resumable=True)
+        
+        uploaded_file = drive_service.files().create(
+            body=file_metadata, media_body=media, fields='id,name'
+        ).execute()
+        
+        google_file_id = uploaded_file.get('id')
+        
+        sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE student_id = :sid"
+        db.execute(sql_query, status="approved", gfid=google_file_id, sid=student_id)
+        
+        flash(f"Successfully uploaded file '{uploaded_file.get('name')}' (ID: {google_file_id})", "success")
 
-        try:
-            with open(csv_file_path, 'a', newline='') as file:
-                writer = csv.writer(file)
+    # --- THE ROBUST FIX IS HERE ---
+    except HttpError as error:
+        # This error happens if the token is expired, invalid, or revoked.
+        if error.resp.status in [400, 401]:
+            # The token is bad. Remove it from the session.
+            session.pop('drive_auth_token', None)
+            # Send the user a helpful message and prompt them to log in again.
+            flash("Your Google authorization has expired or was revoked. Please authorize again.", "warning")
+            # Redirecting to the dashboard will now show the "Login with Google" button.
+            return redirect(url_for('faculty_dashboard'))
+        else:
+            # For other API errors (e.g., 500 server error), just show the error.
+            flash(f"An API error occurred: {error}", "danger")
 
-                # If the file did NOT exist, write the header row first
-                if not os.path.exists(csv_file_path):
-                    writer.writerow(variables) # writerow for a single row
+    except Exception as e:
+        print(f"An unexpected error occurred in upload_to_drive: {e}", file=sys.stderr)
+        flash(f"An unexpected error occurred: {e}", "danger")
+        
+    return redirect(url_for('faculty_dashboard'))
 
-                # Write the new data row
-                writer.writerow(new_row)
-
-        except IOError as e:
-            print(f"Error writing to CSV file: {e}")
-            return render_template("blood_donation.html")
-
-        return render_template("blood_donation.html")
-
-    else:
-
-        # Fields required in the Form
-        fields_required = [
-            {"field_name": "Event Title", "field_type": "text", "name": "event", "required": "true"},
-            {"field_name": "From Date", "field_type": "date", "name": "from_date", "required": "true"},
-            {"field_name": "To Date", "field_type": "date", "name":"to_date", "required": "true"},
-            {"field_name": "Organizer", "field_type": "text", "name":"organizer", "required": "true"},
-            {"field_name": "Venue", "field_type": "text", "name":"venue", "required": "true"},
-            {"field_name": "Certificate / Proof", "field_type": "file", "name":"certificate", 
-            "help_text": "Upload your blood donor certificate or equivalent proof", "required": "true"},
-            # {"field_name": "I hereby agree", "field_type": "checkbox", "name":"declaration"}
-            ]
-
-        return render_template("blood_donation.html", fields=fields_required)
-
+@app.route("/reject_entry", methods=["POST"])
+def reject_entry():
+    student_id = request.form.get("student_id")
+    form_name = request.form.get("form_name")
+    full_path = request.form.get("full_path")
+    try:
+        db.execute(f"UPDATE {form_name} SET status='rejected' WHERE student_id=?", student_id)
+    except Exception as e:
+        flash(f"Database error: {e}")
+        return redirect(url_for('faculty_dashboard'))
+    local_delete(full_path)
+    return redirect(url_for('faculty_dashboard'))
 if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
 
-    app.run(host="0.0.0.0", debug=False)
+    app.run(host="0.0.0.0", debug=True)
+
