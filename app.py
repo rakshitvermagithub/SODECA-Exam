@@ -946,6 +946,8 @@ def faculty_dashboard():
 
             # Empty list to store data from each form in db
             all_forms_data = []
+            # List to store field names for headers
+            form_headers = []
 
             # Get all forms available in form's definitions
             for form in form_name_list:
@@ -953,10 +955,14 @@ def faculty_dashboard():
                 form_data = db.execute(f"SELECT * FROM {form}")
                 # Append it in list of differnet forms' with data
                 all_forms_data.append(form_data)
+                # Extract field names from FORM_DEFINITIONS for headers
+                field_names = [field['field_name'] for field in FORM_DEFINITIONS[form]['fields']]
+                form_headers.append(field_names)
 
             return render_template("faculty_dashboard.html", forms_data=all_forms_data,
                                    form_title_list=form_title,
                                    form_names=form_name_list,
+                                   form_headers=form_headers,
                                    is_authorized=is_authorized)
         else:
             return redirect("/")
