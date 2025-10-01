@@ -18,7 +18,7 @@
 
         <div class="card-body">
             <!-- Form body-->
-            <form action="/student_details" method="post">
+            <form action="/" method="post">
                 <!--<div class="mb-3">
                     <label for="studentEmail" class="form-label">Student Email</label>
                     <input type="email" class="form-control" name="email" aria-describedby="emailHelp">
@@ -28,7 +28,7 @@
                 <!-- Enter University Roll No. -->
                 <div class="mb-3">
                     <label for="universityRollNo" class="form-label">University Roll No.</label>
-                    <input class="form-control" type="text" id="universityRollNo" 
+                    <input class="form-control" type="text" id="universityRollNo"
                     name="university_roll_no" value="{{ details.university_roll_no | default('')}}"
                     required>
                 </div>
@@ -53,7 +53,7 @@
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_ai" 
+                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_ai"
                             value="CSE(AI)" required {% if details and details.branch == 'CSE(AI)' %}checked{% endif %}>
                             <label class="form-check-label" for="branch_cse_ai">
                                 CSE (AI)
@@ -67,7 +67,7 @@
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_iot" 
+                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_iot"
                             value="CSE(IOT)" required {% if details and details.branch == 'CSE(IOT)' %}checked{% endif %}>
                             <label class="form-check-label" for="branch_cse_iot">
                                 CSE (IOT)
@@ -83,42 +83,42 @@
                     </label>
                     <div class="d-flex justify-content-evenly">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_3" 
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_3"
                             value="3" required {% if details and details.semester == 3 %}checked{% endif %}>
                             <label class="form-check-label" for="semester_3">
                                 3
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_4" 
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_4"
                             value="4" required {% if details and details.semester == 4 %}checked{% endif %}>
                             <label class="form-check-label" for="semester_4">
                                 4
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_5" 
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_5"
                             value="5" required {% if details and details.semester == 5 %}checked{% endif %}>
                             <label class="form-check-label" for="semester_5">
                                 5
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_6" 
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_6"
                             value="6" required {% if details and details.semester == 6 %}checked{% endif %}>
                             <label class="form-check-label" for="semester_6">
                                 6
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_7" 
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_7"
                             value="7" required {% if details and details.semester == 7 %}checked{% endif %}>
                             <label class="form-check-label" for="semester_7">
                                 7
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_8" 
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_8"
                             value="8" required {% if details and details.semester == 8 %}checked{% endif %}>
                             <label class="form-check-label" for="semester_8">
                                 8
@@ -132,77 +132,77 @@
                     <label for="section" class="form-label d-block">Section</label>
                     <div class="d-flex justify-content-evenly">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_a" 
+                            <input class="form-check-input" type="radio" name="section_option" id="section_a"
                             value="A" required {% if details and details.section == 'A' %}checked{% endif %}>
                             <label class="form-check-label" for="section_a">
                                 A
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_b" 
+                            <input class="form-check-input" type="radio" name="section_option" id="section_b"
                             value="B" required {% if details and details.section == 'B' %}checked{% endif %}>
                             <label class="form-check-label" for="section_b">
                                 B
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_c" 
+                            <input class="form-check-input" type="radio" name="section_option" id="section_c"
                             value="C" required {% if details and details.section == 'C' %}checked{% endif %}>
                             <label class="form-check-label" for="section_c">
                                 C
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_d" 
+                            <input class="form-check-input" type="radio" name="section_option" id="section_d"
                             value="D" required {% if details and details.section == 'D' %}checked{% endif %}>
                             <label class="form-check-label" for="section_d">
                                 D
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_e" 
+                            <input class="form-check-input" type="radio" name="section_option" id="section_e"
                             value="E" required {% if details and details.section == 'E' %}checked{% endif %}>
                             <label class="form-check-label" for="section_e">
                                 E
                             </label>
                         </div>
                     </div>
-                </div> 
+                </div>
 
                 <!-- Select Group Number -->
                 <div class="mb-3">
                     <label for="groupNo" class="form-label d-block">Group</label>
                     <div class="d-flex justify-content-evenly">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="group_option" id="group_g1" 
+                            <input class="form-check-input" type="radio" name="group_option" id="group_g1"
                             value="G1" required {% if details and details.class_group == 'G1' %}checked{% endif %}>
                             <label class="form-check-label" for="group_g1">
                                 G1
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="group_option" id="group_g2" 
+                            <input class="form-check-input" type="radio" name="group_option" id="group_g2"
                             value="G2" required {% if details and details.class_group == 'G2' %}checked{% endif %}>
                             <label class="form-check-label" for="group_g2">
                                 G2
                             </label>
                         </div>
                     </div>
-                </div>   
-                
+                </div>
+
                 <!-- Input Batch Counselor -->
                 <div class="mb-3">
                     <label for="batchCounselor" class="form-label">Name of the Batch Counselor</label>
-                    <input type="text" class="form-control" id="batchCounselor" 
+                    <input type="text" class="form-control" id="batchCounselor"
                     name="batch_counselor" required value="{{ details.batch_counselor | default('') }}">
                 </div>
-                
+
                 <!-- Submit Button -->
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary w-25" value="Submit">Submit</button>
                 </div>
             </form>
-        </div>   
+        </div>
     </div>
 </div>
 {% endblock %}
