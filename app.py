@@ -663,7 +663,7 @@ def student_details():
             session["user_id"], university_roll_no, student_name, selected_branch,
             selected_semester, selected_section, selected_group, batch_counselor
         )
-        flash("Your details are saved", "success")
+        flash("Your details are saved successfully, you may proceed to the homepage.", "success")
         return redirect("/student_details")
 
     else:
@@ -746,7 +746,7 @@ def fill_form():
         # If not selected any forms, first go and select
         if "selected_forms" not in session:
             flash("Please select atleast one form to submit", "danger")
-            return redirect("/sodeca_forms")
+            return redirect("/")
 
         # Verify if student checked the verification checkbox
         if "verified_details" not in session:
@@ -769,7 +769,7 @@ def fill_form():
             session.pop("current_form_index", None)
 
             flash("Kindly check your submissions and their approval status on the hompeage", "success")
-            return redirect("/sodeca_forms")
+            return redirect("/")
 
         # current_form_index is the key in dict "selected_forms" defined in the start
         current_form = selected_forms[current_form_index]
@@ -959,7 +959,7 @@ def faculty_dashboard():
                                    form_names=form_name_list,
                                    is_authorized=is_authorized)
         else:
-            return redirect("/sodeca_forms")
+            return redirect("/")
 
 @app.route('/view_submission/<path:filename>')
 @login_required
