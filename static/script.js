@@ -1,12 +1,21 @@
 // Use a Map to store selected form IDs and their names for easy lookup
 const selectedForms = new Map();
 
+new DataTable('#blood_donor', {
+        layout: {
+            topStart: {
+                buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+            }
+        }
+    });
+
 /**
  * Updates the selection state when a checkbox is clicked.
  * @param {HTMLInputElement} checkbox - The checkbox element that was changed.
  * @param {string} formId - The ID of the accordion item.
  * @param {string} formName - The display name of the form.
  */
+
 function updateSelection(checkbox, formId, formName) {
     const item = document.getElementById(formId);
     if (checkbox.checked) {
@@ -71,3 +80,4 @@ document.querySelectorAll('.process-btn').forEach(button => {
         });
     });
 });
+
