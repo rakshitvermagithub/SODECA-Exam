@@ -935,8 +935,8 @@ def faculty_dashboard():
 
         if request.method == "GET":
 
-            if role(session["user_id"]) != 'faculty':
-                return "Access Denied!", 400
+            # if role(session["user_id"]) != 'faculty':
+                # return "Access Denied!", 400
 
             is_authorized = 'drive_auth_token' in session
             print(session.get('drive_auth_token'))
