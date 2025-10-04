@@ -46,14 +46,14 @@
                         <h4>{{ form_title_list[(outer_loop.index0)] }}</h4>
                     </div>
                     <div class="table-responsive mb-3">
-                        <table class="table table-bordered table-sm table-hover">
+                        <table class="table table-bordered table-sm table-hover" id="{{ form_names[(outer_loop.index0)] }}">
                             <thead>
                                 <tr>
-                                <!-- Getting fields from form_headers instead of data -->
-                                {% for field_name in form_headers[outer_loop.index0] %}
-                                    {% if field_name != 'full_path' and field_name != 'certificate' %}
-                                    <th>{{ field_name | replace('_', ' ') | title }}</th>
-                                    {% endif %}
+                                <!-- Getting fields from instead of data -->
+                                {% for header in form[0] %}
+                                {% if header != 'full_path' %}
+                                    <td>{{ header }}</td>
+                                {% endif %}
                                 {% endfor %}
                                 </tr>
                             </thead>
