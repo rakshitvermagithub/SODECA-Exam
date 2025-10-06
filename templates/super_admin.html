@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Super Admin
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" src="../static/super_admin.css">
+{% endblock %}
+
+{% block main %}
+<div class="container mt-3 text-secondary">
+    <h2 class="heading">Welcome! <b>SUPER ADMIN</b></h2>
+    <div class="grid ">
+        <div class="row justify-content-center mt-5">
+            <div class="col">
+                <div class="card d-flex" style="width: 18rem">
+                    <img src="../static/image.png" alt="image depicting person sitting">
+                    <b>BATCH COUNSELLOR</b>
+                    <a type="button" class="btn btn-outline-dark m-3" href="{{ url_for('assign_batch') }}">
+                        Know More
+                    </a>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card d-flex" style="width: 18rem">
+                    <img src="../static/st3.png" alt="student img" >
+                    <b>STUDENT REPORT</b>
+                    <a type="button" class="btn btn-outline-dark m-3" href="{{ url_for('student_report') }}">
+                        Know More
+                    </a>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card d-flex" style="width: 18rem">
+                    <img src="../static/image.png" alt="image depicting person sitting">
+                    <b>FACULTY DATA</b>
+                    <a type="button" class="btn btn-outline-dark m-3" href="{{ url_for('faculty_list') }}">
+                        Know More
+                    </a>
+                </div>
+            </div>
+        </div> 
+    </div>
+</div>
+{% endblock %}

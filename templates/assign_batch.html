@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Assign Faculty
+{% endblock %}
+
+{% block main %}
+<div class="container mt-3 text-secondary">
+    <h2 class="heading"><u class="h2">Welcome! <b>SUPER ADMIN</b></u></h2>
+    <h3 class="mt-5 "><b>ASSIGNED BATCHES</b></h3>
+    <div class="d-flex justify-content-end">
+        <button class="btn btn-info" type="button" data-bs-toggle="modal" data-bs-target="#staticBackdrop"><i class="bi bi-person-fill-add"></i> Add/Update</button>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Add New Batch Counsellor Details</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('assign_batch') }}" method="post">
+            <div class="modal-body">
+                <select class="form-select mb-3" name="college_email" id="collegeEmail">
+                    <option value="selectSection" selected disabled>Select Faculty Email</option>
+                    {% for faculty in faculty_data %}
+                    <option value="{{ faculty['college_email'] }}" data-name="{{ faculty['full_name'] }}">
+                        {{ faculty['college_email'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <input class="form-control mb-3" id="fullName" placeholder="Faculty Name" disabled required>
+                <select class="form-select" style="width: 150px;" name="batch" id="section">
+                    <option value="selectSection" selected disabled>Select Section</option>
+                    <option value="A1">CS-A1</option>
+                    <option value="A2">CS-A2</option>
+                    <option value="B1">CS-B1</option>
+                    <option value="B2">CS-B2</option>
+                    <option value="C1">CS-C1</option>
+                    <option value="C2">CS-C2</option>
+                    <option value="D1">CS-D1</option>
+                    <option value="D2">CS-D2</option>
+                    <option value="E1">CS-E1</option>
+                    <option value="E2">CS-E2</option>
+                    <option value="F1">CS-F1</option>
+                    <option value="F2">CS-F2</option>
+                </select> 
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-outline-success">Add/Update</button>
+            </div>
+            </div>
+            </form>
+        </div>
+    </div>
+    <table class="table table-striped table-bordered table-hover mt-5 align">
+        <thead>
+            <tr>
+            <th scope="col">Serial Number</th>
+            <th scope="col">Name</th>
+            <th scope="col">Assigned Batch</th>
+            <th scope="col">Operation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for faculty in faculty_data %}
+            <tr>
+            <th scope="row">{{ loop.index }}</th>
+                <td>{{ faculty["full_name"] }}</td>
+                <td>{{ faculty["assigned_batch"] }}</td>
+                <td>
+                    <button class="btn btn-danger">Discharge</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table> 
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    const nameSelect = document.getElementById('fullName');
+    const emailSelect = document.getElementById('collegeEmail');
+
+    // When email is selected, auto-select corresponding name
+    emailSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const correspondingName = selectedOption.getAttribute('data-name');
+        
+        nameSelect.value = correspondingName
+    });
+</script>
+{% endblock %}

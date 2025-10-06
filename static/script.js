@@ -1,13 +1,25 @@
 // Use a Map to store selected form IDs and their names for easy lookup
 const selectedForms = new Map();
 
-new DataTable('#blood_donor', {
+const list = ['blood_donor', 'participation'];
+list.forEach((item) => {
+    new DataTable(`#${item}`, {
         layout: {
             topStart: {
                 buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
             }
         }
-    });
+    });
+});
+
+$(document).ready(function() {
+            $('#tab').DataTable({
+                responsive: true,
+                scrollX: false,
+                autoWidth: false,
+                paging: false
+            });
+        });
 
 /**
  * Updates the selection state when a checkbox is clicked.
@@ -54,30 +66,5 @@ document.getElementById('college-form').addEventListener('submit', function(even
         alert('Please select at least one form before proceeding.');
         return;
     }
-});
-
-document.querySelectorAll('.process-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        var row = this.closest('tr');
-        var rowData = {
-            form_name: row.dataset.formName,
-            student_id: row.dataset.studentId,
-        };
-        
-        fetch('/update_sheets', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(rowData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            location.reload(); // refresh the page
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    });
 });
 

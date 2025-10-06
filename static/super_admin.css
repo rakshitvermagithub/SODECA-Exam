@@ -1,0 +1,22 @@
+.heading{
+    text-align: center;
+}
+.algin{
+    text-align: center;
+}
+.h2{
+    color: rgb(99, 99, 99);
+}
+b{
+    
+    text-align: center;
+}
+h3{
+    text-align: center;
+    color: cadetblue;
+}
+#tab th,
+#tab td {
+    text-align: center !important;
+    vertical-align: middle;
+}

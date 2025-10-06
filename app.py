@@ -151,7 +151,7 @@ FORM_DEFINITIONS = {
         ]
     },
 
-    'participation': {
+    'part_in_comp': {
         'title': 'Participation in Competition/Contest/Activity',
         'description': '...',
         'enctype': 'multipart/form-data',  # Important for file uploads
@@ -304,6 +304,126 @@ FORM_DEFINITIONS = {
                 }
             }
         ]
+    },
+    
+    'part_in_work': {
+        'title': 'Workshop/Seminar/Webinar/Conference Attended',
+        'description': '...',
+        'enctype': 'multipart/form-data',  # Important for file uploads
+        'fields': [
+            {
+                'field_label': 'Event Name',
+                'field_type': 'text',
+                'field_name': 'event_title',
+                'required': True,  # Boolean instead of string
+                'placeholder': '',
+                'help_text': 'e.g : Ten Days TEQIP-III Sponsored Student Workshop on Emerging Web Development Trends',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 50
+                }
+            },
+            {
+                'field_label': 'Event Type',
+                'field_type': 'radio',
+                'field_name': 'event_type',
+                'required': True,
+                'options': [
+                    {'value': 'workshop', 'label': 'Workshop'},
+                    {'value': 'seminar', 'label': 'Seminar'},
+                    {'value': 'webinar', 'label': 'Webinar'},
+                    {'value': 'conference', 'label': 'Conference'},
+                    {'value': 'symposium', 'label': 'Symposium'},
+                ]
+            },
+            {
+                'field_label': 'Level',
+                'field_type': 'radio',
+                'field_name': 'event_level',
+                'required': True,
+                'options': [
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'},
+                ]
+            },
+            {
+                'field_label': 'Duration(in days)',
+                'field_type': 'number',
+                'field_name': 'event_duration',
+                'required': True,
+                'placeholder': 'Your answer',
+                'field_validation': {
+                    'min': 1,
+                    'max': 365
+                }
+            },
+                        {
+                'field_label': 'From Date',
+                'field_type': 'date',
+                'field_name': 'from_date',
+                'required': True,
+                'help_text': 'Start date of the event',
+                'field_validation': {
+                    'max_date': 'today'  # Can't be future date
+                }
+            },
+            {
+                'field_label': 'To Date',
+                'field_type': 'date',
+                'field_name': 'to_date',
+                'required': True,
+                'help_text': 'End date of the event',
+                'field_validation': {
+                    'max_date': 'today',
+                    'after_field': 'from_date'  # Must be after from_date
+                }
+            },
+            {
+                'field_label': 'Mode of Event',
+                'field_type': 'radio',
+                'field_name': 'mode',
+                'required': True,
+                'options': [
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'},
+                ]
+            },
+            {
+                'field_label': 'Sponsoring Agency',
+                'field_type': 'text',
+                'field_name': 'sponsor',
+                'required': True,  # Boolean instead of string
+                'placeholder': '',
+                'help_text': 'e.g:TEQIP-III/RTU/AICTE/IEEE/Non Sponsored/NA',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 50
+                }
+            },
+            {
+                'field_label': 'Organized By',
+                'field_type': 'text',
+                'field_name': 'organizer',
+                'required': True,  # Boolean instead of string
+                'placeholder': '',
+                'help_text': 'e.g SKIT Jaipur/ Write online if online activity',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 50
+                }
+            },
+            {
+                'field_label': 'Workshop/Seminar/Webinar/Conference Certificate/other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Upload your participation certificate or equivalent proof',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '5MB'
+                }
+            }
+        ]
     }
 }
 
@@ -330,6 +450,18 @@ db.execute("""
     semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL,
     batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id))
 """)
+# Initialise table to store faculty details
+db.execute("""
+    CREATE TABLE IF NOT EXISTS faculty_details(
+        full_name TEXT NOT NULL, 
+        college_email TEXT PRIMARY KEY,
+        designation TEXT NOT NULL,
+        department TEXT NOT NULL, 
+        assigned_batch TEXT NOT NULL DEFAULT 'not assigned',
+        contact TEXT NOT NULL DEFAULT 'to be updated'
+        )
+    """)
+
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
 
@@ -413,6 +545,12 @@ def local_delete(full_path):
         print(f"Unexpected error in local_delete: {e}")
         flash("An unexpected error occurred. Please try again.", "danger")
         return redirect(url_for('faculty_dashboard'))
+    
+# Get list of faculty emails
+faculty_emails = []
+faculty_dict = db.execute("SELECT college_email FROM faculty_details")
+for faculty in faculty_dict:
+    faculty_emails.append(faculty["college_email"])
 
 # Register
 @app.route("/register", methods=["GET", "POST"])
@@ -446,7 +584,7 @@ def register():
             return redirect("/register")
 
         # Check if email already exists
-        existing_user = db.execute("SELECT * FROM users WHERE email = ? AND role = 'student'", email)
+        existing_user = db.execute("SELECT * FROM users WHERE email = ?", email)
         if existing_user:
             flash("Email already registered", "danger")
             return render_template("register.html")
@@ -455,11 +593,18 @@ def register():
         # Convert plain password into a complex string
         hash_password = generate_password_hash(password)
 
-        # Store Student's login details in the table
-        db.execute(
-            "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password
-            )
-        return redirect("/student_details")
+        if email in faculty_emails:
+            # Store Faculty's login details in the table
+            db.execute(
+                "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)", email, hash_password, 'faculty'
+                )
+            return redirect(url_for("faculty_dashboard"))
+        else:
+            # Store Student's login details in the table
+            db.execute(
+                "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password,
+                )
+            return redirect("/student_details")
     else:
         return render_template("register.html")
 
@@ -485,6 +630,8 @@ def login_callback():
             last_name = user_info.get('family_name', '')
             profile_picture = user_info.get('picture', '')
 
+            is_faculty = email in faculty_emails
+
             # Check if user already exists with this Google ID
             existing_user = db.execute("SELECT * FROM users WHERE google_id = ?", google_id)
 
@@ -506,16 +653,30 @@ def login_callback():
                     session["user_id"] = email_user[0]["user_id"]
                     flash("Google account linked successfully!", "success")
                 else:
-                    # New user, create a new account in the database
-                    user_id = db.execute("""
-                        INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name)
-                        VALUES (?, ?, 'google', ?, ?, ?)
-                    """, email, google_id, profile_picture, first_name, last_name)
-                    session["user_id"] = user_id
-                    flash("Welcome! Account created with Google!", "success")
-                    return redirect("/student_details")
+                    if is_faculty:
+                        # New faculty, create a new account in the database with role 'faculty'
+                        user_id = db.execute("""
+                            INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name, role)
+                            VALUES (?, ?, 'google', ?, ?, ?, ?)
+                        """, email, google_id, profile_picture, first_name, last_name, "faculty")
+                        session["user_id"] = user_id
+                        flash("Welcome Faculty! Account created with Google!", "success")
+                        return redirect(url_for("faculty_dashboard"))
+                    else:
+                        # New student, create a new account in the database with default role 'student'
+                        user_id = db.execute("""
+                            INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name)
+                            VALUES (?, ?, 'google', ?, ?, ?)
+                        """, email, google_id, profile_picture, first_name, last_name)
 
-            return redirect("/") # Or wherever users go after login
+                    session["user_id"] = user_id
+                    flash("Welcome Student! Account created with Google!", "success")
+                    return redirect("/student_details")
+                
+            if is_faculty:
+                return redirect(url_for("faculty_dashboard"))
+            
+            return redirect(url_for("sodeca_forms")) # Or wherever users go after login
         else:
             flash("Could not fetch user info from Google.", "danger")
             return redirect("/login")
@@ -554,7 +715,10 @@ def login():
         session["user_id"] = rows[0]["user_id"]
         session["auth_provider"] = "local"
 
-        return redirect("/")
+        if email in faculty_emails:
+            return redirect(url_for("faculty_dashboard"))
+        else:
+            return redirect(url_for("sodeca_forms"))
     else:
         return render_template("login.html")
 
@@ -935,8 +1099,8 @@ def faculty_dashboard():
 
         if request.method == "GET":
 
-            # if role(session["user_id"]) != 'faculty':
-                # return "Access Denied!", 400
+            if role(session["user_id"]) != 'faculty':
+                return "Access Denied!", 400
 
             is_authorized = 'drive_auth_token' in session
             print(session.get('drive_auth_token'))
@@ -966,7 +1130,7 @@ def faculty_dashboard():
 def view_submission(filename):
 
     """Securely serves a file from the local upload folder for faculty to view."""
-    if role(session["user_id"]) != 'student':
+    if role(session["user_id"]) != 'faculty':
         return "Access Denied: You must be a faculty member to view submissions.", 403
 
     try:
@@ -1028,7 +1192,6 @@ def upload_to_drive():
 
         flash(f"Successfully uploaded file '{uploaded_file.get('name')}' (ID: {google_file_id})", "success")
 
-    # --- THE ROBUST FIX IS HERE ---
     except HttpError as error:
         # This error happens if the token is expired, invalid, or revoked.
         if error.resp.status in [400, 401]:
@@ -1060,6 +1223,83 @@ def reject_entry():
         return redirect(url_for('faculty_dashboard'))
     local_delete(full_path)
     return redirect(url_for('faculty_dashboard'))
+
+@app.route("/super_admin", methods=["GET"])
+@login_required
+def super_admin():
+    return render_template("super_admin.html")
+
+@app.route("/faculty_list", methods=["GET", "POST"])
+def faculty_list():
+    if request.method == "POST":
+        # Add/Update request
+        full_name = request.form.get("full_name")
+        college_email = request.form.get("college_email")
+        designation = request.form.get("designation")
+        department = request.form.get("department")
+        contact = request.form.get("contact")
+        if not contact:
+            contact = 'to be updated'
+
+        try:
+            db.execute(
+                """
+                INSERT INTO faculty_details (
+                    full_name, college_email, designation, department, contact
+                )
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(college_email) DO UPDATE SET
+                    full_name = excluded.full_name,
+                    designation = excluded.designation,
+                    department = excluded.department,
+                    contact = excluded.contact
+                """,
+                full_name, college_email, designation, department, contact
+            )
+            faculty_emails.append(college_email)
+        except Exception as e:
+            flash(f"Error updating: {e}")
+
+        # Upload excel
+        return redirect(url_for('faculty_list'))
+    else:
+        faculty_data = db.execute("SELECT * FROM faculty_details")
+        return render_template("faculty_list.html", faculty_data=faculty_data)
+
+@app.route("/assign_batch", methods=["GET", "POST"])
+@login_required
+def assign_batch():
+
+    if request.method == "POST":
+
+        college_email = request.form.get("college_email")
+        batch = request.form.get("batch")
+
+        try:
+            # Update batch in database
+            db.execute("UPDATE faculty_details SET assigned_batch=? WHERE college_email=?", batch, college_email)
+            flash("Batch updated!", "success")
+        except Exception as e:
+            flash(f"Error updating: {e}", "danger")
+        
+        print("here")
+        return redirect (url_for("assign_batch"))
+    
+    else:
+
+        faculty_data = db.execute("SELECT full_name, college_email, assigned_batch FROM faculty_details")
+
+        for faculty in faculty_data:
+            print(faculty["full_name"])
+            print(faculty["college_email"])
+        return render_template("assign_batch.html", faculty_data=faculty_data)
+    
+@app.route("/student_report", methods=["GET", "POST"])
+@login_required
+def student_report():
+    if request.method == "GET":
+        return render_template("student_report.html")
+
 if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):
