@@ -434,7 +434,7 @@ form_title = []
 for form in FORM_DEFINITIONS:
     form_title.append(FORM_DEFINITIONS[form]["title"])
 
-# Initialise table to store student login details
+# Initialise table to store user login details
 db.execute("""
     CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     email TEXT UNIQUE NOT NULL, hash_password TEXT, google_id TEXT UNIQUE,
@@ -452,14 +452,11 @@ db.execute("""
 """)
 # Initialise table to store faculty details
 db.execute("""
-    CREATE TABLE IF NOT EXISTS faculty_details(
-        full_name TEXT NOT NULL, 
-        college_email TEXT PRIMARY KEY,
-        designation TEXT NOT NULL,
-        department TEXT NOT NULL, 
-        assigned_batch TEXT NOT NULL DEFAULT 'not assigned',
-        contact TEXT NOT NULL DEFAULT 'to be updated'
-        )
+    CREATE TABLE IF NOT EXISTS faculty_details(college_email TEXT PRIMARY KEY NOT NULL,
+    faculty_user_id INTEGER UNIQUE, full_name TEXT NOT NULL, designation TEXT NOT NULL,
+    department TEXT NOT NULL, assigned_batch TEXT NOT NULL DEFAULT 'not assigned',
+    contact TEXT NOT NULL DEFAULT 'to be updated',
+    FOREIGN KEY (faculty_user_id) REFERENCES users(user_id) )
     """)
 
 # Create tables for all the forms in FORM_DEFINITIONS
@@ -545,7 +542,7 @@ def local_delete(full_path):
         print(f"Unexpected error in local_delete: {e}")
         flash("An unexpected error occurred. Please try again.", "danger")
         return redirect(url_for('faculty_dashboard'))
-    
+
 # Get list of faculty emails
 faculty_emails = []
 faculty_dict = db.execute("SELECT college_email FROM faculty_details")
@@ -595,15 +592,22 @@ def register():
 
         if email in faculty_emails:
             # Store Faculty's login details in the table
-            db.execute(
+            user_id = db.execute(
                 "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)", email, hash_password, 'faculty'
                 )
+            
+            # Add user_id in faculty_details
+            db.execute("""
+                UPDATE faculty_details SET faculty_user_id = ? WHERE email = ?
+            """, user_id, email) 
+
             return redirect(url_for("faculty_dashboard"))
         else:
             # Store Student's login details in the table
             db.execute(
                 "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password,
                 )
+
             return redirect("/student_details")
     else:
         return render_template("register.html")
@@ -660,6 +664,12 @@ def login_callback():
                             VALUES (?, ?, 'google', ?, ?, ?, ?)
                         """, email, google_id, profile_picture, first_name, last_name, "faculty")
                         session["user_id"] = user_id
+
+                        # Add user_id in faculty_details
+                        db.execute("""
+                            UPDATE faculty_details SET faculty_user_id = ? WHERE email = ?
+                        """, user_id, email) 
+
                         flash("Welcome Faculty! Account created with Google!", "success")
                         return redirect(url_for("faculty_dashboard"))
                     else:
@@ -713,11 +723,20 @@ def login():
 
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
-        session["auth_provider"] = "local"
 
+        # If faculty
         if email in faculty_emails:
             return redirect(url_for("faculty_dashboard"))
-        else:
+        
+        # It is a student
+        else:    
+            details_filled = db.execute("SELECT * FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
+            # If student has not filled details
+            if not details_filled:
+                # fill details first
+                flash("Login succesfull! You may fill the neccessary student details", "success")
+                return redirect(url_for("student_details"))
+            
             return redirect(url_for("sodeca_forms"))
     else:
         return render_template("login.html")
@@ -868,36 +887,34 @@ def sodeca_forms():
 @login_required
 def verify_student_details():
 
-    if session["user_id"]:
+    # If student checked and clicked next
+    if request.method == "POST":
 
-        # If student checked and clicked next
-        if request.method == "POST":
+        verified_details = request.form.get("verified_details")
+        session["verified_details"] = verified_details
 
-            verified_details = request.form.get("verified_details")
-            session["verified_details"] = verified_details
+        print(f"Verified: {verified_details}")
 
-            print(f"Verified: {verified_details}")
-
-            if verified_details == None:
-                flash("Kindly confirm details by checking the checkbox", "warning")
-                return redirect("/verify_student_details")
-            else:
-                return redirect("/fill_form")
+        if verified_details == None:
+            flash("Kindly confirm details by checking the checkbox", "warning")
+            return redirect("/verify_student_details")
         else:
-            # Get student details if already present
-            # Variable stores a list of dictionaries
-            student_details_row = db.execute(
-                        "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
-                        )
+            return redirect("/fill_form")
+    else:
+        # Get student details if already present
+        # Variable stores a list of dictionaries
+        student_details_row = db.execute(
+                    "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
+                    )
 
-            # If details are already available
-            if student_details_row:
-                filled_details = student_details_row[0]
+        # If details are already available
+        if student_details_row:
+            filled_details = student_details_row[0]
 
-                # Show the page with filled details
-                return render_template("verify_student_details.html", details = filled_details)
-            else:
-                return render_template("verify_student_details.html", details=None)
+            # Show the page with filled details
+            return render_template("verify_student_details.html", details = filled_details)
+        else:
+            return render_template("verify_student_details.html", details=None)
 
 @app.route("/fill_form", methods=["GET", "POST"])
 @login_required
@@ -1101,6 +1118,8 @@ def faculty_dashboard():
 
             if role(session["user_id"]) != 'faculty':
                 return "Access Denied!", 400
+            
+            batch = db.execute("SELECT assigned_batch FROM faculty_details WHERE user_id = ?", session["user_id"])
 
             is_authorized = 'drive_auth_token' in session
             print(session.get('drive_auth_token'))
@@ -1113,8 +1132,15 @@ def faculty_dashboard():
     
             # Get all forms available in form's definitions
             for form in form_name_list:
-                # Get the data for different forms
-                form_data = db.execute(f"SELECT * FROM {form}")
+                # Get the data for different forms with BATCH SPECIFIED
+                form_data = db.execute(f"""
+                    SELECT 
+                        s.*
+                        f.*
+                    FROM student_details s
+                    INNER JOIN {form} f ON s.student_user_id = f.faculty_user_id
+                    WHERE s.batch = ?
+                """, batch)
                 # Append it in list of differnet forms' with data
                 all_forms_data.append(form_data)
 
@@ -1242,26 +1268,49 @@ def faculty_list():
             contact = 'to be updated'
 
         try:
+            # Check if user exists with this email
+            existing_user = db.execute(
+                "SELECT user_id FROM users WHERE email = ?", 
+                college_email
+            )
+            
+            user_id = existing_user[0]["user_id"] if existing_user else None
+            
+            # UPSERT faculty_details with user_id
             db.execute(
                 """
                 INSERT INTO faculty_details (
-                    full_name, college_email, designation, department, contact
+                    college_email, user_id, full_name, designation, department, contact
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(college_email) DO UPDATE SET
+                    user_id = excluded.user_id,
                     full_name = excluded.full_name,
                     designation = excluded.designation,
                     department = excluded.department,
                     contact = excluded.contact
                 """,
-                full_name, college_email, designation, department, contact
+                college_email, user_id, full_name, designation, department, contact
             )
-            faculty_emails.append(college_email)
-        except Exception as e:
-            flash(f"Error updating: {e}")
+            
+            # Update faculty_emails list if needed
+            if college_email not in faculty_emails:
+                faculty_emails.append(college_email)
 
-        # Upload excel
+            if existing_user:
+                # Ensure they're marked as faculty
+                db.execute(
+                    "UPDATE users SET role = 'faculty' WHERE user_id = ?",
+                    user_id
+                )
+            
+            flash("Faculty details updated successfully!", "success")
+
+        except Exception as e:
+            flash(f"Error updating: {e}", "danger")
+
         return redirect(url_for('faculty_list'))
+    
     else:
         faculty_data = db.execute("SELECT * FROM faculty_details")
         return render_template("faculty_list.html", faculty_data=faculty_data)
