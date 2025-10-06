@@ -23,7 +23,7 @@
             <hr class="flex-grow-1 border-secondary">
         </div>
 
-        <form action="/" method="post" class="mb-3 text-center">
+        <form action="{{ url_for('register') }}" method="post" class="mb-3 text-center">
             <input class="form-control mb-3" type="email" placeholder="Email" name="email">
             <input class="form-control mb-3" type="password" placeholder="Pasword" name="password">
             <input class="form-control mb-3" type="password" placeholder="Confirm Password" name="confirm_password">
