@@ -10,6 +10,24 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-8">
 
+            <div class="accordion-item mb-3" id="progress-bar">
+                <div class="form-check">
+                    <label class="form-check-label fw-bold fs-5 mb-2">
+                        Forms Progress
+                    </label>
+                    <div class="progress mb-2" style = "width: 98%">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="{{count}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
+                            {{ count }}/{{ total }}
+                        </div>
+                        {% if count < 1 %}
+                        <span class="position-absolute w-100 text-center" style="line-height: 16px; z-index: 10; margin-left: -343px">
+                          0/{{ total }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
             {% if success %}
 
                 <!-- Submission Success Message -->

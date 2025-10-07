@@ -1789,6 +1789,7 @@ def fill_form():
 
         selected_forms = session["selected_forms"]
         current_form_index = session["current_form_index"]
+        total_count = len(selected_forms)
 
         # If all forms are completed
         if current_form_index >= len(selected_forms):
@@ -1808,6 +1809,8 @@ def fill_form():
 
             # Initialise dict for text and radio inputs
             form_inputs = {}
+            from_date = None
+            to_date = None
 
             # Initialise in this scope the google_file_id
             save_path = ""
@@ -1905,15 +1908,16 @@ def fill_form():
                     # TODO: Error Handling
 
             # Error checking using "date_object"
-            if from_date > to_date:
-                print(f"from_date: {from_date} > to_date: {to_date} ")
-                flash("Error: From date is greater than To date", "danger")
-                return redirect(request.url)
-            today = date.today()
-            if from_date > today or to_date > today:
-                print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
-                flash("Error: Dates cannot be for in future activites", "danger")
-                return redirect(request.url)
+            if from_date and to_date:
+                if from_date > to_date:
+                    print(f"from_date: {from_date} > to_date: {to_date} ")
+                    flash("Error: From date is greater than To date", "danger")
+                    return redirect(request.url)
+                today = date.today()
+                if from_date > today or to_date > today:
+                    print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
+                    flash("Error: Dates cannot be for in future activites", "danger")
+                    return redirect(request.url)
 
             if save_path:
 
@@ -1948,10 +1952,14 @@ def fill_form():
             session["current_form_index"] += 1
 
             # Form submission successful, show success page
-            return render_template("fill_form.html", success=True, form_to_show=form_to_show)
+            percentage = (current_form_index + 1 / total_count) * 100
+            return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=(current_form_index + 1) , progress_width=percentage, total=total_count)
+            # return render_template("fill_form.html", success=True, form_to_show=form_to_show)
 
         # Just show the form to be filled
-        return render_template("fill_form.html", success=False, form_to_show=form_to_show)
+        percentage = (current_form_index / total_count) * 100
+        return render_template("fill_form.html", success=False, form_to_show=form_to_show, count=current_form_index, progress_width = percentage, total=total_count)
+        # return render_template("fill_form.html", success=False, form_to_show=form_to_show)
 
     else:
 
