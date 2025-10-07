@@ -19,7 +19,7 @@
         <div class="accordion" id="formsAccordion">
 
             <!-- Item 1: Blood Donor -->
-            <div class="accordion-item mb-3" id="form-blood-donor">
+            <!-- <div class="accordion-item mb-3" id="form-blood-donor">
                 <div class="selection-area p-3 d-flex align-items-center">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="switch-blood" name="selected_forms[]"
@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <!-- Item 2: Environmental Volunteer -->
+            Item 2: Environmental Volunteer
             <div class="accordion-item mb-3" id="form-env-volunteer">
                 <div class="selection-area p-3 d-flex align-items-center">
                     <div class="form-check">
@@ -73,35 +73,36 @@
                         </ul>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
+            {% for key, form in FORM_DEFINITIONS.items() %}
             <!-- Item 3: Community Service -->
-            <div class="accordion-item mb-3" id="form-community-service">
+            <div class="accordion-item mb-3" id="form-{{ key }}">
                 <div class="selection-area p-3 d-flex align-items-center">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="switch-community" name="selected_forms[]" value="part_in_work" onchange="updateSelection(this, 'form-community-service', 'Workshop')">
-                        <label class="form-check-label fw-bold ps-2 fs-5" for="switch-community">
-                            Workshop/Seminar/Webinar/Conference Attended
+                        <input class="form-check-input" type="checkbox" id="switch-{{ key }}" name="selected_forms[]" value="{{ key }}" onchange="updateSelection(this, 'form-{{ key }}', '{{ form['title'] }}')">
+                        <label class="form-check-label fw-bold ps-2 fs-5" for="switch-{{ key }}">
+                            {{ form["title"] }}
                         </label>
                     </div>
                 </div>
                 <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-community" aria-expanded="false" aria-controls="collapse-community">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ key }}" aria-expanded="false" aria-controls="collapse-{{ key }}">
                         <i class="fas fa-info-circle me-2"></i>View Requirements & Details
                     </button>
                 </h2>
-                <div id="collapse-community" class="accordion-collapse collapse" data-bs-parent="#formsAccordion">
+                <div id="collapse-{{ key }}" class="accordion-collapse collapse" data-bs-parent="#formsAccordion">
                     <div class="accordion-body">
-                        <strong>Community Service Requirements:</strong>
+                        <strong>{{ form["title"] }} Requirements:</strong>
                         <ul class="mt-2 mb-0">
-                            <li>Certificate of community service completion</li>
-                            <li>Minimum 30 hours of documented service</li>
-                            <li>Supervisor verification letter</li>
-                            <li>Project impact report</li>
+                        {% for req in form["description"] %}
+                            <li>{{ req }}</li>
+                        {% endfor %}
                         </ul>
                     </div>
                 </div>
             </div>
+            {% endfor %}
 
         </div>
 

@@ -76,7 +76,10 @@ def allowed_file(filename):
 FORM_DEFINITIONS = {
     'blood_donor': {
         'title': 'Blood Donor',
-        'description': '...',
+        'description': [
+            "Certificate for donating  blood in blood donation camp etc.",
+            "Only Donor Certificates to be uploaded"
+        ],
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
             {
@@ -423,6 +426,852 @@ FORM_DEFINITIONS = {
                 }
             }
         ]
+    },
+
+    'expert_lecture': {
+        'title': 'Expert Lecture Attended',
+        'description': [
+            'Certificate of participation for attending expert talk/guest lecture at SKIT or outside SKIT  in any institute.',
+            'Certificate of participation for attending Key note / Invited Talk (in conference) is allowed.'
+        ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Expert Speaker',
+                'field_type': 'text',
+                'field_name': 'expert_name',
+                'required': True,
+                'placeholder': 'e.g., Mr. J. Jegathesan',
+                'help_text': 'Full name and designation of the expert speaker, e.g., Mr.J.Jegathesan, Didactic Engineer, FESTO India, Bengaluru',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 150
+                }
+            },
+            {
+                'field_label': 'Topic',
+                'field_type': 'text',
+                'field_name': 'topic',
+                'required': True,
+                'placeholder': 'Enter the topic of the lecture',
+                'field_validation': {
+                    'min_length': 5,
+                    'max_length': 200
+                }
+            },
+            {
+                'field_label': 'In-house / Away',
+                'field_type': 'radio',
+                'field_name': 'location_type',
+                'required': True,
+                'help_text': 'Select if the event was held at SKIT or outside SKIT.',
+                'options': [
+                    {'value': 'in-house', 'label': 'In-house'},
+                    {'value': 'away', 'label': 'Away'},
+                ]
+            },
+            {
+                'field_label': 'Mode',
+                'field_type': 'radio',
+                'field_name': 'mode',
+                'required': True,
+                'options': [
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'},
+                ]
+            },
+            {
+                'field_label': 'Duration (in days)',
+                'field_type': 'number',
+                'field_name': 'duration',
+                'required': True,
+                'placeholder': 'e.g., 1',
+                'field_validation': {
+                    'min': 1,
+                    'max': 365
+                }
+            },
+            {
+                'field_label': 'From Date',
+                'field_type': 'date',
+                'field_name': 'from_date',
+                'required': True,
+                'field_validation': {
+                    'max_date': 'today'
+                }
+            },
+            {
+                'field_label': 'To Date',
+                'field_type': 'date',
+                'field_name': 'to_date',
+                'required': True,
+                'field_validation': {
+                    'max_date': 'today',
+                    'after_field': 'from_date'
+                }
+            },
+            {
+                'field_label': 'Organizer',
+                'field_type': 'text',
+                'field_name': 'organizer',
+                'required': True,
+                'placeholder': 'e.g., ECE Department-SKIT Jaipur',
+                'help_text': 'The department or organization that arranged the event.',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 150
+                }
+            },
+            {
+                'field_label': 'Event Venue',
+                'field_type': 'text',
+                'field_name': 'venue',
+                'required': True,
+                'placeholder': 'e.g., CS Block Seminar Hall',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 200
+                }
+            },
+            {
+                'field_label': 'Expert Lecture Attended Certificate/other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Only PDF file format is acceptable. Rename pdf file as universityroll_studentname_eventname before uploading.',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '10MB'
+                }
+            }
+        ]
+    },
+
+    'event_organized': {
+        'title': 'Organized an Event',
+        'description': [
+            'Organizer/Volunteer/Coordinator/etc certificate for any cultural/technical/sports/non-technical event at SKIT'
+            ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Name of the Event/Activity Organized',
+                'field_type': 'text',
+                'field_name': 'event_name',
+                'required': True,
+                'placeholder': 'e.g., SUR, Mayukh, Kill With Fire',
+                'help_text': 'Exactly as Mentioned in the Certificate.',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 100
+                }
+            },
+            {
+                'field_label': 'Nature of the Event',
+                'field_type': 'text',
+                'field_name': 'event_nature',
+                'required': True,
+                'placeholder': 'e.g., Dance Competition, Tree Plantation',
+                'help_text': 'e.g Dance Competition, Singing Competition, Quiz Competition, Tree Plantation Event',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 100
+                }
+            },
+            {
+                'field_label': 'Organizing Club/Body',
+                'field_type': 'text',
+                'field_name': 'organizing_club',
+                'required': True,
+                'placeholder': 'e.g., NSS Club SKIT',
+                'help_text': 'Write NA if not a club activity.',
+                'field_validation': {
+                    'min_length': 2,
+                    'max_length': 100
+                }
+            },
+            {
+                'field_label': 'Team/Individual',
+                'field_type': 'radio',
+                'field_name': 'participation_type',
+                'required': True,
+                'options': [
+                    {'value': 'individual', 'label': 'Individual'},
+                    {'value': 'team', 'label': 'Team'}
+                ]
+            },
+            {
+                'field_label': 'Event Level',
+                'field_type': 'radio',
+                'field_name': 'event_level',
+                'required': True,
+                'help_text': 'Select the highest level of participation for the event.',
+                'options': [
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'university', 'label': 'University'},
+                    {'value': 'state', 'label': 'State'},
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'}
+                ]
+            },
+            {
+                'field_label': 'Event Type',
+                'field_type': 'radio',
+                'field_name': 'event_type',
+                'required': True,
+                'options': [
+                    {'value': 'intra-college', 'label': 'Intra College'},
+                    {'value': 'inter-college', 'label': 'Inter College'}
+                ]
+            },
+            {
+                'field_label': 'Event Category',
+                'field_type': 'radio',
+                'field_name': 'event_category',
+                'required': True,
+                'options': [
+                    {'value': 'cultural', 'label': 'Cultural'},
+                    {'value': 'technical', 'label': 'Technical'},
+                    {'value': 'sports', 'label': 'Sports'},
+                    {'value': 'non-technical', 'label': 'Non-Technical'}
+                ]
+            },
+            {
+                'field_label': 'Mode of Event',
+                'field_type': 'radio',
+                'field_name': 'mode',
+                'required': True,
+                'options': [
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'}
+                ]
+            },
+            {
+                'field_label': 'Duration (in days)',
+                'field_type': 'number',
+                'field_name': 'duration',
+                'required': True,
+                'placeholder': 'e.g., 1',
+                'field_validation': {
+                    'min': 1,
+                    'max': 365
+                }
+            },
+            {
+                'field_label': 'From Date',
+                'field_type': 'date',
+                'field_name': 'from_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'To Date',
+                'field_type': 'date',
+                'field_name': 'to_date',
+                'required': True,
+                'field_validation': {
+                    'max_date': 'today',
+                    'after_field': 'from_date'
+                }
+            },
+            {
+                'field_label': 'Role in event (as mentioned in certificate)',
+                'field_type': 'text',
+                'field_name': 'role',
+                'required': True,
+                'placeholder': 'e.g., Volunteer, Coordinator, Organizer',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 50
+                }
+            },
+            {
+                'field_label': 'No. of Participants in event (approx.)',
+                'field_type': 'number',
+                'field_name': 'participant_count',
+                'required': True,
+                'placeholder': 'e.g., 100',
+                'field_validation': {
+                    'min': 1
+                }
+            },
+            {
+                'field_label': 'Name of Sponsor Agency/Non Sponsored',
+                'field_type': 'text',
+                'field_name': 'sponsor',
+                'required': True,
+                'placeholder': 'Write Non Sponsored if not applicable',
+                'field_validation': {
+                    'min_length': 2,
+                    'max_length': 100
+                }
+            },
+            {
+                'field_label': 'Organizing Institute',
+                'field_type': 'text',
+                'field_name': 'organizing_institute',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 150
+                }
+            },
+            {
+                'field_label': 'Event Venue',
+                'field_type': 'text',
+                'field_name': 'venue',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
+                'field_validation': {
+                    'min_length': 3,
+                    'max_length': 200
+                }
+            },
+            {
+                'field_label': 'Event Organizer Certificate/other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Only PDF file format is acceptable. Rename pdf file as universityroll_studentname_eventname before uploading.',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '10MB'
+                }
+            }
+        ]
+    },
+    
+    'winner_achievement': {
+        'title': 'Winner/Award/Other Achievement',
+        'description':[
+            'Winner/ Runner Up/Consolation/Good Rank or Position/award/prize  in some high level Cultural/Technical(e.g. Hackathon)/Sports/Non Technical competition/contest  organized by SKIT or any other Institute/university/organization.',
+            'for e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as google code Jam / Player of the tournament award in state level cricket league etc'
+            'Certificate should mention some Rank/Place/Position in a competition or some high level achievement like man of the match/player of the tournament etc.'
+            'Non Competition certificates for e.g. Certificate of clearing some exam/test/assessment (with some score) but  without a rank/position/place is NOT allowed. It should be a certificate for only a "competition/contest" activity.'
+            ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Name of the Competition/Event/Activity',
+                'field_type': 'text',
+                'field_name': 'event_name',
+                'required': True,
+                'placeholder': 'e.g., Google Code Jam, Smart India Hackathon',
+                'help_text': 'Exactly as Mentioned in the Certificate.',
+                'field_validation': { 'min_length': 3, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Nature of the Event',
+                'field_type': 'text',
+                'field_name': 'event_nature',
+                'required': True,
+                'placeholder': 'e.g., Coding Competition, Business Plan Contest',
+                'field_validation': { 'min_length': 3, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Team/Individual',
+                'field_type': 'radio',
+                'field_name': 'participation_type',
+                'required': True,
+                'options': [
+                    {'value': 'individual', 'label': 'Individual'},
+                    {'value': 'team', 'label': 'Team'}
+                ]
+            },
+            {
+                'field_label': 'Is it a Hackathon Event?',
+                'field_type': 'radio',
+                'field_name': 'is_hackathon',
+                'required': True,
+                'options': [
+                    {'value': 'yes', 'label': 'Yes, It is a Hackathon event'},
+                    {'value': 'no', 'label': 'No, It is some other event'}
+                ]
+            },
+            {
+                'field_label': 'Name of the team (If it is Hackathon event)',
+                'field_type': 'text',
+                'field_name': 'team_name',
+                'required': True,
+                'placeholder': 'Write NA if not a Hackathon event',
+                'field_validation': { 'min_length': 2, 'max_length': 100 }
+            },
+            {
+                'field_label': 'Name of all team members (If it is Hackathon event)',
+                'field_type': 'text',
+                'field_name': 'team_members',
+                'required': True,
+                'placeholder': 'Write NA if not a Hackathon event',
+                'field_validation': { 'min_length': 2, 'max_length': 500 }
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': { 'min_length': 2, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Award Given (Other Than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': { 'min_length': 2, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Event Level',
+                'field_type': 'radio',
+                'field_name': 'event_level',
+                'required': True,
+                'options': [
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'university', 'label': 'University'},
+                    {'value': 'state', 'label': 'State'},
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'}
+                ]
+            },
+            {
+                'field_label': 'Event Type',
+                'field_type': 'radio',
+                'field_name': 'event_type',
+                'required': True,
+                'options': [
+                    {'value': 'intra-college', 'label': 'Intra College'},
+                    {'value': 'inter-college', 'label': 'Inter College'},
+                    {'value': 'not-applicable', 'label': 'Not Applicable / Individual Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Event Category',
+                'field_type': 'radio',
+                'field_name': 'event_category',
+                'required': True,
+                'options': [
+                    {'value': 'cultural', 'label': 'Cultural'},
+                    {'value': 'technical', 'label': 'Technical'},
+                    {'value': 'sports', 'label': 'Sports'},
+                    {'value': 'non-technical', 'label': 'Non-Technical'}
+                ]
+            },
+            {
+                'field_label': 'Mode of Event',
+                'field_type': 'radio',
+                'field_name': 'mode',
+                'required': True,
+                'options': [
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'}
+                ]
+            },
+            {
+                'field_label': 'Event Duration (in days)',
+                'field_type': 'number',
+                'field_name': 'duration',
+                'required': True,
+                'placeholder': 'e.g., 1',
+                'field_validation': { 'min': 1, 'max': 365 }
+            },
+            {
+                'field_label': 'From Date',
+                'field_type': 'date',
+                'field_name': 'from_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'To Date',
+                'field_type': 'date',
+                'field_name': 'to_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today', 'after_field': 'from_date' }
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Organized By',
+                'field_type': 'radio',
+                'field_name': 'organized_by',
+                'required': True,
+                'options': [
+                    {'value': 'skit', 'label': 'SKIT'},
+                    {'value': 'other', 'label': 'Other Institute/University/Organization'}
+                ]
+            },
+            {
+                'field_label': 'Event Venue',
+                'field_type': 'text',
+                'field_name': 'venue',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
+                'field_validation': { 'min_length': 3, 'max_length': 200 }
+            },
+            {
+                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization/(Event Organizer)',
+                'field_type': 'text',
+                'field_name': 'organizer_details',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
+                'field_validation': { 'min_length': 10, 'max_length': 500 }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'min_length': 10, 'max_length': 500 }
+            },
+            {
+                'field_label': 'Award Certificate/other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Only PDF file format is acceptable. Rename pdf file as universityroll_studentname_eventname before uploading.',
+                'validation': { 'accepted_types': ['.pdf'], 'max_size': '10MB' }
+            }
+        ]
+    },
+
+    'internship_stipend': {
+        'title': 'Internship/Training (Only with Stipend) before Placement',
+        'description': 'Submit details for a paid internship or training that occurred before any final job placement.',
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Name of the Company',
+                'field_type': 'text',
+                'field_name': 'company_name',
+                'required': True,
+                'placeholder': 'e.g., Google, Microsoft, Amazon',
+                'help_text': 'The internship/training should be done before the student is placed in a company and got stipend.',
+                'field_validation': { 'min_length': 2, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Location/Address',
+                'field_type': 'text',
+                'field_name': 'location',
+                'required': True,
+                'placeholder': 'e.g., Bengaluru, Karnataka',
+                'field_validation': { 'min_length': 5, 'max_length': 300 }
+            },
+            {
+                'field_label': 'Stipend Amount',
+                'field_type': 'number',
+                'field_name': 'stipend_amount',
+                'required': True,
+                'placeholder': 'e.g., 5000',
+                'help_text': 'Enter the numeric value of the stipend in Rs. Do not include commas or currency symbols.',
+                'field_validation': { 'min': 1 }
+            },
+            {
+                'field_label': 'Stipend Amount Received',
+                'field_type': 'radio',
+                'field_name': 'stipend_frequency',
+                'required': True,
+                'options': [
+                    {'value': 'per_month', 'label': 'Per Month'},
+                    {'value': 'lump_sum', 'label': 'Lump Sum'}
+                ]
+            },
+            {
+                'field_label': 'Duration (in days)',
+                'field_type': 'number',
+                'field_name': 'duration',
+                'required': True,
+                'placeholder': 'e.g., 30',
+                'field_validation': { 'min': 1, 'max': 365 }
+            },
+            {
+                'field_label': 'From Date',
+                'field_type': 'date',
+                'field_name': 'from_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'To Date',
+                'field_type': 'date',
+                'field_name': 'to_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today', 'after_field': 'from_date' }
+            },
+            {
+                'field_label': 'Mode',
+                'field_type': 'radio',
+                'field_name': 'mode',
+                'required': True,
+                'options': [
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'}
+                ]
+            },
+            {
+                'field_label': 'Internship/Training Certificate /other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Certificate must contain proof of stipend. If not, merge proof (bank statement, offer letter) into the PDF.',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '10MB'
+                }
+            }
+        ]
+    },
+
+    'paper_presented': {
+        'title': 'Paper Presented in Conference',
+        'description': [
+            "Presented paper in any  conference (National/International) at SKIT or outside SKIT",
+        ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Name of Conference',
+                'field_type': 'text',
+                'field_name': 'conference_name',
+                'required': True,
+                'placeholder': 'e.g., 3rd International Conference on Internet of Things...',
+                'field_validation': { 'min_length': 10, 'max_length': 200 }
+            },
+            {
+                'field_label': 'National/International',
+                'field_type': 'radio',
+                'field_name': 'conference_level',
+                'required': True,
+                'options': [
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'}
+                ]
+            },
+            {
+                'field_label': 'Duration (in days)',
+                'field_type': 'number',
+                'field_name': 'duration',
+                'required': True,
+                'placeholder': 'e.g., 2',
+                'field_validation': { 'min': 1, 'max': 365 }
+            },
+            {
+                'field_label': 'From Date',
+                'field_type': 'date',
+                'field_name': 'from_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'To Date',
+                'field_type': 'date',
+                'field_name': 'to_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today', 'after_field': 'from_date' }
+            },
+            {
+                'field_label': 'Paper Title',
+                'field_type': 'text',
+                'field_name': 'paper_title',
+                'required': True,
+                'placeholder': 'Enter the full title of your paper',
+                'field_validation': { 'min_length': 10, 'max_length': 250 }
+            },
+            {
+                'field_label': 'Other Authors (Name, Branch)',
+                'field_type': 'text',
+                'field_name': 'other_authors',
+                'required': True,
+                'placeholder': 'e.g., 1. Ajay Sharma, CSE 2. Abhay Kumar, CSE.',
+                'field_validation': { 'min_length': 2, 'max_length': 500 }
+            },
+            {
+                'field_label': 'Mode of Conference',
+                'field_type': 'radio',
+                'field_name': 'mode',
+                'required': True,
+                'options': [
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'}
+                ]
+            },
+            {
+                'field_label': 'Organizer',
+                'field_type': 'text',
+                'field_name': 'organizer',
+                'required': True,
+                'placeholder': 'e.g., IEEE, Springer, SKIT Jaipur',
+                'field_validation': { 'min_length': 3, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Event Venue',
+                'field_type': 'text',
+                'field_name': 'venue',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
+                'field_validation': { 'min_length': 3, 'max_length': 200 }
+            },
+            {
+                'field_label': 'Conference Paper Presented Certificate/other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Proof for paper presentation is mandatory. Rename PDF file as universityroll_studentname_eventname before uploading.',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '10MB'
+                }
+            }
+        ]
+    },
+
+    'financial_grant': {
+        'title': 'Financial Grant Received',
+        'description': [
+            "Received any financial funding for project / start up / DST project etc. from private/government agency."
+        ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Funding Agency Name',
+                'field_type': 'text',
+                'field_name': 'agency_name',
+                'required': True,
+                'placeholder': 'e.g., Department of Science & Technology, Govt. of India',
+                'field_validation': { 'min_length': 3, 'max_length': 200 }
+            },
+            {
+                'field_label': 'Funded Amount',
+                'field_type': 'number',
+                'field_name': 'funded_amount',
+                'required': True,
+                'placeholder': 'Enter the amount in Rs.',
+                'field_validation': { 'min': 1 }
+            },
+            {
+                'field_label': 'Funded For',
+                'field_type': 'text',
+                'field_name': 'funded_for',
+                'required': True,
+                'placeholder': 'e.g., Research Project, Startup Idea, Conference Travel',
+                'field_validation': { 'min_length': 5, 'max_length': 250 }
+            },
+            {
+                'field_label': 'Status of Funding Agency',
+                'field_type': 'radio',
+                'field_name': 'agency_status',
+                'required': True,
+                'options': [
+                    {'value': 'private', 'label': 'Private'},
+                    {'value': 'government', 'label': 'Government'}
+                ]
+            },
+            {
+                'field_label': 'Funding Date',
+                'field_type': 'date',
+                'field_name': 'funding_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Financial Grant Certificate/ other proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Only PDF file format is acceptable. Rename PDF file as universityroll_studentname_financialgrant before uploading.',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '10MB'
+                }
+            }
+        ]
+    },
+
+    'online_course': {
+        'title': 'Coursera / edX Certification',
+        'description': [
+            "Only Upload Coursera/edX Certificates. Course certificates from other platforms such Udemy NOT allowed to be uploaded."
+        ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Name of the Course',
+                'field_type': 'text',
+                'field_name': 'course_name',
+                'required': True,
+                'placeholder': 'e.g., Python for Everybody',
+                'field_validation': { 'min_length': 5, 'max_length': 150 }
+            },
+            {
+                'field_label': 'Platform',
+                'field_type': 'text',
+                'field_name': 'platform',
+                'required': True,
+                'placeholder': 'e.g., Coursera, edX, Udemy',
+                'field_validation': { 'min_length': 2, 'max_length': 100 }
+            },
+            {
+                'field_label': 'Duration',
+                'field_type': 'text',
+                'field_name': 'duration',
+                'required': True,
+                'placeholder': 'e.g., 4 weeks, 20 hours',
+                'field_validation': { 'min_length': 2, 'max_length': 50 }
+            },
+            {
+                'field_label': 'Date of Completion',
+                'field_type': 'date',
+                'field_name': 'completion_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Rename the file with your University Roll No.',
+                'validation': {
+                    'accepted_types': ['.pdf'],
+                    'max_size': '10MB'
+                }
+            }
+        ]
     }
 }
 
@@ -596,9 +1445,9 @@ def register():
                 )
             
             # Add user_id in faculty_details
-            db.execute("""
-                UPDATE faculty_details SET faculty_user_id = ? WHERE email = ?
-            """, user_id, email) 
+            db.execute(
+                "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, email
+                ) 
 
             return redirect(url_for("faculty_dashboard"))
         else:
@@ -880,7 +1729,7 @@ def sodeca_forms():
         # redirect to fill form
         return redirect("/verify_student_details")
     else:
-        return render_template("sodeca_forms.html")
+        return render_template("sodeca_forms.html", FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 @app.route("/verify_student_details", methods=["GET", "POST"])
 @login_required
@@ -964,7 +1813,7 @@ def fill_form():
             save_path = ""
 
             # Check if certificate was submitted
-            if 'certificate' not in request.files:
+            if current_form != 'placement_offer' and 'certificate' not in request.files:
                 flash("No file part", "danger")
                 return redirect(request.url)
 
@@ -1006,22 +1855,24 @@ def fill_form():
 
                     # Check if file is valid and has an allowed extension
                     if certificate and allowed_file(certificate.filename):
+                        
+                        # If its placement offers then do not rename pdf
+                        if current_form != 'placement_offer':
+                            # Get student_name and unversity_roll_no
+                            student_details = db.execute(
+                                """SELECT university_roll_no, student_name FROM
+                                student_details WHERE student_user_id = ?""", user_id
+                            )
 
-                        # Get student_name and unversity_roll_no
-                        student_details = db.execute(
-                            """SELECT university_roll_no, student_name FROM
-                            student_details WHERE student_user_id = ?""", user_id
-                        )
+                            # Get file extension eg. ".pdf"
+                            file_extension = os.path.splitext(certificate.filename)[1]
 
-                        # Get file extension eg. ".pdf"
-                        file_extension = os.path.splitext(certificate.filename)[1]
+                            # Rename the file in format universityroll_studentname_eventname
+                            uni_roll_no = student_details[0]["university_roll_no"]
+                            student_name = student_details[0]["student_name"]
+                            event_name = request.form.get("event_title", "unknown_event")
 
-                        # Rename the file in format universityroll_studentname_eventname
-                        uni_roll_no = student_details[0]["university_roll_no"]
-                        student_name = student_details[0]["student_name"]
-                        event_name = request.form.get("event_title", "unknown_event")
-
-                        certificate.filename =  f"{uni_roll_no}_{student_name}_{event_name}{file_extension}"
+                            certificate.filename =  f"{uni_roll_no}_{student_name}_{event_name}{file_extension}"
 
                         # Secure the filename to prevent security risks (e.g., directory traversal)
                         filename = secure_filename(certificate.filename)
@@ -1119,7 +1970,7 @@ def faculty_dashboard():
                 return "Access Denied!", 400
             
             # Get batch details, assigned to faculty
-            batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE user_id = ?", session["user_id"])
+            batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
 
             is_authorized = 'drive_auth_token' in session
             print(session.get('drive_auth_token'))
@@ -1173,6 +2024,7 @@ def view_submission(filename):
         return redirect(url_for('faculty_dashboard'))
 
 @app.route("/upload_to_drive", methods=["POST"])
+@login_required
 def upload_to_drive():
     """Uploads a file using the authorized Drive client."""
     token = session.get('drive_auth_token')
@@ -1239,6 +2091,7 @@ def upload_to_drive():
     return redirect(url_for('faculty_dashboard'))
 
 @app.route("/reject_entry", methods=["POST"])
+@login_required
 def reject_entry():
     student_id = request.form.get("student_id")
     form_name = request.form.get("form_name")
@@ -1374,10 +2227,6 @@ def assign_batch():
     else:
 
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
-
-        for faculty in faculty_data:
-            print(faculty["full_name"])
-            print(faculty["college_email"])
         return render_template("assign_batch.html", faculty_data=faculty_data)
     
 @app.route("/student_report", methods=["GET", "POST"])
