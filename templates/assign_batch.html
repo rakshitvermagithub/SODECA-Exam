@@ -29,7 +29,8 @@
                     </option>
                     {% endfor %}
                 </select>
-                <input class="form-control mb-3" id="fullName" placeholder="Faculty Name" disabled required>
+
+                <!-- <input class="form-control mb-3" id="fullName" placeholder="Faculty Name" disabled required>
                 <select class="form-select" style="width: 150px;" name="batch" id="section">
                     <option value="selectSection" selected disabled>Select Section</option>
                     <option value="A1">CS-A1</option>
@@ -44,7 +45,155 @@
                     <option value="E2">CS-E2</option>
                     <option value="F1">CS-F1</option>
                     <option value="F2">CS-F2</option>
-                </select> 
+                </select> -->
+
+                <!-- Select Branch -->
+                <div class="mb-3">
+                    <label for="branch" class="form-label d-block">Branch</label>
+                    <div class="d-flex justify-content-evenly">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse"
+                            value="CSE" required {% if details and details.branch == "CSE" %}checked{% endif %}>
+                            <label class="form-check-label" for="branch_cse">
+                                CSE
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_ai"
+                            value="CSE(AI)" required {% if details and details.branch == 'CSE(AI)' %}checked{% endif %}>
+                            <label class="form-check-label" for="branch_cse_ai">
+                                CSE (AI)
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_ds"
+                            value="CSE(DS)" required {% if details and details.branch == 'CSE(DS)' %}checked{% endif %}>
+                            <label class="form-check-label" for="branch_cse_ds">
+                                CSE (DS)
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_iot"
+                            value="CSE(IOT)" required {% if details and details.branch == 'CSE(IOT)' %}checked{% endif %}>
+                            <label class="form-check-label" for="branch_cse_iot">
+                                CSE (IOT)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Semester -->
+                <div class="mb-3">
+                    <label for="semester" class="form-label d-block">
+                        Semester
+                    </label>
+                    <div class="d-flex justify-content-evenly">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_3"
+                            value="3" required {% if details and details.semester == 3 %}checked{% endif %}>
+                            <label class="form-check-label" for="semester_3">
+                                3
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_4"
+                            value="4" required {% if details and details.semester == 4 %}checked{% endif %}>
+                            <label class="form-check-label" for="semester_4">
+                                4
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_5"
+                            value="5" required {% if details and details.semester == 5 %}checked{% endif %}>
+                            <label class="form-check-label" for="semester_5">
+                                5
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_6"
+                            value="6" required {% if details and details.semester == 6 %}checked{% endif %}>
+                            <label class="form-check-label" for="semester_6">
+                                6
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_7"
+                            value="7" required {% if details and details.semester == 7 %}checked{% endif %}>
+                            <label class="form-check-label" for="semester_7">
+                                7
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="semester_option" id="semester_8"
+                            value="8" required {% if details and details.semester == 8 %}checked{% endif %}>
+                            <label class="form-check-label" for="semester_8">
+                                8
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Section -->
+                <div class="mb-3">
+                    <label for="section" class="form-label d-block">Section</label>
+                    <div class="d-flex justify-content-evenly">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="section_option" id="section_a"value="A" required>
+                            <label class="form-check-label" for="section_a">
+                                A
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="section_option" id="section_b"
+                            value="B" required>
+                            <label class="form-check-label" for="section_b">
+                                B
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="section_option" id="section_c"
+                            value="C" required>
+                            <label class="form-check-label" for="section_c">
+                                C
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="section_option" id="section_d"
+                            value="D" required>
+                            <label class="form-check-label" for="section_d">
+                                D
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="section_option" id="section_e"
+                            value="E" required>
+                            <label class="form-check-label" for="section_e">
+                                E
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Group Number -->
+                <div class="mb-3">
+                    <label for="groupNo" class="form-label d-block">Group</label>
+                    <div class="d-flex justify-content-evenly">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="group_option" id="group_g1"
+                            value="G1" required>
+                            <label class="form-check-label" for="group_g1">
+                                G1
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="group_option" id="group_g2"
+                            value="G2" required>
+                            <label class="form-check-label" for="group_g2">
+                                G2
+                            </label>
+                        </div>
+                    </div>
+                </div> 
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Close</button>
@@ -68,7 +217,7 @@
             <tr>
             <th scope="row">{{ loop.index }}</th>
                 <td>{{ faculty["full_name"] }}</td>
-                <td>{{ faculty["assigned_batch"] }}</td>
+                <td>{{ faculty["semester"] }}{{ faculty["branch"] }}-{{ faculty["section"] }}-{{ faculty["group"]}}</td>
                 <td>
                     <button class="btn btn-danger">Discharge</button>
                 </td>

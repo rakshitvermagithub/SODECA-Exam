@@ -65,7 +65,6 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
 def allowed_file(filename):
@@ -454,7 +453,7 @@ db.execute("""
 db.execute("""
     CREATE TABLE IF NOT EXISTS faculty_details(college_email TEXT PRIMARY KEY NOT NULL,
     faculty_user_id INTEGER UNIQUE, full_name TEXT NOT NULL, designation TEXT NOT NULL,
-    department TEXT NOT NULL, assigned_batch TEXT NOT NULL DEFAULT 'not assigned',
+    department TEXT NOT NULL, semester INTEGER, branch TEXT, section TEXT, class_group TEXT, 
     contact TEXT NOT NULL DEFAULT 'to be updated',
     FOREIGN KEY (faculty_user_id) REFERENCES users(user_id) )
     """)
@@ -1119,7 +1118,8 @@ def faculty_dashboard():
             if role(session["user_id"]) != 'faculty':
                 return "Access Denied!", 400
             
-            batch = db.execute("SELECT assigned_batch FROM faculty_details WHERE user_id = ?", session["user_id"])
+            # Get batch details, assigned to faculty
+            batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE user_id = ?", session["user_id"])
 
             is_authorized = 'drive_auth_token' in session
             print(session.get('drive_auth_token'))
@@ -1135,12 +1135,13 @@ def faculty_dashboard():
                 # Get the data for different forms with BATCH SPECIFIED
                 form_data = db.execute(f"""
                     SELECT 
-                        s.*
+                        s.*,
                         f.*
                     FROM student_details s
-                    INNER JOIN {form} f ON s.student_user_id = f.faculty_user_id
-                    WHERE s.batch = ?
-                """, batch)
+                    INNER JOIN {form} f ON s.student_user_id = f.student_id
+                    WHERE s.semester = ? AND s.branch = ? AND s.section = ? AND s.class_group = ?
+                """, batch[0]["semester"], batch[0]["branch"], batch[0]["section"], batch[0]["class_group"])
+
                 # Append it in list of differnet forms' with data
                 all_forms_data.append(form_data)
 
@@ -1257,34 +1258,47 @@ def super_admin():
 
 @app.route("/faculty_list", methods=["GET", "POST"])
 def faculty_list():
+
     if request.method == "POST":
         # Add/Update request
         full_name = request.form.get("full_name")
+        if not full_name:
+            flash("Name is a required field", "danger")
+            return redirect(url_for("faculty_list"))
         college_email = request.form.get("college_email")
+        if not college_email:
+            flash("Email is a required field", "danger")
+            return redirect(url_for("faculty_list"))
         designation = request.form.get("designation")
+        if not designation:
+            flash("Designation is a required field", "danger")
+            return redirect(url_for("faculty_list"))
         department = request.form.get("department")
+        if not department:
+            flash("Department is a required field", "danger")
+            return redirect(url_for("faculty_list"))
         contact = request.form.get("contact")
         if not contact:
             contact = 'to be updated'
 
+        # Check if user exists with this email
+        existing_user = db.execute(
+            "SELECT user_id FROM users WHERE email = ?", 
+            college_email
+        )
+        user_id = existing_user[0]["user_id"] if existing_user else None
+
         try:
-            # Check if user exists with this email
-            existing_user = db.execute(
-                "SELECT user_id FROM users WHERE email = ?", 
-                college_email
-            )
-            
-            user_id = existing_user[0]["user_id"] if existing_user else None
-            
+             
             # UPSERT faculty_details with user_id
             db.execute(
                 """
                 INSERT INTO faculty_details (
-                    college_email, user_id, full_name, designation, department, contact
+                    college_email, faculty_user_id, full_name, designation, department, contact
                 )
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(college_email) DO UPDATE SET
-                    user_id = excluded.user_id,
+                    faculty_user_id = excluded.faculty_user_id,
                     full_name = excluded.full_name,
                     designation = excluded.designation,
                     department = excluded.department,
@@ -1315,6 +1329,25 @@ def faculty_list():
         faculty_data = db.execute("SELECT * FROM faculty_details")
         return render_template("faculty_list.html", faculty_data=faculty_data)
 
+@app.route("/delete_faculty", methods=["POST"])
+def delete_faculty():
+    email_to_delete = request.form.get("college_email")
+    
+    if not email_to_delete:
+        flash("Error: No faculty email was provided for deletion.", "danger")
+        return redirect(url_for("faculty_list"))
+    
+    try:
+        # Execute the DELETE query using the primary key(college email)
+        db.execute("DELETE FROM faculty_details WHERE college_email = ?", email_to_delete)
+        flash(f"Successfully deleted faculty member: {email_to_delete}", "success")
+    except Exception as e:
+        # Log the error and show a generic message
+        print(f"Database error while deleting faculty: {e}", file=sys.stderr)
+        flash("An error occurred while trying to delete the faculty member.", "danger")
+
+    return redirect(url_for("faculty_list"))
+
 @app.route("/assign_batch", methods=["GET", "POST"])
 @login_required
 def assign_batch():
@@ -1322,21 +1355,25 @@ def assign_batch():
     if request.method == "POST":
 
         college_email = request.form.get("college_email")
-        batch = request.form.get("batch")
+        semester = request.form.get("semester_option")
+        branch = request.form.get("branch_option")
+        section = request.form.get("section_option")
+        group = request.form.get("group_option")
 
         try:
             # Update batch in database
-            db.execute("UPDATE faculty_details SET assigned_batch=? WHERE college_email=?", batch, college_email)
+            db.execute("UPDATE faculty_details SET semester=?, branch=?, section=?, class_group=? WHERE college_email=?",
+                    semester, branch, section, group, college_email)
             flash("Batch updated!", "success")
+
         except Exception as e:
             flash(f"Error updating: {e}", "danger")
         
-        print("here")
         return redirect (url_for("assign_batch"))
     
     else:
 
-        faculty_data = db.execute("SELECT full_name, college_email, assigned_batch FROM faculty_details")
+        faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
 
         for faculty in faculty_data:
             print(faculty["full_name"])
