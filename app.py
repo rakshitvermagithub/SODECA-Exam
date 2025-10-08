@@ -2,6 +2,7 @@ from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
 from config import Config
 from datetime import datetime, date
+from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory
 from flask_session import Session
 from functools import wraps
@@ -12,6 +13,8 @@ from googleapiclient.http import MediaFileUpload
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
+import random
+import smtplib
 import sys
 
 
@@ -1397,6 +1400,34 @@ faculty_dict = db.execute("SELECT college_email FROM faculty_details")
 for faculty in faculty_dict:
     faculty_emails.append(faculty["college_email"])
 
+def send_otp(to_mail):
+    print("Log from the system: Method invoked!")
+    if not to_mail:
+        return "Error!, Email not found in the session.", 400
+
+    otp = ""
+    for _ in range(6):
+        otp += str(random.randint(0, 9))
+
+    session['otp_email'] = to_mail
+    session['otp_secret'] = otp
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+
+    from_mail = "d68930637@gmail.com"
+    server.login(from_mail, 'uahpdvgzxercjtrd')
+
+    msg = EmailMessage()
+    msg['Subject'] = "OTP Verification"
+    msg['From'] = from_mail
+    msg['To'] = to_mail
+    msg.set_content("OTP to register your account is: " + otp)
+
+    server.send_message(msg)
+    server.quit()
+    print(f"OTP sent to {to_mail}: {otp}") # For debugging
+
 # Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -1437,28 +1468,98 @@ def register():
         # If form was filled successfully
         # Convert plain password into a complex string
         hash_password = generate_password_hash(password)
+        role = 'faculty' if email in faculty_emails else 'student'
 
-        if email in faculty_emails:
-            # Store Faculty's login details in the table
-            user_id = db.execute(
-                "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)", email, hash_password, 'faculty'
-                )
-            
-            # Add user_id in faculty_details
-            db.execute(
-                "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, email
-                ) 
+        session['unverified_user'] = {
+            'email': email,
+            'hash_password': hash_password,
+        }
+        session['user_role'] = role
 
-            return redirect(url_for("faculty_dashboard"))
-        else:
-            # Store Student's login details in the table
-            db.execute(
-                "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password,
-                )
+        # Verify the user email with an otp
+        try:
+            send_otp(email)
+            flash("A verification code has been sent to your email.", "info")
+            return redirect(url_for("otp_verify"))
+        except Exception as e:
+            print(f"An error occurred while sending OTP: {e}")
+            flash("An error occurred while sending the verification email. Please try again.", "danger")
+            return redirect(url_for("register"))
 
-            return redirect("/student_details")
+        # # Check if user is a faculty or student
+        # if role == 'faculty':
+        #     # Store Faculty's login details in the table
+        #     user_id = db.execute(
+        #         "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)", email, hash_password, 'faculty'
+        #         )     
+        #     # Add user_id in faculty_details
+        #     db.execute(
+        #         "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, email
+        #         ) 
+        #     return redirect(url_for("faculty_dashboard"))
+        # else:
+        #     # Store Student's login details in the table
+        #     db.execute(
+        #         "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password,
+        #         )
+        #     return redirect("/student_details")
     else:
         return render_template("register.html")
+    
+@app.route("/otp_verify", methods=["GET", "POST"])
+def otp_verify():
+    # Make sure the user has started the registration process
+    if 'unverified_user' not in session or 'otp_secret' not in session:
+        flash("Please start the registration process first.", "warning")
+        return redirect(url_for("register"))
+
+    if request.method == "POST":
+        otp_entered = request.form.get('otp')
+        print(f"Actual OTP: {session.get("otp_secret")}, Entered OTP: {otp_entered}")
+        if otp_entered != session.get("otp_secret"):
+            print(f"Incorrect OTP entered. Please try again.")
+            flash("Wrong OTP entered.Please Check again!","danger")
+            return render_template("otpverify.html")
+
+        user_data = session["unverified_user"]
+
+        try:
+            # Check if user is a faculty or student
+            if session.get("user_role") == 'faculty':
+                # Store Faculty's login details in the table
+                user_id = db.execute(
+                    "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)",
+                    user_data["email"], user_data["hash_password"], 'faculty'
+                    )     
+                # Add user_id in faculty_details
+                db.execute(
+                    "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, user_data["email"]
+                    ) 
+            else:
+                # Store Student's login details in the table
+                user_id = db.execute(
+                    "INSERT INTO users (email, hash_password) VALUES (?, ?)", user_data["email"], user_data["hash_password"],
+                    )
+                
+            # Clean session
+            session.pop('unverified_user', None)
+            session.pop('otp_secret', None)
+            session.pop('otp_email', None)
+            session['user_id'] = user_id
+            flash("Email verified and account created successfully!", "success")
+
+            # Redirect to the appropriate next step
+            if session.get('user_role') == 'faculty':
+                return redirect(url_for("faculty_dashboard"))
+            else:
+                return redirect(url_for("student_details"))
+        except Exception as e:
+            flash("A database error occurred. Please try registering again.", "danger")
+            print(f"DB Error during user creation: {e}")
+            return redirect(url_for("register"))
+    else:
+        flash("The verification code is incorrect. Please try again.", "danger")
+        return render_template("otpverify.html")
 
 @app.route("/auth/google")
 def google_login():

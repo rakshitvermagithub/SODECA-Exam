@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    OTP Verification
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+
+<div class="page-wrapper">
+
+    <div class="card p-5 pt-4 pb-4">
+        <h4 class="text-center mb-4">OTP Verify</h4>
+
+        <form action="{{ url_for('otp_verify') }}" method="post" class="mb-3 text-center">
+            <input class="form-control mb-3" type="text" maxlength="6" placeholder="Enter OTP sent" name="otp">
+            <div class="d-flex justify-content-around">
+                <button class="btn btn-default h-25 me-3" id = "resend_otp" 
+                style = "border: 1px solid gray; width: 185px" 
+                type="button" onclick="window.location.href = '/otpverify'" disabled>
+                    Resend OTP 30 sec
+                </button>
+                <button class="btn btn-primary w-75 h-25 ms-2" type="submit">Verify</button>
+            </div>
+        </form>
+
+        <p class="mt-3">
+            Already registered? <a href="{{ url_for('login') }}">Login</a>
+        </p>
+    </div>
+
+</div>
+{% endblock %}
