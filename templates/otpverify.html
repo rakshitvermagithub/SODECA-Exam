@@ -31,3 +31,24 @@
 
 </div>
 {% endblock %}
+{% block script %}
+<script type = "text/javascript">
+    var timer = 29;
+    var resendButton = document.getElementById('resend_otp');
+    var intervalId;
+    if (resendButton) {
+        function mytimer() {
+            resendButton.innerHTML = "Resend OTP " + timer + " sec";
+            timer--;
+            if(timer < 0) {
+                clearInterval(intervalId);
+                resendButton.innerHTML = "Resend OTP";
+                resendButton.disabled = false;
+            }
+        }
+        intervalId = setInterval(mytimer, 1000);
+    } else {
+        console.error("Error: Button with ID 'resend_otp' not found.");
+    }
+</script>
+{% endblock %}

@@ -10,6 +10,7 @@
 
 {% block main %}
 {% include "message.html" %}
+
 {% if not is_authorized %}
     <p>To approve and upload submissions, you must first authorize this application to access your Google Drive.</p>
     <a href="{{ url_for('authorize_drive') }}"><button>Login with Google to Manage Files</button></a>
@@ -80,7 +81,7 @@
                                         </td>
                                         {% else %}
                                         <td>
-                                            <form action="{{ url_for('upload_to_drive') }}" method="POST" style="display: inline;">
+                                            <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
                                             <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
                                             <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
                                             <input type="hidden" name="filename" value="{{ row['certificate'] }}">
@@ -133,4 +134,19 @@
 <script src = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src = "https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src = "https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
+<script>
+// Wrap in DOMContentLoaded to ensure tables exist
+document.addEventListener('DOMContentLoaded', function() {
+    const list = {{ form_names | tojson }};
+    list.forEach((item) => {
+        new DataTable(`#${item}`, {
+            layout: {
+                topStart: {
+                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

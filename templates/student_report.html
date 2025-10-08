@@ -4,10 +4,197 @@
     Student Report
 {% endblock %}
 
+{% block css %}
+<style>
+    body {
+        height: 100vh;
+    }
+    .filter-wrapper {
+        display: flex;
+        height: 100%;
+    }
+    .filter-sidebar {
+        flex-shrink: 0;
+        width: 280px;
+        border-right: 1px solid #dee2e6;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+    .filter-body {
+        flex-grow: 1;
+        overflow-y: auto; /* Allow content to scroll */
+        padding: 1.5rem 2rem;
+    }
+    .filter-item {
+        padding: 0.875rem 1.5rem;
+        cursor: pointer;
+        border-left: 4px solid transparent;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+    .filter-item:hover {
+        background: #f8f9fa;
+    }
+    .filter-item.active {
+        background: #e7f1ff;
+        border-left-color: #0d6efd;
+        font-weight: 500;
+    }
+    .filter-count {
+        font-size: 0.8rem;
+        color: #6c757d;
+        background-color: #e9ecef;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.5rem;
+    }
+    .filter-content {
+        display: none;
+    }
+    .filter-content.active {
+        display: block;
+    }
+    .apply-btn-container {
+        border-top: 1px solid #dee2e6;
+        padding: 1rem 1.5rem;
+        margin-top: auto; /* Pushes the button to the bottom */
+        background: #fff;
+    }
+</style>
+{% endblock %}
+
 {% block main %}
+{% include "message.html" %}
+
 <div class="container mt-3 text-secondary">
     <h2 class="heading"><u class="h2">Welcome! <b>SUPER ADMIN</b></u></h2>
     <h3 ><b>STUDENT REPORT</b></h3>
+
+        <div class="filter-wrapper">
+            <!-- Left Sidebar - Filter Labels -->
+            <div class="filter-sidebar">
+                <h4 class="px-4 pt-4 pb-3 fw-bold">Filters</h4>
+                <div id="filter-nav">
+                    <div class="filter-item active" data-filter="student">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-people me-2"></i>Student Filter</span>
+                            <span class="filter-count" id="student-count">0 active</span>
+                        </div>
+                    </div>
+                    <div class="filter-item" data-filter="form">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-file-earmark-text me-2"></i>Form Filter</span>
+                            <span class="filter-count" id="form-count">0 selected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="apply-btn-container">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" id="resetFiltersBtn">Reset All Filters</button>
+                    <button type="submit" form="filterForm" class="btn btn-primary w-100">Apply Filters</button>
+                </div>
+            </div>
+
+            <!-- Right Panel - Filter Options -->
+            <div class="filter-body">
+                <form method="POST" action="/apply_filters" id="filterForm">
+                    
+                    <!-- Student Filter Content -->
+                    <div class="filter-content active" id="content-student">
+                        <h5 class="fw-semibold mb-4">Student Criteria</h5>
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <label for="roll_number" class="form-label">Roll Number</label>
+                                <input type="text" class="form-control" name="university_ roll_number" placeholder="e.g., 21ESKCS123">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Semester</label>
+                                <div>
+                                    {% for i in range(1, 9) %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem{{ i }}">
+                                        <label class="form-check-label" for="sem{{ i }}">{{ i }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Branch</label>
+                                <div>
+                                    {# Example with dynamic branches from backend #}
+                                    {% set branches = ['CSE', 'IT', 'ECE', 'ME', 'Civil', 'EE'] %}
+                                    {% for branch in branches %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branch{{ branch }}">
+                                        <label class="form-check-label" for="branch{{ branch }}">{{ branch }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <!-- Add other student filters (Section, Group, etc.) similarly -->
+                             <div class="col-md-12">
+                                <label class="form-label">Branch</label>
+                                <div>
+                                    {# Example with dynamic branches from backend #}
+                                    {% set sections = ['A', 'B', 'C', 'D', 'E', 'F'] %}
+                                    {% for section in sections %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="section{{ section }}">
+                                        <label class="form-check-label" for="section{{ section }}">{{ section }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <!-- Add other student filters (Section, Group, etc.) similarly -->
+                            <div class="col-md-12">
+                                <label class="form-label">Group</label>
+                                <div>
+                                    {# Example with dynamic groups from backend #}
+                                    {% set groups = ['G1', 'G2'] %}
+                                    {% for group in groups %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="groups[]" value="{{ group }}" id="group{{ group }}">
+                                        <label class="form-check-label" for="group{{ group }}">{{ group }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Filter Content -->
+                    <div class="filter-content" id="content-form">
+                        <h5 class="fw-semibold mb-4">Form Types</h5>
+                        {# Example with dynamic form types from backend #}
+                        {% set forms = [
+                            {'key': 'blood_donor', 'title': 'Blood Donor'},
+                            {'key': 'participation', 'title': 'Participation in Competition'},
+                            {'key': 'expert_lecture', 'title': 'Expert Lecture Attended'},
+                            {'key': 'internship', 'title': 'Internship/Training'}
+                        ] %}
+                        {% for form in forms %}
+                        <div class="form-check fs-5 mb-2 p-3 rounded-3 form-filter-item">
+                            <input class="form-check-input" type="checkbox" name="forms[]" value="{{ form.key }}" id="form-{{ form.key }}">
+                            <label class="form-check-label ms-2" for="form-{{ form.key }}">{{ form.title }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    Student Filter
+        Type Roll Number in a format
+        Select one or more Semester
+        Select one or more Branch
+        Select one or more Section
+        Select one or more Group
+        Select one or more Batch Counsellor
+
+    Form Filter
+        Select one or multiple forms
+        <!-- Months Filter using date of entry Accepted -->
+        <!-- Additionaly also show entries pending -->
+
     <div class="table-responsive">
         <table class="table table-striped table-bordered table-sm table-hover align" id="tab">
         <caption class="caption-top">List of Student's SODECA Record</caption>
@@ -84,6 +271,61 @@
         <button type="submit" class="btn btn-success" style="width: 150px;">Download</button>
     </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterNav = document.getElementById('filter-nav');
+        const filterContents = document.querySelectorAll('.filter-content');
+        const filterForm = document.getElementById('filterForm');
+
+        // Handle sidebar navigation
+        filterNav.addEventListener('click', function(event) {
+            const filterItem = event.target.closest('.filter-item');
+            if (!filterItem) return;
+
+            // Update active state on sidebar
+            filterNav.querySelectorAll('.filter-item').forEach(item => item.classList.remove('active'));
+            filterItem.classList.add('active');
+
+            // Show corresponding content panel
+            const filterName = filterItem.dataset.filter;
+            filterContents.forEach(content => {
+                content.classList.toggle('active', content.id === `content-${filterName}`);
+            });
+        });
+
+        // Update counts when any form input changes
+        filterForm.addEventListener('change', updateAllCounts);
+        
+        // Handle reset button
+        document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+            filterForm.reset();
+            updateAllCounts();
+        });
+
+        function updateAllCounts() {
+            // Student filters count
+            const studentFilters = filterForm.querySelectorAll(
+                'input[name^="semesters"]:checked, input[name^="branches"]:checked'
+            );
+            let studentCount = studentFilters.length;
+            const rollInput = filterForm.querySelector('input[name="roll_number"]');
+            if (rollInput && rollInput.value) {
+                studentCount++;
+            }
+            document.getElementById('student-count').textContent = `${studentCount} active`;
+
+            // Form filters count
+            const formFilters = filterForm.querySelectorAll('input[name^="forms"]:checked');
+            document.getElementById('form-count').textContent = `${formFilters.length} selected`;
+        }
+
+        // Initial count update on page load
+        updateAllCounts();
+    });
+</script>
 {% endblock %}
     <!-- <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>

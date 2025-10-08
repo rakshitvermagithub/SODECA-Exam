@@ -796,7 +796,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Name of the team (If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_name',
-                'required': True,
+                'required': False,
                 'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'min_length': 2, 'max_length': 100 }
             },
@@ -804,7 +804,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Name of all team members (If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_members',
-                'required': True,
+                'required': False,
                 'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'min_length': 2, 'max_length': 500 }
             },
@@ -825,7 +825,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': { 'min_length': 2, 'max_length': 150 }
@@ -848,7 +848,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': { 'min_length': 2, 'max_length': 150 }
@@ -975,7 +975,9 @@ FORM_DEFINITIONS = {
 
     'internship_stipend': {
         'title': 'Internship/Training (Only with Stipend) before Placement',
-        'description': 'Submit details for a paid internship or training that occurred before any final job placement.',
+        'description': [
+            'Submit details for a paid internship or training that occurred before any final job placement.'
+        ],
         'enctype': 'multipart/form-data',
         'fields': [
             {
@@ -1843,12 +1845,7 @@ def verify_student_details():
         session["verified_details"] = verified_details
 
         print(f"Verified: {verified_details}")
-
-        if verified_details == None:
-            flash("Kindly confirm details by checking the checkbox", "warning")
-            return redirect("/verify_student_details")
-        else:
-            return redirect("/fill_form")
+        return redirect("/fill_form")
     else:
         # Get student details if already present
         # Variable stores a list of dictionaries
@@ -1869,203 +1866,192 @@ def verify_student_details():
 @login_required
 def fill_form():
 
+    # If user has not verified details
+    if session.get("verified_details") == None:
+        flash("Kindly confirm details by checking the checkbox", "warning")
+        return redirect("/verify_student_details")
+    
+    # If not selected any forms, first go and select
+    if not session.get("selected_forms"):
+        flash("Please select atleast one form to submit", "danger")
+        return redirect("/")
+
     user_id = session["user_id"]
+    selected_forms = session["selected_forms"]
+    current_form_index = session["current_form_index"]
+    total_count = len(selected_forms)
 
-    if user_id:
+    # If all forms are completed
+    if current_form_index >= len(selected_forms):
 
-        # If not selected any forms, first go and select
-        if "selected_forms" not in session:
-            flash("Please select atleast one form to submit", "danger")
-            return redirect("/")
+        # Clean up the session
+        session.pop("selected_forms", None)
+        session.pop("current_form_index", None)
+        session.pop("verified_details", None)
 
-        # Verify if student checked the verification checkbox
-        if "verified_details" not in session:
-            flash('Please verify you student details', "warning")
-            return redirect("/verify_student_details")
+        flash("Kindly check your submissions and their approval status on the hompeage", "success")
+        return redirect("/")
 
-        # If verification was not checked
-        if not session["verified_details"]:
-            flash("Please check the checkbox to confirm your details", "danger")
-            return redirect("/verify_student_details")
+    # current_form_index is the key in dict "selected_forms" defined in the start
+    current_form = selected_forms[current_form_index]
+    form_to_show = FORM_DEFINITIONS[current_form]
 
-        selected_forms = session["selected_forms"]
-        current_form_index = session["current_form_index"]
-        total_count = len(selected_forms)
+    if request.method == "POST":
 
-        # If all forms are completed
-        if current_form_index >= len(selected_forms):
+        # Initialise dict for text and radio inputs
+        form_inputs = {}
+        from_date = None
+        to_date = None
 
-            # Clean up the session
-            session.pop("selected_forms", None)
-            session.pop("current_form_index", None)
+        # Initialise in this scope the google_file_id
+        save_path = ""
 
-            flash("Kindly check your submissions and their approval status on the hompeage", "success")
-            return redirect("/")
+        # Check if certificate was submitted
+        if current_form != 'placement_offer' and 'certificate' not in request.files:
+            flash("No file part", "danger")
+            return redirect(request.url)
 
-        # current_form_index is the key in dict "selected_forms" defined in the start
-        current_form = selected_forms[current_form_index]
-        form_to_show = FORM_DEFINITIONS[current_form]
+        # Iterating through all input fields
+        for field in form_to_show["fields"]:
 
-        if request.method == "POST":
+            field_title = field["field_label"]
+            field_name = field["field_name"]
+            field_type = field["field_type"]
+            field_required = field["required"]
 
-            # Initialise dict for text and radio inputs
-            form_inputs = {}
-            from_date = None
-            to_date = None
-
-            # Initialise in this scope the google_file_id
-            save_path = ""
-
-            # Check if certificate was submitted
-            if current_form != 'placement_offer' and 'certificate' not in request.files:
-                flash("No file part", "danger")
-                return redirect(request.url)
-
-            # Iterating through all input fields
-            for field in form_to_show["fields"]:
-
-                field_title = field["field_label"]
-                field_name = field["field_name"]
-                field_type = field["field_type"]
-
-                # If input field is a date
-                if field_type == "date":
-                    date_string = request.form.get(field_name)
-                    try:
-                        # Parse the date string into a datetime object
-                        date_object = datetime.strptime(date_string, '%Y-%m-%d').date()
-
-                        if field_name == "to_date":
-                            to_date = date_object
-                        if field_name == "from_date":
-                            from_date = date_object
-
-                        # After succesful parsing only, Append in form_inputs
-                        form_inputs[field_name] = date_string
-
-                    except ValueError:
-                        flash("Invalid date format submitted.")
-                        return redirect(request.url)
-
-                elif field_type == "file":
-
-                    # As certificate is required in every form
-                    certificate = request.files[field_name]
-
-                    # Check if the user selected a file
-                    if certificate.filename == "":
-                        flash("No selected file", "danger")
-                        return redirect(request.url)
-
-                    # Check if file is valid and has an allowed extension
-                    if certificate and allowed_file(certificate.filename):
-                        
-                        # If its placement offers then do not rename pdf
-                        if current_form != 'placement_offer':
-                            # Get student_name and unversity_roll_no
-                            student_details = db.execute(
-                                """SELECT university_roll_no, student_name FROM
-                                student_details WHERE student_user_id = ?""", user_id
-                            )
-
-                            # Get file extension eg. ".pdf"
-                            file_extension = os.path.splitext(certificate.filename)[1]
-
-                            # Rename the file in format universityroll_studentname_eventname
-                            uni_roll_no = student_details[0]["university_roll_no"]
-                            student_name = student_details[0]["student_name"]
-                            event_name = request.form.get("event_title", "unknown_event")
-
-                            certificate.filename =  f"{uni_roll_no}_{student_name}_{event_name}{file_extension}"
-
-                        # Secure the filename to prevent security risks (e.g., directory traversal)
-                        filename = secure_filename(certificate.filename)
-                        # Save filename in form_inputs
-                        form_inputs[field_name] = filename
-
-                        save_path = os.path.join(UPLOAD_FOLDER, filename)
-
-                        # Save the file to the local server
-                        certificate.save(save_path)
-
-                    else:
-                        flash("Invalid file type. Allowed types are: pdf", "danger")
-                        return redirect(request.url)
-
-                # Text and Radio inputs
-                else:
-                    # Update form_inputs dict
-                    form_inputs[field_name] = request.form.get(field_name)
-
-                    # If any input is missing
-                    if not form_inputs[field_name]:
-                        # flash error
-                        flash(f"Submission Failed: {field_title} is missing!", "danger")
-                        return redirect(request.url)
-
-                    # Debugging
-                    print(f"{field_title}: {form_inputs[field_name]}")
-
-                    # TODO: Error Handling
-
-            # Error checking using "date_object"
-            if from_date and to_date:
-                if from_date > to_date:
-                    print(f"from_date: {from_date} > to_date: {to_date} ")
-                    flash("Error: From date is greater than To date", "danger")
-                    return redirect(request.url)
-                today = date.today()
-                if from_date > today or to_date > today:
-                    print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
-                    flash("Error: Dates cannot be for in future activites", "danger")
-                    return redirect(request.url)
-
-            if save_path:
-
-                form_fields = form_inputs.keys()
-                form_fields_sql = ",".join(form_fields) # Make a list of inputs separated by ","
-                placeholder_sql = ",".join(["?"]*len(form_inputs)) # eg. "?,?,?..."
-                values_list = list(form_inputs.values()) # eg. ["Value1", "Value2"...]
-                # eg. "field1 = excluded.field1, field2 = excluded.field2..."
-                update_clause = ", ".join([f"{field} = excluded.{field}" for field in form_fields])
+            # If input field is a date
+            if field_type == "date":
+                date_string = request.form.get(field_name)
 
                 try:
-                    # Dynamically store form entries in respective tables in database
-                    db.execute(f"""
-                        INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status)
-                        VALUES(?, {placeholder_sql}, ?, ?, ?)
-                        ON CONFLICT(student_id) DO UPDATE SET {update_clause},
-                        full_path = EXCLUDED.full_path,
-                        google_file_id = EXCLUDED.google_file_id,
-                        status = EXCLUDED.status
-                    """, session["user_id"], *values_list, # *values_list gives a string eg. "Value1", "Value2"...
-                    save_path, "pending", "pending", )
+                    # Parse the date string into a datetime object
+                    date_object = datetime.strptime(date_string, '%Y-%m-%d').date()
 
-                except Exception as e:
-                    print(f"Database error: {e}", file=sys.stderr)
-                    flash("A database error occurred while saving the form. Please try again.", "danger")
+                    if field_name == "to_date":
+                        to_date = date_object
+                    if field_name == "from_date":
+                        from_date = date_object
 
-                    # IMPORTANT: If the DB save fails, we should delete the file we just uploaded
+                    # After succesful parsing only, Append in form_inputs
+                    form_inputs[field_name] = date_string
 
+                except ValueError:
+                    flash("Invalid date format submitted.")
                     return redirect(request.url)
 
-            # Update form number
-            session["current_form_index"] += 1
+            elif field_type == "file":
 
-            # Form submission successful, show success page
-            percentage = (current_form_index + 1 / total_count) * 100
-            return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=(current_form_index + 1) , progress_width=percentage, total=total_count)
-            # return render_template("fill_form.html", success=True, form_to_show=form_to_show)
+                # As certificate is required in every form
+                certificate = request.files[field_name]
 
-        # Just show the form to be filled
-        percentage = (current_form_index / total_count) * 100
-        return render_template("fill_form.html", success=False, form_to_show=form_to_show, count=current_form_index, progress_width = percentage, total=total_count)
-        # return render_template("fill_form.html", success=False, form_to_show=form_to_show)
+                # Check if the user selected a file
+                if certificate.filename == "":
+                    flash("No selected file", "danger")
+                    return redirect(request.url)
 
-    else:
+                # Check if file is valid and has an allowed extension
+                if certificate and allowed_file(certificate.filename):
+                    
+                    # If its placement offers then do not rename pdf
+                    if current_form != 'placement_offer':
+                        # Get student_name and unversity_roll_no
+                        student_details = db.execute(
+                            """SELECT university_roll_no, student_name FROM
+                            student_details WHERE student_user_id = ?""", user_id
+                        )
 
-        flash("Please Login/Register first")
-        return redirect("/login")
+                        # Get file extension eg. ".pdf"
+                        file_extension = os.path.splitext(certificate.filename)[1]
+
+                        # Rename the file in format universityroll_studentname_eventname
+                        uni_roll_no = student_details[0]["university_roll_no"]
+                        student_name = student_details[0]["student_name"]
+                        event_name = request.form.get("event_title", "unknown_event")
+
+                        certificate.filename =  f"{uni_roll_no}_{student_name}_{event_name}{file_extension}"
+
+                    # Secure the filename to prevent security risks (e.g., directory traversal)
+                    filename = secure_filename(certificate.filename)
+                    # Save filename in form_inputs
+                    form_inputs[field_name] = filename
+
+                    save_path = os.path.join(UPLOAD_FOLDER, filename)
+
+                    # Save the file to the local server
+                    certificate.save(save_path)
+
+                else:
+                    flash("Invalid file type. Allowed types are: pdf", "danger")
+                    return redirect(request.url)
+
+            # Text and Radio inputs
+            else:
+                # Update form_inputs dict
+                form_inputs[field_name] = request.form.get(field_name)
+                # TODO: Error Handling
+
+            # If any required input is missing
+            if field_required and not form_inputs[field_name]:
+                # flash error
+                flash(f"Submission Failed: {field_title} is required!", "danger")
+                return redirect(request.url)
+
+            # Debugging
+            print(f"{field_title}: {form_inputs[field_name]}")
+
+        # Error checking using "date_object"
+        if from_date and to_date:
+            if from_date > to_date:
+                print(f"from_date: {from_date} > to_date: {to_date} ")
+                flash("Error: From date is greater than To date", "danger")
+                return redirect(request.url)
+            today = date.today()
+            if from_date > today or to_date > today:
+                print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
+                flash("Error: Dates cannot be for in future activites", "danger")
+                return redirect(request.url)
+
+        if save_path:
+
+            form_fields = form_inputs.keys()
+            form_fields_sql = ",".join(form_fields) # Make a list of inputs separated by ","
+            placeholder_sql = ",".join(["?"]*len(form_inputs)) # eg. "?,?,?..."
+            values_list = list(form_inputs.values()) # eg. ["Value1", "Value2"...]
+            # eg. "field1 = excluded.field1, field2 = excluded.field2..."
+            update_clause = ", ".join([f"{field} = excluded.{field}" for field in form_fields])
+
+            try:
+                # Dynamically store form entries in respective tables in database
+                db.execute(f"""
+                    INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status)
+                    VALUES(?, {placeholder_sql}, ?, ?, ?)
+                    ON CONFLICT(student_id) DO UPDATE SET {update_clause},
+                    full_path = EXCLUDED.full_path,
+                    google_file_id = EXCLUDED.google_file_id,
+                    status = EXCLUDED.status
+                """, session["user_id"], *values_list, # *values_list gives a string eg. "Value1", "Value2"...
+                save_path, "pending", "pending", )
+
+            except Exception as e:
+                print(f"Database error: {e}", file=sys.stderr)
+                flash("A database error occurred while saving the form. Please try again.", "danger")
+
+                # IMPORTANT: If the DB save fails, we should delete the file we just saved
+
+                return redirect(request.url)
+
+        # Update form number
+        session["current_form_index"] += 1
+
+        # Form submission successful, show success page
+        percentage = (current_form_index + 1 / total_count) * 100
+        return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=(current_form_index + 1) , progress_width=percentage, total=total_count)
+        # return render_template("fill_form.html", success=True, form_to_show=form_to_show)
+
+    # Just show the form to be filled
+    percentage = (current_form_index / total_count) * 100
+    return render_template("fill_form.html", success=False, form_to_show=form_to_show, count=current_form_index, progress_width = percentage, total=total_count)
+    # return render_template("fill_form.html", success=False, form_to_show=form_to_show)
 
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
@@ -2105,7 +2091,8 @@ def faculty_dashboard():
                 # Append it in list of differnet forms' with data
                 all_forms_data.append(form_data)
 
-            return render_template("faculty_dashboard.html", forms_data=all_forms_data,
+            return render_template("faculty_dashboard.html", 
+                                   forms_data=all_forms_data,
                                    form_title_list=form_title,
                                    form_names=form_name_list,
                                    is_authorized=is_authorized)
@@ -2341,8 +2328,32 @@ def assign_batch():
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
 def student_report():
-    if request.method == "GET":
-        return render_template("student_report.html")
+    # if request.method == "POST":
+
+    #     # where_clause will have 
+    #     where_clause = []
+
+    #     base_queries = []
+    #     for form in forms:
+    #         base_queries.append(f"""SELECT university_roll_number, google_file_id, from_date 
+    #                             FROM student_details s 
+    #                             INNER JOIN {form} f 
+    #                             ON s.student_user_id = f.student_id 
+    #                             WHERE {where_clause}""")
+
+    #     for queries in base_queries:
+            
+
+    #     # Get single roll number
+    #     roll_number = request.form.get("roll_number")
+
+    #     # Get multiple checkbox values using .getlist()
+    #     # The '[]' in the name is a common convention but not required by Flask.
+    #     semesters = request.form.getlist("semesters[]") # Returns a list like ['1', '3', '5']
+    #     branches = request.form.getlist("branches[]")   # Returns a list like ['CSE', 'IT']
+    #     forms = request.form.getlist("forms[]")
+    # else:
+    return render_template("student_report.html")
 
 if __name__ == '__main__':
 

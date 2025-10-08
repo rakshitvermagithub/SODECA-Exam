@@ -5,6 +5,8 @@
 {% endblock %}
 
 {% block main %}
+{% include "message.html" %}
+
 <div class="container mt-3 text-secondary">
     <h2 class="heading"><u class="h2">Welcome! <b>SUPER ADMIN</b></u></h2>
     <h3 class="mt-5 "><b>ASSIGNED BATCHES</b></h3>
@@ -208,6 +210,7 @@
             <tr>
             <th scope="col">Serial Number</th>
             <th scope="col">Name</th>
+            <th scope="col">College E-Mail ID</th>
             <th scope="col">Assigned Batch</th>
             <th scope="col">Operation</th>
             </tr>
@@ -217,7 +220,8 @@
             <tr>
             <th scope="row">{{ loop.index }}</th>
                 <td>{{ faculty["full_name"] }}</td>
-                <td>{{ faculty["semester"] }}{{ faculty["branch"] }}-{{ faculty["section"] }}-{{ faculty["group"]}}</td>
+                <td>{{ faculty["college_email"] }}</td>
+                <td>{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}-{{ faculty["class_group"] }}</td>
                 <td>
                     <button class="btn btn-danger">Discharge</button>
                 </td>

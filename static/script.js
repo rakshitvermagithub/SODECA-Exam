@@ -1,17 +1,6 @@
 // Use a Map to store selected form IDs and their names for easy lookup
 const selectedForms = new Map();
 
-const list = ['blood_donor', 'participation'];
-list.forEach((item) => {
-    new DataTable(`#${item}`, {
-        layout: {
-            topStart: {
-                buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
-            }
-        }
-    });
-});
-
 $(document).ready(function() {
             $('#tab').DataTable({
                 responsive: true,
