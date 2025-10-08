@@ -1311,15 +1311,6 @@ db.execute("""
     contact TEXT NOT NULL DEFAULT 'to be updated',
     FOREIGN KEY (faculty_user_id) REFERENCES users(user_id) )
     """)
-# Create student_details table if not there
-db.execute(
-    "CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL, " \
-    "university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL, " \
-    "semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL, " \
-    "batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) " \
-    "REFERENCES users(user_id))"
-    )
-
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
 
@@ -1570,9 +1561,9 @@ def otp_verify():
             flash("A database error occurred. Please try registering again.", "danger")
             print(f"DB Error during user creation: {e}")
             return redirect(url_for("register"))
-    else:
-        flash("The verification code is incorrect. Please try again.", "danger")
-        return render_template("otpverify.html")
+    
+    # Else GET request
+    return render_template("otpverify.html")
 
 @app.route("/auth/google")
 def google_login():
@@ -1774,31 +1765,35 @@ def student_details():
         if not batch_counselor:
             return redirect("/student_details")
 
-        # If all entries are filled successfuly
-        # Store detail using UPSERT query
-        # The corrected and robust "UPSERT" command
-        db.execute(
-            """
-            INSERT INTO student_details (
-                student_user_id, university_roll_no, student_name, branch,
-                semester, section, class_group, batch_counselor
+        try:
+            # If all entries are filled successfuly
+            # Store detail using UPSERT query
+            # The corrected and robust "UPSERT" command
+            db.execute(
+                """
+                INSERT INTO student_details (
+                    student_user_id, university_roll_no, student_name, branch,
+                    semester, section, class_group, batch_counselor
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(student_user_id) DO UPDATE SET
+                    university_roll_no = excluded.university_roll_no,
+                    student_name = excluded.student_name,
+                    branch = excluded.branch,
+                    semester = excluded.semester,
+                    section = excluded.section,
+                    class_group = excluded.class_group,
+                    batch_counselor = excluded.batch_counselor
+                """,
+                session["user_id"], university_roll_no, student_name, selected_branch,
+                selected_semester, selected_section, selected_group, batch_counselor
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(student_user_id) DO UPDATE SET
-                university_roll_no = excluded.university_roll_no,
-                student_name = excluded.student_name,
-                branch = excluded.branch,
-                semester = excluded.semester,
-                section = excluded.section,
-                class_group = excluded.class_group,
-                batch_counselor = excluded.batch_counselor
-            """,
-            session["user_id"], university_roll_no, student_name, selected_branch,
-            selected_semester, selected_section, selected_group, batch_counselor
-        )
+        except Exception as e:
+            flash(f"Database error: {e}")
+            return redirect(url_for("student_details"))
+        
         flash("Your details are saved successfully. View or edit details on the profile page", "success")
         return redirect(url_for("sodeca_forms"))
-
     else:
 
         # Get student details if already present
