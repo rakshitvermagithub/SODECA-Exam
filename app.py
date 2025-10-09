@@ -52,8 +52,9 @@ google_drive_client = oauth.register(
 
 # --- General App Configuration ---
 UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
+DATABASE_FILE = app.config["DATABASE_FILE"]
 PARENT_FOLDER_ID = "1cllojwiiMV2_YtZ93eadi0rrHf6Lg6_-" # Your target Google Drive folder
-db = SQL(f"sqlite:///{app.config['DATABASE_FILE']}")
+db = SQL(f"sqlite:///{DATABASE_FILE}")
 
 def login_required(f):
     """
@@ -2353,6 +2354,10 @@ if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
+
+    if not os.path.exists(DATABASE_FILE):
+        with open(DATABASE_FILE, 'w') as f:
+            pass
 
     app.run(host="0.0.0.0", debug=True)
 
