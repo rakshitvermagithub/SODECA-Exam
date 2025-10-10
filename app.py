@@ -53,6 +53,9 @@ PARENT_FOLDER_ID = "1cllojwiiMV2_YtZ93eadi0rrHf6Lg6_-" # Your target Google Driv
 
 # --- General App Configuration ---
 UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
+if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+
 DATABASE_FILE = app.config["DATABASE_FILE"]
 if not os.path.exists(DATABASE_FILE):
         with open(DATABASE_FILE, 'w') as f:
@@ -2327,32 +2330,65 @@ def assign_batch():
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
 def student_report():
-    # if request.method == "POST":
+    if request.method == "POST":
 
-    #     # where_clause will have 
-    #     where_clause = []
+        # where_clause will have parameter inputs
+        where_params = []
+        where_clause = ""
+        # Queries as per the number of forms selected
+        base_queries = []
+        filtered_data = []
 
-    #     base_queries = []
-    #     for form in forms:
-    #         base_queries.append(f"""SELECT university_roll_number, google_file_id, from_date 
-    #                             FROM student_details s 
-    #                             INNER JOIN {form} f 
-    #                             ON s.student_user_id = f.student_id 
-    #                             WHERE {where_clause}""")
+        # Get single roll number
+        university_roll_number = request.form.get("roll_number")
+        if university_roll_number:
+            where_params.append(f"s.university_roll_number='{university_roll_number}'")
+        # Get multiple checkbox values using .getlist()
+        semesters = request.form.getlist("semesters[]") # Returns a list like ['1', '3', '5']
+        if semesters:
+            joined_semesters = ",".join(semesters)
+            where_params.append(f"s.semester IN ({joined_semesters})")
 
-    #     for queries in base_queries:
+        branches = request.form.getlist("branches[]")   # Returns a list like ['CSE', 'IT']
+        if branches:
+            quoted_branches = [f"'{branch}'" for branch in branches]
+            joined_branches = ",".join(quoted_branches)
+            where_params.append(f"s.branch IN ({joined_branches})")
+
+        # Update where_clause with available inputs 
+        where_clause = " AND ".join(where_params) if where_params else "1=1"
+
+        forms = request.form.getlist("forms[]")
+        for form in forms:
+            base_queries.append(f"SELECT s.student_name, s.university_roll_no, s.section, '{form}' AS category, f.from_date, f.to_date, f.google_file_id FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}")
+
+        if base_queries:
+
+            complete_query = " UNION ALL ".join(base_queries)
             
+            # Wrap the entire UNION in parentheses before ordering.
+            # Only wrap the query in parentheses if there is more than one SELECT statement (i.e., a UNION).
+            # If there's only one query, don't wrap it.
+            final_query = f"{complete_query} ORDER BY from_date DESC"
 
-    #     # Get single roll number
-    #     roll_number = request.form.get("roll_number")
+            try:
+                print(f"Executing query: {final_query}")  # Debug
+                filtered_data = db.execute(final_query)
 
-    #     # Get multiple checkbox values using .getlist()
-    #     # The '[]' in the name is a common convention but not required by Flask.
-    #     semesters = request.form.getlist("semesters[]") # Returns a list like ['1', '3', '5']
-    #     branches = request.form.getlist("branches[]")   # Returns a list like ['CSE', 'IT']
-    #     forms = request.form.getlist("forms[]")
-    # else:
-    return render_template("student_report.html")
+                if not filtered_data:
+                    flash("No records found with selected filters.", "info")
+            
+            except Exception as e:
+                print(f"Error: {e}")
+                print(f"Query: {final_query}")  # See the actual query
+                flash(f"Database error: {e}", "danger")
+                return redirect(url_for("student_report"))
+        else:
+            flash("Please select at least one form to filter.", "warning")
+
+        return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
+
+    return render_template("student_report.html", filtered_data=[], FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 if __name__ == '__main__':
 
