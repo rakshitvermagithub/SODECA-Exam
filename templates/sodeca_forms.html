@@ -4,124 +4,202 @@
     SODECA Forms
 {% endblock %}
 
+{% block css %}
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 56px);
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .card-minimalist {
+        border: none;
+        border-top: 5px solid var(--bs-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+
+    .form-title {
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    .form-title::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 50px;
+        height: 3px;
+        background: var(--bs-primary);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* --- Accordion Enhancements --- */
+    .accordion-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    }
+
+    .accordion-item.selected {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.25);
+    }
+
+    .form-check-input {
+        width: 1.25em;
+        height: 1.25em;
+    }
+
+    .accordion-button:not(.collapsed) {
+        box-shadow: none;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+
+    /* --- Summary Box Enhancements --- */
+    .summary-box {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    #selectedSummary .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.75em;
+    }
+</style>
+{% endblock %}
+
 {% block main %}
 {% include "message.html" %}
 
-<div class="container w-75 py-5">
-    <h1 class="mb-2 text-center">SODECA Forms</h1>
-    <p class="text-muted mb-4 text-center">Select the forms you wish to submit.<br>
-        (Ensure you have proof/certificates for your selections<span class="text-danger">*</span>)
-    </p>
+<div class="page-wrapper d-flex justify-content-center align-items-center">
+    <div class="card card-minimalist p-4" style="max-width: 900px; width: 100%;">
+        <div class="card-body">
+            <h1 class="mb-2 text-center form-title">SODECA Forms</h1>
+            <p class="text-muted mb-4 text-center">Select the category of your submission.<br>
+                (Ensure you have valid Proof/Certificate for your selections<span class="text-danger">*</span>)
+            </p>
 
-    <form action="/" method="post" id="college-form">
+            <form action="{{ url_for('sodeca_forms') }}" method="post" id="college-form">
+                <div class="accordion" id="formsAccordion">
+                    {% for key, form in FORM_DEFINITIONS.items() %}
+                    <div class="accordion-item mb-3" id="form-item-{{ key }}">
+                        <div class="selection-area p-3 d-flex align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input form-selector" type="checkbox" id="switch-{{ key }}" name="selected_forms[]" value="{{ key }}" data-form-title="{{ form['title'] }}">
+                                <label class="form-check-label fw-semibold ps-2 fs-4" for="switch-{{ key }}">
+                                    {{ form["title"] }}
+                                </label>
+                            </div>
+                        </div>
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ key }}" aria-expanded="false" aria-controls="collapse-{{ key }}">
+                                <i class="fas fa-info-circle me-2"></i>View Requirements & Details
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ key }}" class="accordion-collapse collapse fs-6" data-bs-parent="#formsAccordion">
+                            <div class="accordion-body">
+                                <strong>{{ form["title"] }} Requirements:</strong>
+                                <ul class="mt-2 mb-0">
+                                {% for req in form["description"] %}
+                                    <li>{{ req }}</li>
+                                {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
 
-        <!-- Selectable Forms Accordion -->
-        <div class="accordion" id="formsAccordion">
-
-            <!-- Item 1: Blood Donor -->
-            <!-- <div class="accordion-item mb-3" id="form-blood-donor">
-                <div class="selection-area p-3 d-flex align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="switch-blood" name="selected_forms[]"
-                        value="blood_donor" onchange="updateSelection(this, 'form-blood-donor', 'Blood Donor')">
-                        <label class="form-check-label fw-bold ps-2 fs-5" for="switch-blood">
-                            Blood Donor
-                        </label>
+                <div class="mt-4 p-4 summary-box">
+                    <h5 class="mb-3">Your Selection</h5>
+                    <div id="selectedSummary" class="mb-3 d-flex flex-wrap gap-2">
+                        <span class="text-muted" id="no-selection-text">No forms selected yet.</span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary fw-bold py-2" type="submit">
+                            Proceed to Next Step
+                        </button>
                     </div>
                 </div>
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-blood" aria-expanded="false" aria-controls="collapse-blood">
-                        <i class="fas fa-info-circle me-2"></i>View Requirements & Details
-                    </button>
-                </h2>
-                <div id="collapse-blood" class="accordion-collapse collapse" data-bs-parent="#formsAccordion">
-                    <div class="accordion-body">
-                        <strong>Blood Donor Requirements:</strong>
-                        <ul class="mt-2 mb-0">
-                            <li>Must be between 18-65 years old</li>
-                            <li>Minimum weight of 50kg</li>
-                            <li>Certificate from a recognized blood bank</li>
-                            <li>Proof of at least 3 donations in the last 2 years</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            Item 2: Environmental Volunteer
-            <div class="accordion-item mb-3" id="form-env-volunteer">
-                <div class="selection-area p-3 d-flex align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="switch-env" name="selected_forms[]" value="part_in_comp" onchange="updateSelection(this, 'form-env-volunteer', 'Participation')">
-                        <label class="form-check-label fw-bold ps-2 fs-5" for="switch-env">
-                            Participation
-                        </label>
-                    </div>
-                </div>
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-env" aria-expanded="false" aria-controls="collapse-env">
-                        <i class="fas fa-info-circle me-2"></i>View Requirements & Details
-                    </button>
-                </h2>
-                <div id="collapse-env" class="accordion-collapse collapse" data-bs-parent="#formsAccordion">
-                    <div class="accordion-body">
-                        <strong>Requirements:</strong>
-                        <ul class="mt-2 mb-0">
-                            <li>Certificate of participation in environmental activities</li>
-                            <li>Minimum 40 hours of volunteer work</li>
-                            <li>Letter of recommendation from an environmental organization</li>
-                            <li>Photo documentation of activities</li>
-                        </ul>
-                    </div>
-                </div>
-            </div> -->
-
-            {% for key, form in FORM_DEFINITIONS.items() %}
-            <!-- Item 3: Community Service -->
-            <div class="accordion-item mb-3" id="form-{{ key }}">
-                <div class="selection-area p-3 d-flex align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="switch-{{ key }}" name="selected_forms[]" value="{{ key }}" onchange="updateSelection(this, 'form-{{ key }}', '{{ form['title'] }}')">
-                        <label class="form-check-label fw-bold ps-2 fs-5" for="switch-{{ key }}">
-                            {{ form["title"] }}
-                        </label>
-                    </div>
-                </div>
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ key }}" aria-expanded="false" aria-controls="collapse-{{ key }}">
-                        <i class="fas fa-info-circle me-2"></i>View Requirements & Details
-                    </button>
-                </h2>
-                <div id="collapse-{{ key }}" class="accordion-collapse collapse" data-bs-parent="#formsAccordion">
-                    <div class="accordion-body">
-                        <strong>{{ form["title"] }} Requirements:</strong>
-                        <ul class="mt-2 mb-0">
-                        {% for req in form["description"] %}
-                            <li>{{ req }}</li>
-                        {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-
+            </form>
         </div>
-
-        <!-- Selection Summary and Action -->
-        <div class="mt-4 p-4 summary-box">
-
-            <h5 class="mb-3">Your Selection</h5>
-            <div id="selectedSummary" class="mb-3">
-                <span class="text-muted">No forms selected.</span>
-            </div>
-
-            <div class="d-grid gap-2">
-                <button class="btn btn-primary fw-bold py-2" type="submit">
-                    Proceed to Next Step
-                </button>
-            </div>
-
-        </div>
-    </form>
+    </div>
 </div>
 
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const collegeForm = document.getElementById('college-form');
+    const checkboxes = document.querySelectorAll('.form-selector');
+    const summaryDiv = document.getElementById('selectedSummary');
+    const noSelectionText = document.getElementById('no-selection-text');
+
+    const selections = {};
+
+    function updateSummary() {
+        summaryDiv.innerHTML = '';
+        const selectedItems = Object.values(selections);
+
+        if (selectedItems.length === 0) {
+            summaryDiv.appendChild(noSelectionText);
+        } else {
+            selectedItems.forEach(title => {
+                const badge = document.createElement('span');
+                badge.className = 'badge text-bg-primary';
+                badge.textContent = title;
+                summaryDiv.appendChild(badge);
+            });
+        }
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const formId = this.value;
+            const formTitle = this.dataset.formTitle;
+            const accordionItem = document.getElementById(`form-item-${formId}`);
+
+            if (this.checked) {
+                selections[formId] = formTitle;
+                accordionItem.classList.add('selected');
+            } else {
+                delete selections[formId];
+                accordionItem.classList.remove('selected');
+            }
+            updateSummary();
+        });
+    });
+
+    collegeForm.addEventListener('submit', function(event) {
+        const selectedCount = Object.keys(selections).length;
+
+        if (selectedCount === 0) {
+            // 1. Prevent the form from submitting
+            event.preventDefault();
+
+            // 2. Display a flash message using the function from message.html
+            // This checks if the function exists before calling it.
+            if (typeof showFlashMessage === 'function') {
+                showFlashMessage('Please select at least one form to proceed.', 'danger');
+            } else {
+                // Fallback for safety, though it shouldn't be needed.
+                alert('Please select at least one form to proceed.');
+            }
+        }
+    });
+
+    // Initial call to set the summary on page load
+    updateSummary();
+});
+</script>
 {% endblock %}

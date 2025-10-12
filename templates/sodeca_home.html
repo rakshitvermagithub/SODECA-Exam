@@ -1,0 +1,154 @@
+{% extends "layout.html"%}
+
+{% block title %} 
+    Homepage
+{% endblock %}
+
+{% block css %}
+<style>
+    /* --- Main Hero Section --- */
+    .main-section {
+        background: linear-gradient(135deg, #0951be 0%, #0d6efd 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    @keyframes move {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(40px, 40px); }
+    }
+
+    /* --- "JOIN US" Button Styling --- */
+    .btn-gradient {
+        background: linear-gradient(135deg, #ffffff 0%, #e9ecef 100%);
+        color: #0d6efd;
+        font-weight: bold;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        /* Smoother transitions for transform and shadow */
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+
+    .btn-gradient:hover {
+        color: #0d6efd;
+        /* Enhanced "pop" effect by lifting and scaling up */
+        transform: translateY(-5px) scale(1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Active state to simulate a click/press */
+    .btn-gradient:active {
+        color: #0d6efd;
+        /* Pulls the button down slightly to give a "pressed" feel */
+        transform: translateY(-1px) scale(0.99);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* --- Section Cards Styling --- */
+    .content-card {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+
+    .hover-card {
+        transition: all 0.3s ease;
+    }
+
+    .hover-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+
+    /* Refined instructions list */
+    .instructions-list {
+        padding-left: 1rem;
+        list-style: none;
+        column-count: 2;
+        column-gap: 2rem;
+    }
+    .instructions-list li {
+        padding-left: 1.5rem;
+        position: relative;
+        margin-bottom: 0.75rem;
+    }
+    .instructions-list li::before {
+        content: '✦';
+        position: absolute;
+        left: 0;
+        color: var(--bs-primary);
+    }
+    @media (max-width: 768px) {
+        .instructions-list {
+            column-count: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block nav %}
+    <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="btn rounded-3 border-primary pe-3 ps-3">Examination Forms</a></li>
+{% endblock %}
+
+{% block main %}
+    
+    <!-- main-section -->
+    <div class="main-section w-100 p-5 d-flex flex-column align-items-start justify-content-center text-white">
+        <h1 class="display-3 fw-semibold">SODECA Exam 2025-26</h1>
+        <p class="lead" style="max-width: 900px;">
+        SODECA refers to a category of courses, specifically Social Outreach, Discipline & Extra Curricular Activities, 
+        which are part of the curriculum. It is designed and implemented to enhance students' holistic development by 
+        integrating social, disciplinary, and extra-curricular elements into their engineering education.
+        <br><em>This portal is for students to submit thier entries for the examination of this course
+        for the term 2025-26.</em>    
+        </p>
+        <a href="{{ url_for('register') }}" class="btn btn-gradient mt-3">REGISTER & SUBMIT FORMS</a>
+    </div>
+
+    <!-- General Instructions Section -->
+    <div class="container my-5">
+        <h1 class="text-center mb-5 form-title">General Instructions</h1>
+        <div class="card content-card">
+            <div class="card-body p-5">
+                <ul class="instructions-list">
+                    <li>Date of activities/Certificates: <span class="text-danger fw-bold">From 1 Jan 2024 till date of SODECA Exam.</span></li>
+                    <li>Certificates/proofs must be clearly scanned. Only pdf files are allowed.</li>
+                    <li>Certificates/proofs must be authentic and should clearly mention names, date, signature of the authority etc.</li>
+                    <li>The exam will be conducted in offline mode. Attendance will be given after verification from batch counsellor.</li>
+                    <li>Students will bring separate softcopies (only pdf) of all the certificates. Hardcopies NOT required.</li>
+                    <li>Rename certificate/proof pdf file as: universityroll_studentname_eventname.</li>
+                    <li>Student has to fill the FEEDBACK FORM for current semester in their ERP portal.</li>
+                    <li>If a student is not having a certificate, any other document where their name is mentioned can be used.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Types Section -->
+    <div class="container my-5">
+        <h1 class="text-center mb-5 form-title">Event Types</h1>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100 content-card hover-card">
+                    <div class="card-body p-4">
+                        <h4 class="text-primary"><i class="bi bi-building me-2"></i>Intra College Events</h4>
+                        <p>Competition within SKIT college only. No other institute participated.</p>
+                        <span class="badge bg-info">College Level Events</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 content-card hover-card">
+                    <div class="card-body p-4">
+                        <h4 class="text-danger"><i class="bi bi-globe me-2"></i>Inter College Events</h4>
+                        <p>Competition between different institutes or colleges.</p>
+                        <span class="badge bg-warning">University/State/National/International</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

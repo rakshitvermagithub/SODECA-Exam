@@ -4,84 +4,132 @@
     Verify Student Details
 {% endblock %}
 
+{% block css %}
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 56px);
+        background-color: #f0f2f5;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .card-minimalist {
+        border: none;
+        border-top: 5px solid var(--bs-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+
+    .form-title {
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    .form-title::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 50px;
+        height: 3px;
+        background: var(--bs-primary);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Style for disabled floating inputs to look clean */
+    .form-floating > .form-control:disabled ~ label {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
 {% block main %}
 {% include 'message.html' %}
 
- <!-- Verify Student Details Card -->
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-8">
+<div class="page-wrapper d-flex justify-content-center align-items-center">
+    <div class="card shadow p-4" style="max-width: 700px; width: 100%;">
+        <div class="card-body">
+            <h4 class="card-title text-center mb-4 form-title">Verify Your Details</h4>
+            <p class="text-center text-muted mb-4">Please confirm that the following information is correct before proceeding.</p>
 
-            <div class="card">
+            <!-- Display Student Details -->
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                        <input class="form-control" type="text" id="stdName" value="{{ details.student_name | default('')}}" disabled readonly>
+                        <label for="stdName">Name of the Student</label>
+                    </div>
+                </div>
+                 <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                        <input class="form-control" type="text" id="universityRollNo" value="{{ details.university_roll_no | default('')}}" disabled readonly>
+                        <label for="universityRollNo">University Roll No.</label>
+                    </div>
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                        <input class="form-control" type="text" id="branch" value="{{ details.branch | default('') }}" disabled readonly>
+                        <label for="branch">Branch</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                        <input class="form-control" type="text" id="semester" value="{{ details.semester | default('') }}" disabled readonly>
+                        <label for="semester">Semester</label>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Form heading -->
-                <div class="card-header text-center">
-                    <h4>Verify Student Details</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                        <input class="form-control" type="text" id="section" value="{{ details.section | default('') }}" disabled readonly>
+                        <label for="section">Section</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-floating">
+                        <input class="form-control" type="text" id="groupNo" value="{{ details.class_group | default('') }}" disabled readonly>
+                        <label for="groupNo">Group</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="batchCounselor" value="{{ details.batch_counselor | default('') }}" disabled readonly>
+                    <label for="batchCounselor">Name of the Batch Counselor</label>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Confirmation Form -->
+            <form action="/verify_student_details" method="post">
+                <!-- Outer container for background and padding -->
+                <div class="mb-4 p-2 rounded">
+                    <!-- The form-check element now lives inside the padded container -->
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="True" id="checkDefault" name="verified_details" required style="width: 1.25em; height: 1.25em;">
+                        <label class="form-check-label" for="checkDefault">
+                            <mark>I have verified that the details shown above are correct.<span class="text-danger">*</span></mark>
+                        </label>
+                    </div>
                 </div>
 
-                <div class="card-body">
-
-                    <!-- <div class="mb-3">
-                        <label for="universityRollNo" class="form-label">University Roll No.</label>
-                        <input class="form-control" type="text" id="universityRollNo" 
-                            value="{{ details.university_roll_no | default('')}}" disabled>
-                    </div> -->
-
-                    <div class="mb-3">
-                        <label for="stdName" class="form-label">Name of the Student</label>
-                        <input class="form-control" type="text" id="stdName"
-                            value="{{ details.student_name | default('')}}" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="branch" class="form-label">Branch</label>
-                        <input class="form-control" type="text" id="branch" 
-                            value="{{ details.branch | default('') }}" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="semester" class="form-label">Semester</label>
-                        <input class="form-control" type="text" id="semester" 
-                            value="{{ details.semester | default('') }}" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="section" class="form-label">Section</label>
-                        <input class="form-control" type="text" id="section" 
-                            value="{{ details.section | default('') }}" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="groupNo" class="form-label">Group</label>
-                        <input class="form-control" type="text" id="groupNo" 
-                            value="{{ details.class_group | default('') }}" disabled>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="batchCounselor" class="form-label">Name of the Batch Counselor</label>
-                        <input type="text" class="form-control" id="batchCounselor" 
-                            value="{{ details.batch_counselor | default('') }}" disabled>
-                    </div>
-
-                    <form action="/verify_student_details" method="post">
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" value="True" id="checkDefault" name="verified_details">
-                            <label class="form-check-label" for="checkDefault">
-                                <span class="text-bg-info">I have verified that above details are correct</span><span class="text-danger">*</span>
-                            </label>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="text-center mb-3">
-                            <button type="submit" class="btn btn-primary w-25" value="Submit">Continue</button>
-                        </div>
-
-                    </form>
-
-                </div> 
+                <div class="text-center mb-3">
+                    <button type="submit" class="btn btn-primary" style="width: 150px;">Continue</button>
+                </div>
+            </form>
+            <div class="text-center">
+                You want to edit your details? <a class="link link-offset-1" href="{{url_for('student_details')}}">Click here</a> 
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
+

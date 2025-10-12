@@ -3,146 +3,235 @@
 {% block title %}
     Check Submissions
 {% endblock %}
+
 {% block css %}
-<link href = "https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.css" rel="stylesheet">
-<link href = "https://cdn.datatables.net/buttons/3.2.5/css/buttons.dataTables.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 140px); /* Adjust 140px based on header + footer height */
+        background-color: #f0f2f5;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .card-minimalist {
+        border: none;
+        border-top: 5px solid var(--bs-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+
+    .form-title {
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    .form-title::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 50px;
+        height: 3px;
+        background: var(--bs-primary);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* --- Custom Table Styles --- */
+    .table thead {
+        background-color: #f8f9fa;
+    }
+    .table th {
+        font-weight: 600;
+        color: #495057;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f0f2f5;
+    }
+
+    /* Styling for DataTables buttons to match our design */
+    .dt-buttons .btn {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        transition: all 0.2s ease;
+    }
+    .dt-buttons .btn:hover {
+        background-color: #f8f9fa;
+        border-color: #adb5bd;
+    }
+    
+    /* Navigation Table styles */
+    .nav-table a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+</style>
 {% endblock %}
 
 {% block main %}
 {% include "message.html" %}
 
-{% if not is_authorized %}
-    <p>To approve and upload submissions, you must first authorize this application to access your Google Drive.</p>
-    <a href="{{ url_for('authorize_drive') }}"><button>Login with Google to Manage Files</button></a>
-{% else %}
-    <!-- Table for forms name list -->
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-8">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h4>Forms list</h4>
+<div class="page-wrapper">
+    {% if not is_authorized %}
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card card-minimalist p-4 text-center">
+                        <div class="card-body">
+                            <h4 class="form-title mb-4">Authorization Required</h4>
+                            <p class="text-muted">To approve and manage student submissions, you must first authorize this application to access your Google Drive.</p>
+                            <a href="{{ url_for('authorize_drive') }}" class="btn btn-primary mt-3">
+                                <i class="bi bi-google me-2"></i>Login with Google to Manage Files
+                            </a>
+                        </div>
                     </div>
-                    <table class="table mb-3">
-                        {% for name in form_title_list %}
-                        <tr>
-                            <td>{{loop.index}}. {{ name }}</td>
-                        </tr>
-                        {% endfor %}
-                    </table>
                 </div>
             </div>
         </div>
+    {% else %}
+        <!-- Forms Navigation Table -->
+        <div class="container mb-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-10">
+                    <div class="card card-minimalist">
+                        <div class="card-body p-4">
+                             <h3 class="text-center mb-4 form-title">Forms list</h3>
+                            <div class="table-responsive">
+                                <table class="table table-hover nav-table">
+                                    <tbody>
+                                    {% for name in form_title_list %}
+                                        <tr>
+                                            <!-- The anchor link now wraps the content and links to the table ID -->
+                                            <td>
+                                                <a href="#{{ form_names[loop.index0] }}-anchor">
+                                                    <div class="d-flex justify-content-between align-items-center fs-5">
+                                                        <span>{{loop.index}}. {{ name }}</span>
+                                                        <i class="bi bi-box-arrow-up-right text-primary"></i>
+                                                    </div>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Table for each form created dynamically -->
-        <!-- forms_data is a list of list of dicts(forms)-->
+        <!-- Dynamically Generated Data Tables -->
         {% for form in forms_data %}
-        {% set outer_loop = loop %}
-        <div class="container py-4">
-        <div class="row justify-content-center">
-            <div class="col-12 col-lg-11">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <h4>{{ form_title_list[(outer_loop.index0)] }}</h4>
-                    </div>
-                    <div class="table-responsive mb-3">
-                        <table class="table table-bordered table-sm table-hover" id="{{ form_names[(outer_loop.index0)] }}">
-                            <thead>
-                                <tr>
-                                <!-- Getting fields from instead of data -->
-                                {% for header in form[0] %}
-                                {% if header != 'full_path' %}
-                                    <td>{{ header }}</td>
-                                {% endif %}
-                                {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <!-- Loop for rows in a table like blood_donor -->
-                            {% for row in form %}
-
-                                <tr>
-                                <!-- For keys and value in each row of entries -->
-                                {% for key, value in row.items() %}
-
-                                    {% if key == 'certificate' %}
-                                    <td>
-                                        <a href="{{ url_for('view_submission', filename=value) }}" target="_blank">{{ value }}</a>
-                                    </td>
-                                    {% elif key == 'status' %}
-                                        {% if value == 'approved' %}
-                                        <td>
-                                            <button class="btn btn-success" disabled>Approved</button>
-                                        </td>
-                                        {% elif value == 'rejected' %}
-                                        <td>
-                                            <button class="btn btn-danger" disabled>Rejected</button>
-                                        </td>
-                                        {% else %}
-                                        <td>
-                                            <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
-                                            <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
-                                            <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
-                                            <input type="hidden" name="filename" value="{{ row['certificate'] }}">
-
-                                            <button type="submit" class="btn btn-success">Approve</button>
-                                            </form>
-
-                                            <form action="{{ url_for('reject_entry') }}" method="POST" style="display: inline;">
-                                                <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
-                                                <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
-                                                <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
-
-                                                <button type="submit" class="btn btn-danger">Reject</button>
-                                            </form>
-                                        </td>
-                                        {% endif %}
-
-                                    {% elif key == 'google_file_id' and value != 'pending' %}
-                                    <td>
-                                        <a href="https://drive.google.com/file/d/{{ value }}/view">View</a>
-                                        <a href="https://drive.google.com/uc?id={{ value }}&export=download">Download</a>
-                                    </td>
-                                    {% elif key == 'full_path' %}
-                                    {% else %}
-                                    <td>
-                                        <span>{{ value }}</span>
-                                    </td>
-                                    {% endif %}
-
-                                {% endfor %}
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
+            {% set outer_loop = loop %}
+            <!-- Anchor for navigation -->
+            <div class="container py-4" id="{{ form_names[(outer_loop.index0)] }}-anchor">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <div class="card shadow border-dark-subtle">
+                            <div class="card-body p-4">
+                                <h3 class="text-center mb-4 form-title">{{ form_title_list[(outer_loop.index0)] }}</h3>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered border-dark-subtle table-hover" id="{{ form_names[(outer_loop.index0)] }}" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                {% for header in form[0] %}
+                                                    {% if header != 'full_path' and header != 'student_user_id' %}
+                                                        <th>{{ header }}</th>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in form %}
+                                            <tr>
+                                                {% for key, value in row.items() %}
+                                                    {% if key == 'certificate' %}
+                                                        <td>
+                                                            <a href="{{ url_for('view_submission', filename=value) }}" target="_blank">{{ value }}</a>
+                                                        </td>
+                                                    {% elif key == 'status' %}
+                                                        <td>
+                                                            {% if value == 'approved' %}
+                                                                <span class="badge bg-success">Approved</span>
+                                                            {% elif value == 'rejected' %}
+                                                                <span class="badge bg-danger">Rejected</span>
+                                                            {% else %}
+                                                                <div class="btn-group btn-group-sm">
+                                                                    <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
+                                                                        <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
+                                                                        <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
+                                                                        <input type="hidden" name="filename" value="{{ row['certificate'] }}">
+                                                                        <button type="submit" class="btn btn-outline-success">Approve</button>
+                                                                    </form>
+                                                                    <form action="{{ url_for('reject_entry') }}" method="POST" style="display: inline;">
+                                                                        <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
+                                                                        <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
+                                                                        <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
+                                                                        <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                                                    </form>
+                                                                </div>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% elif key == 'google_file_id' and value != 'pending' %}
+                                                        <td>
+                                                            <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">View</a>
+                                                            <a href="https://drive.google.com/file/d/{{ value }}/download" target="_blank">Download</a>
+                                                        </td>
+                                                    {% elif key == 'full_path' or key == 'student_user_id' %}
+                                                        <!-- This column is hidden as per the header logic -->
+                                                    {% else %}
+                                                        <td>{{ value }}</td>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         {% endfor %}
-        </div>
-    </div>
-{% endif %}
+    {% endif %}
+</div>
 {% endblock %}
+
 {% block script %}
-<script src = "https://code.jquery.com/jquery-3.7.1.js"></script>
-<script src = "https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
-<script src = "https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
-<script src = "https://cdn.datatables.net/buttons/3.2.5/js/buttons.dataTables.js"></script>
-<script src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src = "https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
-<script src = "https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.bootstrap5.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script>
-// Wrap in DOMContentLoaded to ensure tables exist
 document.addEventListener('DOMContentLoaded', function() {
     const list = {{ form_names | tojson }};
     list.forEach((item) => {
         new DataTable(`#${item}`, {
             layout: {
                 topStart: {
-                    buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                    buttons: [
+                        { extend: 'copy', className: 'btn-sm' },
+                        { extend: 'csv', className: 'btn-sm' },
+                        { extend: 'excel', className: 'btn-sm' },
+                        { extend: 'pdf', className: 'btn-sm' },
+                        { extend: 'print', className: 'btn-sm' }
+                    ]
                 }
             }
         });

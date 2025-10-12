@@ -166,7 +166,14 @@ FORM_DEFINITIONS = {
 
     'part_in_comp': {
         'title': 'Participation in Competition/Contest/Activity',
-        'description': '...',
+        'description': [
+            "Certificate of participation for Cultural / Technical (e.g. Hackathon) /Sports /Non Technical  events in some Competition/Contest/Activity organized by SKIT or any other Institute.", 
+            "It should be a participation certificate for a competition/contest or some significant events" ,
+            "Event should be organized by SKIT or any other institute and you should represent SKIT.",
+            "Personal level participation certificate NOT allowed. Only participation in an activity as an SKIT student is valid.", 
+            "Participation certificate should mention your name as student of SKIT. for e.g. Ajay Gupta  of SKIT participated in xyz event.",
+            "Certificate of completion (For e.g  successfully completed an online assesment/course/training etc ) is NOT allowed. Certificate for Appearing  in / Clearing  an online assesment/test is NOT allowed."
+                        ],
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
             {
@@ -250,17 +257,6 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Event Duration(in days)',
-                'field_type': 'number',
-                'field_name': 'event_duration',
-                'required': True,
-                'placeholder': 'Your answer',
-                'field_validation': {
-                    'min': 1,
-                    'max': 365
-                }
-            },
-            {
                 'field_label': 'From Date',
                 'field_type': 'date',
                 'field_name': 'from_date',
@@ -321,7 +317,9 @@ FORM_DEFINITIONS = {
     
     'part_in_work': {
         'title': 'Workshop/Seminar/Webinar/Conference Attended',
-        'description': '...',
+        'description': [
+            'Certificate  for participation for attending any Workshop/Seminar/Webinar/Symposium/Conference organized by SKIT or any other Institute'
+            ],
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
             {
@@ -360,17 +358,6 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Duration(in days)',
-                'field_type': 'number',
-                'field_name': 'event_duration',
-                'required': True,
-                'placeholder': 'Your answer',
-                'field_validation': {
-                    'min': 1,
-                    'max': 365
-                }
-            },
-                        {
                 'field_label': 'From Date',
                 'field_type': 'date',
                 'field_name': 'from_date',
@@ -471,7 +458,7 @@ FORM_DEFINITIONS = {
                 }
             },
             {
-                'field_label': 'In-house / Away',
+                'field_label': 'In-house/Away',
                 'field_type': 'radio',
                 'field_name': 'location_type',
                 'required': True,
@@ -490,17 +477,6 @@ FORM_DEFINITIONS = {
                     {'value': 'online', 'label': 'Online'},
                     {'value': 'offline', 'label': 'Offline'},
                 ]
-            },
-            {
-                'field_label': 'Duration (in days)',
-                'field_type': 'number',
-                'field_name': 'duration',
-                'required': True,
-                'placeholder': 'e.g., 1',
-                'field_validation': {
-                    'min': 1,
-                    'max': 365
-                }
             },
             {
                 'field_label': 'From Date',
@@ -658,17 +634,6 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Duration (in days)',
-                'field_type': 'number',
-                'field_name': 'duration',
-                'required': True,
-                'placeholder': 'e.g., 1',
-                'field_validation': {
-                    'min': 1,
-                    'max': 365
-                }
-            },
-            {
                 'field_label': 'From Date',
                 'field_type': 'date',
                 'field_name': 'from_date',
@@ -801,7 +766,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Name of the team (If it is Hackathon event)',
+                'field_label': 'Name of the team(If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_name',
                 'required': False,
@@ -906,14 +871,6 @@ FORM_DEFINITIONS = {
                     {'value': 'online', 'label': 'Online'},
                     {'value': 'offline', 'label': 'Offline'}
                 ]
-            },
-            {
-                'field_label': 'Event Duration (in days)',
-                'field_type': 'number',
-                'field_name': 'duration',
-                'required': True,
-                'placeholder': 'e.g., 1',
-                'field_validation': { 'min': 1, 'max': 365 }
             },
             {
                 'field_label': 'From Date',
@@ -1025,14 +982,6 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Duration (in days)',
-                'field_type': 'number',
-                'field_name': 'duration',
-                'required': True,
-                'placeholder': 'e.g., 30',
-                'field_validation': { 'min': 1, 'max': 365 }
-            },
-            {
                 'field_label': 'From Date',
                 'field_type': 'date',
                 'field_name': 'from_date',
@@ -1094,14 +1043,6 @@ FORM_DEFINITIONS = {
                     {'value': 'national', 'label': 'National'},
                     {'value': 'international', 'label': 'International'}
                 ]
-            },
-            {
-                'field_label': 'Duration (in days)',
-                'field_type': 'number',
-                'field_name': 'duration',
-                'required': True,
-                'placeholder': 'e.g., 2',
-                'field_validation': { 'min': 1, 'max': 365 }
             },
             {
                 'field_label': 'From Date',
@@ -1257,14 +1198,6 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'e.g., Coursera, edX, Udemy',
                 'field_validation': { 'min_length': 2, 'max_length': 100 }
-            },
-            {
-                'field_label': 'Duration',
-                'field_type': 'text',
-                'field_name': 'duration',
-                'required': True,
-                'placeholder': 'e.g., 4 weeks, 20 hours',
-                'field_validation': { 'min_length': 2, 'max_length': 50 }
             },
             {
                 'field_label': 'Date of Completion',
@@ -1437,6 +1370,15 @@ def send_otp(to_mail):
     server.quit()
     print(f"OTP sent to {to_mail}: {otp}") # For debugging
 
+# Homepage route
+@app.route("/", methods=["GET"])
+def sodeca_home():
+    # If faculty
+    if session.get("user_role") == 'faculty':
+        return redirect(url_for("faculty_dashboard"))
+    # If student
+    return render_template("sodeca_home.html")
+
 # Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -1596,6 +1538,7 @@ def login_callback():
             profile_picture = user_info.get('picture', '')
 
             is_faculty = email in faculty_emails
+            session['user_role'] = 'faculty' if is_faculty else 'student'
 
             # Check if user already exists with this Google ID
             existing_user = db.execute("SELECT * FROM users WHERE google_id = ?", google_id)
@@ -1685,14 +1628,16 @@ def login():
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
 
-        # If faculty
+        # if faculty
         if email in faculty_emails:
+            session["user_role"] = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
-        # It is a student
+        # if student
         else:    
+            session["user_role"] = 'student'
             details_filled = db.execute("SELECT * FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
-            # If student has not filled details
+            # if student has not filled details
             if not details_filled:
                 # fill details first
                 flash("Login succesfull! You may fill the neccessary student details", "success")
@@ -1800,14 +1745,17 @@ def student_details():
             flash(f"Database error: {e}")
             return redirect(url_for("student_details"))
         
-        flash("Your details are saved successfully. View or edit details on the profile page", "success")
+        flash("Your details are saved successfully. View on the profile page", "success")
         return redirect(url_for("sodeca_forms"))
+    
     else:
-
         # Get student details if already present
         # Variable stores a list of dictionaries
         student_details_row = db.execute(
             "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
+        )
+        faculty_list = db.execute(
+            "SELECT full_name, designation, department FROM faculty_details"
         )
 
         # If details are already available
@@ -1816,12 +1764,14 @@ def student_details():
 
             # Show the page with filled details
             return render_template(
-                "student_details.html", details = filled_details
+                "student_details.html", details=filled_details, faculty_list=faculty_list
                 )
         else:
-            return render_template("student_details.html", details=None)
+            return render_template(
+                "student_details.html", details=None, faculty_list=faculty_list
+                )
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/sodeca_forms", methods=["GET", "POST"])
 def sodeca_forms():
 
     if request.method == "POST":
@@ -1854,15 +1804,15 @@ def verify_student_details():
         student_details_row = db.execute(
                     "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
                     )
-
+        
         # If details are already available
-        if student_details_row:
-            filled_details = student_details_row[0]
+        if not student_details_row:
+            flash("You cannot proceed with empty student details.", "danger")
+            flash("Go to Profile tab and submit your details", "warning")
+            return redirect(url_for('sodeca_forms'))
 
-            # Show the page with filled details
-            return render_template("verify_student_details.html", details = filled_details)
-        else:
-            return render_template("verify_student_details.html", details=None)
+        # Show the page with filled details
+        return render_template("verify_student_details.html", details=student_details_row[0])
 
 @app.route("/fill_form", methods=["GET", "POST"])
 @login_required
@@ -2008,7 +1958,7 @@ def fill_form():
                 flash("Error: From date is greater than To date", "danger")
                 return redirect(request.url)
             today = date.today()
-            if from_date > today or to_date > today:
+            if from_date >= today or to_date >= today:
                 print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
                 flash("Error: Dates cannot be for in future activites", "danger")
                 return redirect(request.url)
@@ -2389,6 +2339,10 @@ def student_report():
         return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
     return render_template("student_report.html", filtered_data=[], FORM_DEFINITIONS=FORM_DEFINITIONS)
+
+@app.route("/tarun", methods=["GET"])
+def tarun():
+    return render_template("tarun.html")
 
 if __name__ == '__main__':
 

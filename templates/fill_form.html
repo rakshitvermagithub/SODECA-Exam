@@ -4,121 +4,291 @@
     {{ form_to_show["title"] }} Form
 {% endblock %}
 
+{% block css %}
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 56px);
+        background-color: #f0f2f5;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .card-minimalist {
+        border: none;
+        border-top: 5px solid var(--bs-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+
+    .form-title {
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    .form-title::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 50px;
+        height: 3px;
+        background: var(--bs-primary);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .progress-container {
+        position: relative;
+        background-color: #e9ecef;
+        border: 1px solid var(--bs-primary);
+        border-radius: 0.375rem;
+        padding: 3px;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
+    }
+
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        color: #212529;
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-shadow: 0 0 3px rgba(255,255,255,0.4);
+    }
+    
+    .progress-container .progress {
+        height: 1.5rem;
+    }
+    
+    .progress-container .progress-bar {
+        border-radius: 0.25rem;
+    }
+
+    /* Ensure feedback for radio/select groups is visible */
+    .invalid-feedback {
+        display: none;
+    }
+    .form-control.is-invalid ~ .invalid-feedback,
+    .form-select.is-invalid ~ .invalid-feedback,
+    .was-validated .form-check-input:invalid ~ .invalid-feedback {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+
 {% block main %}
 {% include "message.html" %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-8">
+<div class="page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10 col-xl-8">
 
-            <div class="accordion-item mb-3" id="progress-bar">
-                <div class="form-check">
-                    <label class="form-check-label fw-bold fs-5 mb-2">
-                        Forms Progress
-                    </label>
-                    <div class="progress mb-2" style = "width: 98%">
-                        <div class="progress-bar" role="progressbar" aria-valuenow="{{count}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
-                            {{ count }}/{{ total }}
+                <div class="progress-container mb-4 w-75 mx-auto">
+                    <div class="progress-text">{{ count }} / {{ total }}</div>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" aria-valuenow="{{count}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
                         </div>
-                        {% if count < 1 %}
-                        <span class="position-absolute w-100 text-center" style="line-height: 16px; z-index: 10; margin-left: -343px">
-                          0/{{ total }}
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            {% if success %}
-
-                <!-- Submission Success Message -->
-                <div class="card mb-3 shadow-sm border-dark rounded-1">
-                    <div class="card-body p-4">
-                        <h3 class="card-title mb-3 fw-bold text-dark">
-                            Your entry for {{ form_to_show["title"] }} has been submitted! ✅
-                        </h3>
-                        <a href="/fill_form"><button class="btn btn-primary">
-                            Continue
-                        </button></a>
                     </div>
                 </div>
 
-            {% else %}
-
-                <!-- Forms to be filled -->
-                <div class="card shadow-sm border-dark rounded-1 position-relative">
-                    <div class="card-header text-center">
-                        <h4>{{ form_to_show["title"] }}</h4>
+                {% if success %}
+                    <div class="card card-minimalist mb-3">
+                        <div class="card-body p-5 text-center">
+                            <h3 class="card-title mb-3 fw-bold text-dark form-title">Entry Submitted!</h3>
+                            <p class="text-muted">Your entry for "{{ form_to_show["title"] }}" has been saved successfully. ✅</p>
+                            <a href="/fill_form" class="btn btn-primary mt-3" style="width: 150px;">Continue</a>
+                        </div>
                     </div>
-                    <div class="card-body p-4">   
-                        <form action="/fill_form" method="post" enctype="multipart/form-data">
-                            {% for field in form_to_show["fields"] %}
-                                {% if field["field_name"] == "from_date" %}
-                                {% set to_date_field = form_to_show["fields"][loop.index] %}
-                                <!-- Date Range Fields (From and To Date) -->
-                                <div class="mb-3">
-                                    <div class="row g-3">
-                                        <!-- From Date -->
-                                        <div class="col-md-6">
-                                            <label class="form-label mb-1">{{ field["field_label"] }}</label>
-                                            {% if field["help_text"] %}
-                                            <div class="form-text mb-2">{{ field["help_text"] }}</div>
-                                            {% endif %}
-                                            <input type="{{ field["field_type"] }}" class="form-control" 
-                                                id="field{{ loop.index }}" name="{{ field["field_name"] }}" 
-                                                placeholder="{{ field["placeholder"] | default('') }}" 
-                                                {% if field["required"] %}required{% endif %}>
-                                        </div>
-                                        
-                                        <!-- To Date -->
-                                        <div class="col-md-6">
-                                            <label class="form-label mb-1">{{ to_date_field["field_label"] }}</label>
-                                            {% if to_date_field["help_text"] %}
-                                            <div class="form-text mb-2">{{ to_date_field["help_text"] }}</div>
-                                            {% endif %}
-                                            <input type="{{ to_date_field["field_type"] }}" class="form-control" 
-                                                id="field{{ loop.index + 1 }}" name="{{ to_date_field["field_name"] }}" 
-                                                placeholder="{{ to_date_field["placeholder"] | default('') }}" 
-                                                {% if to_date_field["required"] %}required{% endif %}>
-                                        </div>
-                                    </div>
-                                </div>
+                {% else %}
+                    <div class="card shadow position-relative">
+                        <div class="card-body p-4 p-md-5">
+                            <h4 class="text-center mb-4 form-title display-6">{{ form_to_show["title"] }}</h4>
                             
-                                {% elif field["field_name"] == "to_date" %}
-                                    <!-- Skip to_date as it's already rendered with from_date -->
-                                    
-                                {% else %}
-                                <div class="mb-3">
-                                    <label class="form-label mb-1">{{ field["field_label"] | default("Field Title") }}</label>
-                                    {% if field["help_text"] %}
-                                    <div class="form-text mb-2">{{ field["help_text"] }}</div>
-                                    {% endif %}
-
-                                    {% if field["field_type"] == "radio" %}
-                                        {% include 'partials/radio_field.html' %}
-                                    {% elif field["field_type"] == "select" %}
-                                        {% include 'partials/select_field.html' %}
-                                    {% elif field["field_type"] == "checkbox" %}
-                                        {% include 'partials/checkbox_field.html' %}
+                            <form id="fillForm" action="/fill_form" method="post" enctype="multipart/form-data" novalidate>
+                                
+                                {% for field in form_to_show["fields"] %}
+                                    {% if field["field_name"] == "from_date" %}
+                                        {% set to_date_field = form_to_show["fields"][loop.index] %}
+                                        <div class="mb-3">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label mb-1 fs-5">{{ field["field_label"] }}{% if field.required %}<span class="text-danger">*</span>{% endif %}</label>
+                                                    {% if field["help_text"] %}<div class="form-text mb-2">{{ field["help_text"] }}</div>{% endif %}
+                                                    <input type="{{ field.field_type }}" class="form-control" id="{{ field.field_name }}" name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" {% if field.required %}required{% endif %}>
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label mb-1 fs-5">{{ to_date_field["field_label"] }}{% if field.required %}<span class="text-danger">*</span>{% endif %}</label>
+                                                    {% if to_date_field.help_text %}<div class="form-text mb-2">{{ to_date_field.help_text }}</div>{% endif %}
+                                                    <input type="{{ to_date_field.field_type }}" class="form-control" id="{{ to_date_field.field_name }}" name="{{ to_date_field.field_name }}" placeholder="{{ to_date_field.placeholder|default('') }}" {% if to_date_field.required %}required{% endif %}>
+                                                    <div class="invalid-feedback"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% elif field["field_name"] == "to_date" %}
+                                        <!-- This field is rendered with from_date, so we skip it here -->
                                     {% else %}
                                         <div class="mb-3">
-                                            <input type="{{ field["field_type"] }}" class="form-control" 
-                                            id="field{{ loop.index }}" name="{{ field["field_name"] }}" 
-                                            placeholder="{{ field["placeholder"] }}" 
-                                            {% if field["required"] %}required{% endif %}">
+                                            <label class="form-label fs-5" for="{{ field.field_name }}">{{ field["field_label"] | default("Field Title") }}{% if field.required %}<span class="text-danger">*</span>{% endif %}</label>
+                                            {% if field["help_text"] %}<div class="form-text mb-2">{{ field["help_text"] }}</div>{% endif %}
+
+                                            {% if field["field_type"] == "radio" %}
+                                                {% if field.options and field.options|length > 2 %}
+                                                    {% include 'partials/select_field.html' %}
+                                                {% else %}
+                                                    {% include 'partials/radio_field.html' %}
+                                                {% endif %}
+                                            {% elif field["field_type"] == "select" %}
+                                                {% include 'partials/select_field.html' %}
+                                            {% elif field["field_type"] == "checkbox" %}
+                                                {% include 'partials/checkbox_field.html' %}
+                                            {% else %}
+                                                <input type="{{ field.field_type }}" class="form-control" id="{{ field.field_name }}" name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" {% if field.required %}required{% endif %}>
+                                            {% endif %}
+                                            <div class="invalid-feedback"></div>
                                         </div>
                                     {% endif %}
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                            <!-- Submit form button -->
-                            <button class="btn btn-primary" type="submit">Submit and Continue</button>   
-                        </form>
-                    </div>
-                </div>  
-            
-            {% endif %}
+                                {% endfor %}
 
+                                <hr class="my-4">
+                                <div class="text-center">
+                                    <button class="btn btn-primary" type="submit" style="width: 200px;">Submit and Continue</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>  
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('fillForm');
+    if (!form) return; // Stop if there's no form on the page
+
+    // Pass the form's data structure from Jinja to JavaScript
+    const formFieldsData = {{ form_to_show.fields | tojson }};
+    
+    const showValidation = (input, isValid, message) => {
+        const parent = input.closest('.mb-3');
+        const feedback = parent.querySelector('.invalid-feedback');
+        
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            if (feedback) feedback.textContent = '';
+        } else {
+            input.classList.add('is-invalid');
+            if (feedback) feedback.textContent = message;
+        }
+    };
+
+    const validateField = (input) => {
+        let isValid = true;
+        let message = '';
+        const fieldData = formFieldsData.find(f => f.field_name === input.id);
+        if (!fieldData) return true; // Cannot validate if data is not found
+
+        // 1. Required Field Validation
+        if (fieldData.required) {
+            if (!input.value || input.value.trim() === '') {
+                isValid = false;
+                message = 'This field is required.';
+            }
+        }
+        
+        // 2. Text Length Validation
+        if (isValid && input.type === 'text' && fieldData.field_validation) {
+            const min = fieldData.field_validation.min_length;
+            const max = fieldData.field_validation.max_length;
+            if (min && input.value.length < min) {
+                isValid = false;
+                message = `Must be at least ${min} characters long.`;
+            }
+            if (max && input.value.length > max) {
+                isValid = false;
+                message = `Cannot exceed ${max} characters.`;
+            }
+        }
+
+        // 3. Date Validation (Must be in the past)
+        if (isValid && input.type === 'date') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize to midnight
+            const selectedDate = new Date(input.value);
+
+            if (selectedDate >= today) {
+                isValid = false;
+                message = 'Date must be in the past.';
+            }
+        }
+
+        // 4. Date Range Validation (from_date vs to_date)
+        if (isValid && (input.id === 'from_date' || input.id === 'to_date')) {
+            const fromDateEl = document.getElementById('from_date');
+            const toDateEl = document.getElementById('to_date');
+            if (fromDateEl && toDateEl && fromDateEl.value && toDateEl.value) {
+                if (new Date(fromDateEl.value) > new Date(toDateEl.value)) {
+                    showValidation(toDateEl, false, 'To Date cannot be before From Date.');
+                    showValidation(fromDateEl, false, 'From Date cannot be after To Date.');
+                    return false; // Exit early, as both are invalid
+                } else {
+                    showValidation(toDateEl, true, '');
+                    showValidation(fromDateEl, true, '');
+                }
+            }
+        }
+
+        // 5. File Validation
+        if (isValid && input.type === 'file') {
+            const maxFileSize = 5 * 1024 * 1024; // 5MB
+            if (input.files.length > 0) {
+                const file = input.files[0];
+                if (file.type !== 'application/pdf') {
+                    isValid = false;
+                    message = 'Invalid file type. Only PDF is allowed.';
+                } else if (file.size > maxFileSize) {
+                    isValid = false;
+                    message = `File is too large. Maximum size is 5MB.`;
+                }
+            }
+        }
+
+        showValidation(input, isValid, message);
+        return isValid;
+    };
+
+    // Attach event listeners for real-time feedback
+    form.querySelectorAll('input, select').forEach(input => {
+        const eventType = (input.type === 'file' || input.type === 'select-one' || input.type === 'radio' || input.type === 'checkbox') ? 'change' : 'blur';
+        input.addEventListener(eventType, () => validateField(input));
+    });
+
+    // Final validation on form submission
+    form.addEventListener('submit', function(event) {
+        let isFormValid = true;
+        form.querySelectorAll('input[required], select[required]').forEach(input => {
+            if (!validateField(input)) {
+                isFormValid = false;
+            }
+        });
+
+        if (!isFormValid) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof showFlashMessage === 'function') {
+                showFlashMessage('Please correct the errors before submitting.', 'danger');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+

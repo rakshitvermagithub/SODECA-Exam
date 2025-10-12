@@ -4,207 +4,263 @@
     Student Details
 {% endblock %}
 
+{% block css %}
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 56px);
+        background-color: #f0f2f5;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .card-minimalist {
+        border: none;
+        border-top: 5px solid var(--bs-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+
+    .form-title {
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    .form-title::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 50px;
+        height: 3px;
+        background: var(--bs-primary);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+</style>
+{% endblock %}
+
 {% block main %}
 {% include "message.html" %}
-
-<div class="container w-50 form-container">
-
-    <div class="card">
-
-        <!-- Form heading -->
-        <div class="card-header text-center">
-            <h4>Student Details</h4>
-        </div>
-
+<div class="page-wrapper d-flex justify-content-center align-items-center">
+    <div class="card shadow p-4" style="max-width: 600px; width: 100%;">
         <div class="card-body">
-            <!-- Form body-->
-            <form action="/student_details" method="post">
-                <!--<div class="mb-3">
-                    <label for="studentEmail" class="form-label">Student Email</label>
-                    <input type="email" class="form-control" name="email" aria-describedby="emailHelp">
-                    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
-                </div>-->
+            <h3 class="card-title text-center mb-4 form-title">Student Details</h3>
 
-                <!-- Enter University Roll No. -->
-                <div class="mb-3">
-                    <label for="universityRollNo" class="form-label">University Roll No.</label>
-                    <input class="form-control" type="text" id="universityRollNo"
-                    name="university_roll_no" value="{{ details.university_roll_no | default('')}}"
-                    required>
-                </div>
-
-                <!-- Enter Student Name -->
-                <div class="mb-3">
-                    <label for="stdName" class="form-label">Name of the Student</label>
-                    <input class="form-control" type="text" id="stdName"
-                     name="student_name" value="{{ details.student_name | default('')}}"
-                     required>
-                </div>
-
-                <!-- Select Branch -->
-                <div class="mb-3">
-                    <label for="branch" class="form-label d-block">Branch</label>
-                    <div class="d-flex justify-content-evenly">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse"
-                            value="CSE" required {% if details and details.branch == "CSE" %}checked{% endif %}>
-                            <label class="form-check-label" for="branch_cse">
-                                CSE
-                            </label>
+            <form action="/student_details" id="detailsForm" method="post" novalidate>
+                <!-- Row 1: Roll No and Name -->
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="universityRollNo" name="university_roll_no" placeholder="University Roll No." value="{{ details.university_roll_no | default('')}}" required>
+                            <label for="universityRollNo">University Roll No.</label>
+                            <div class="invalid-feedback"></div>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_ai"
-                            value="CSE(AI)" required {% if details and details.branch == 'CSE(AI)' %}checked{% endif %}>
-                            <label class="form-check-label" for="branch_cse_ai">
-                                CSE (AI)
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_ds"
-                            value="CSE(DS)" required {% if details and details.branch == 'CSE(DS)' %}checked{% endif %}>
-                            <label class="form-check-label" for="branch_cse_ds">
-                                CSE (DS)
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="branch_option" id="branch_cse_iot"
-                            value="CSE(IOT)" required {% if details and details.branch == 'CSE(IOT)' %}checked{% endif %}>
-                            <label class="form-check-label" for="branch_cse_iot">
-                                CSE (IOT)
-                            </label>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="stdName" name="student_name" placeholder="Name of the Student" value="{{ details.student_name | default('')}}" required>
+                            <label for="stdName">Name of the Student</label>
+                            <div class="invalid-feedback"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Select Semester -->
-                <div class="mb-3">
-                    <label for="semester" class="form-label d-block">
-                        Semester
-                    </label>
-                    <div class="d-flex justify-content-evenly">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_3"
-                            value="3" required {% if details and details.semester == 3 %}checked{% endif %}>
-                            <label class="form-check-label" for="semester_3">
-                                3
-                            </label>
+                <!-- Row 2: Branch and Semester Dropdowns -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="branch" name="branch_option" required>
+                                <option value="" disabled {% if not details.branch %}selected{% endif %}>Choose...</option>
+                                <option value="CSE" {% if details and details.branch == 'CSE' %}selected{% endif %}>CSE</option>
+                                <option value="CSE(AI)" {% if details and details.branch == 'CSE(AI)' %}selected{% endif %}>CSE (AI)</option>
+                                <option value="CSE(DS)" {% if details and details.branch == 'CSE(DS)' %}selected{% endif %}>CSE (DS)</option>
+                                <option value="CSE(IOT)" {% if details and details.branch == 'CSE(IOT)' %}selected{% endif %}>CSE (IOT)</option>
+                            </select>
+                            <label for="branch">Branch</label>
+                            <div class="invalid-feedback"></div>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_4"
-                            value="4" required {% if details and details.semester == 4 %}checked{% endif %}>
-                            <label class="form-check-label" for="semester_4">
-                                4
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_5"
-                            value="5" required {% if details and details.semester == 5 %}checked{% endif %}>
-                            <label class="form-check-label" for="semester_5">
-                                5
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_6"
-                            value="6" required {% if details and details.semester == 6 %}checked{% endif %}>
-                            <label class="form-check-label" for="semester_6">
-                                6
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_7"
-                            value="7" required {% if details and details.semester == 7 %}checked{% endif %}>
-                            <label class="form-check-label" for="semester_7">
-                                7
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="semester_option" id="semester_8"
-                            value="8" required {% if details and details.semester == 8 %}checked{% endif %}>
-                            <label class="form-check-label" for="semester_8">
-                                8
-                            </label>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="semester" name="semester_option" required>
+                                <option value="" disabled {% if not details.semester %}selected{% endif %}>Choose...</option>
+                                <option value="3" {% if details and details.semester == 3 %}selected{% endif %}>3</option>
+                                <option value="4" {% if details and details.semester == 4 %}selected{% endif %}>4</option>
+                                <option value="5" {% if details and details.semester == 5 %}selected{% endif %}>5</option>
+                                <option value="6" {% if details and details.semester == 6 %}selected{% endif %}>6</option>
+                                <option value="7" {% if details and details.semester == 7 %}selected{% endif %}>7</option>
+                                <option value="8" {% if details and details.semester == 8 %}selected{% endif %}>8</option>
+                            </select>
+                            <label for="semester">Semester</label>
+                            <div class="invalid-feedback"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Select Section -->
-                <div class="mb-3">
-                    <label for="section" class="form-label d-block">Section</label>
-                    <div class="d-flex justify-content-evenly">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_a"
-                            value="A" required {% if details and details.section == 'A' %}checked{% endif %}>
-                            <label class="form-check-label" for="section_a">
-                                A
-                            </label>
+                <!-- Row 3: Section and Group Dropdowns -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="section" name="section_option" required>
+                                <option value="" disabled {% if not details.section %}selected{% endif %}>Choose...</option>
+                                <option value="A" {% if details and details.section == 'A' %}selected{% endif %}>A</option>
+                                <option value="B" {% if details and details.section == 'B' %}selected{% endif %}>B</option>
+                                <option value="C" {% if details and details.section == 'C' %}selected{% endif %}>C</option>
+                                <option value="D" {% if details and details.section == 'D' %}selected{% endif %}>D</option>
+                                <option value="E" {% if details and details.section == 'E' %}selected{% endif %}>E</option>
+                                <option value="F" {% if details and details.section == 'F' %}selected{% endif %}>F</option>
+                            </select>
+                            <label for="section">Section</label>
+                            <div class="invalid-feedback"></div>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_b"
-                            value="B" required {% if details and details.section == 'B' %}checked{% endif %}>
-                            <label class="form-check-label" for="section_b">
-                                B
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_c"
-                            value="C" required {% if details and details.section == 'C' %}checked{% endif %}>
-                            <label class="form-check-label" for="section_c">
-                                C
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_d"
-                            value="D" required {% if details and details.section == 'D' %}checked{% endif %}>
-                            <label class="form-check-label" for="section_d">
-                                D
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="section_option" id="section_e"
-                            value="E" required {% if details and details.section == 'E' %}checked{% endif %}>
-                            <label class="form-check-label" for="section_e">
-                                E
-                            </label>
+                    </div>
+                     <div class="col-md-6 mb-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="group" name="group_option" required>
+                                <option value="" disabled {% if not details.class_group %}selected{% endif %}>Choose...</option>
+                                <option value="G1" {% if details and details.class_group == 'G1' %}selected{% endif %}>G1</option>
+                                <option value="G2" {% if details and details.class_group == 'G2' %}selected{% endif %}>G2</option>
+                            </select>
+                            <label for="group">Group</label>
+                            <div class="invalid-feedback"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Select Group Number -->
-                <div class="mb-3">
-                    <label for="groupNo" class="form-label d-block">Group</label>
-                    <div class="d-flex justify-content-evenly">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="group_option" id="group_g1"
-                            value="G1" required {% if details and details.class_group == 'G1' %}checked{% endif %}>
-                            <label class="form-check-label" for="group_g1">
-                                G1
-                            </label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="group_option" id="group_g2"
-                            value="G2" required {% if details and details.class_group == 'G2' %}checked{% endif %}>
-                            <label class="form-check-label" for="group_g2">
-                                G2
-                            </label>
-                        </div>
+                <!-- Row 4: Batch Counselor -->
+                <div class="mb-4">
+                     <div class="form-floating">
+                        <select class="form-select" id="batchCounselor" name="batch_counselor" value="{{ details.batch_counselor | default('') }}" required>
+                                <option value="" disabled {% if not details.branch %}selected{% endif %}>Select Batch Counselor</option>
+                                {% for faculty in faculty_list %}
+                                <option value="{{ faculty.full_name }}" 
+                                    {% if details.batch_counselor == '{{ faculty.full_name }}' %}selected{% endif %}>
+                                    {{ faculty.full_name }}({{ faculty.designation }})({{ faculty.department }})
+                                </option>
+                                {% endfor %}
+                        </select>
+                        <label for="batchCounselor">Batch Counselor</label>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
-                <!-- Input Batch Counselor -->
-                <div class="mb-3">
-                    <label for="batchCounselor" class="form-label">Name of the Batch Counselor</label>
-                    <input type="text" class="form-control" id="batchCounselor"
-                    name="batch_counselor" required value="{{ details.batch_counselor | default('') }}">
-                </div>
-
-                <!-- Submit Button -->
+                <!-- Row 5: Buttons -->
                 <div class="text-center">
-                    <button type="submit" class="btn btn-primary w-25" value="Submit">Submit</button>
-                    <a href="/"><button type="button" class="btn btn-secondary w-25" value="Submit">Homepage</button></a>
+                    <button type="submit" class="btn btn-primary" style="width: 120px;">Save</button>
+                    <a href="{{ url_for('sodeca_forms') }}" class="btn btn-secondary">Examination Forms</a>
                 </div>
-
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('detailsForm');
+    const allInputs = form.querySelectorAll('input[required], select[required]');
+    const stdNameInput = document.getElementById('stdName');
+
+    // --- Define the valid options for each dropdown ---
+    const validOptions = {
+        branch: ["CSE", "CSE(AI)", "CSE(DS)", "CSE(IOT)"],
+        semester: ["3", "4", "5", "6", "7", "8"],
+        section: ["A", "B", "C", "D", "E", "F"],
+        group: ["G1", "G2"],
+        // This array is dynamically created by Jinja to validate against
+        batchCounselor: [
+            {% for faculty in faculty_list %}
+                "{{ faculty.full_name }}",
+            {% endfor %}
+        ]
+    };
+
+    const showValidation = (input, isValid, message) => {
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            if (feedback) feedback.textContent = '';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            if (feedback) feedback.textContent = message;
+        }
+    };
+
+    // Generic validator for any required field
+    const validateRequired = (input) => {
+        if (!input.value || input.value.trim() === '') {
+            showValidation(input, false, 'This field is required.');
+            return false;
+        }
+        showValidation(input, true, '');
+        return true;
+    };
+
+    // --- NEW: Specific validator for the student's name ---
+    const validateName = (input) => {
+        if (!validateRequired(input)) {
+            return false;
+        }
+        // Regex to allow letters (including unicode), spaces, dots, and hyphens
+        const nameRegex = /^[A-Za-z\s.-]+$/;
+        if (!nameRegex.test(input.value)) {
+            showValidation(input, false, 'Name can only contain letters, spaces, dots, and hyphens.');
+            return false;
+        }
+        showValidation(input, true, '');
+        return true;
+    };
+
+
+    // Add 'blur' event listeners to all required fields for instant feedback
+    allInputs.forEach(input => {
+        input.addEventListener('blur', () => {
+            // Use the specific name validator for the student name field
+            if (input.id === 'stdName') {
+                validateName(input);
+            } else {
+                validateRequired(input);
+            }
+        });
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', function(event) {
+        let isFormValid = true;
+
+        // 1. Check if all fields are filled using appropriate validators
+        allInputs.forEach(input => {
+            let isValid;
+            if (input.id === 'stdName') {
+                isValid = validateName(input);
+            } else {
+                isValid = validateRequired(input);
+            }
+            if (!isValid) {
+                isFormValid = false;
+            }
+        });
+
+        // 2. Check the integrity of all dropdown values
+        document.querySelectorAll('select[required]').forEach(select => {
+            // The key for validOptions is the select element's id
+            const optionKey = select.id;
+            if (validOptions[optionKey] && !validOptions[optionKey].includes(select.value)) {
+                showValidation(select, false, `Invalid ${optionKey} selected.`);
+                isFormValid = false;
+            }
+        });
+        
+        // If any validation failed, prevent the form from submitting
+        if (!isFormValid) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
+});
+</script>
 {% endblock %}
