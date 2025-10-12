@@ -1,15 +1,6 @@
 // Use a Map to store selected form IDs and their names for easy lookup
 const selectedForms = new Map();
 
-$(document).ready(function() {
-            $('#tab').DataTable({
-                responsive: true,
-                scrollX: false,
-                autoWidth: false,
-                paging: false
-            });
-        });
-
 /**
  * Updates the selection state when a checkbox is clicked.
  * @param {HTMLInputElement} checkbox - The checkbox element that was changed.

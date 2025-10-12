@@ -4,36 +4,194 @@
     Register
 {% endblock %}
 
+{% block css %}
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 56px - 1rem); /* Adjust 56px based on your navbar height */
+        background-color: #6c757d17;
+    }
+    .reg-icon {
+        fill: #212529;
+    }
+    .form-title {
+    position: relative; /* Needed for positioning the pseudo-element */
+    padding-bottom: 0.5rem; /* Adds some space between text and the line */
+    }
+
+    .form-title::after {
+        content: ''; /* Required for a pseudo-element to show up */
+        position: absolute;
+        display: block;
+        width: 50px; /* Width of the line */
+        height: 3px; /* Thickness of the line */
+        background: var(--bs-primary); /* Uses Bootstrap's primary color */
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%; /* Center the line */
+        transform: translateX(-50%); /* Fine-tunes the centering */
+    }
+</style>
+{% endblock %}
+
 {% block main %}
 {% include "message.html" %}
 
-<div class="page-wrapper">
+<div class="page-wrapper d-flex justify-content-center align-items-center">
+    <div class="card p-4 shadow rounded-3 border-dark-subtle" style="max-width: 450px; width: 100%;">
+        <div class="card-body">
 
-    <div class="card p-5 pt-4 pb-4">
-        <h4 class="text-center mb-4">Register</h4>
+            <h3 class="card-title text-center mb-4 form-title"><!-- <svg class="reg-icon" xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#e3e3e3"><path d="M240-160q-33 0-56.5-23.5T160-240q0-33 23.5-56.5T240-320q33 0 56.5 23.5T320-240q0 33-23.5 56.5T240-160Zm0-240q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm0-240q-33 0-56.5-23.5T160-720q0-33 23.5-56.5T240-800q33 0 56.5 23.5T320-720q0 33-23.5 56.5T240-640Zm240 0q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Zm240 0q-33 0-56.5-23.5T640-720q0-33 23.5-56.5T720-800q33 0 56.5 23.5T800-720q0 33-23.5 56.5T720-640ZM480-400q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm40 240v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T863-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z"/></svg> -->
+                Register</h3>
 
-        <a href="{{ url_for('google_login') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center rounded-2 w-100">
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="me-2" style="width:20px;height:20px;">
-            <span class="fw-medium">Sign in with Google</span>
-        </a>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('google_login') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center rounded-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="27px" height="27px" viewBox="0 0 48 48" class="me-1">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                    </svg>                    
+                    <span class="fw-medium">Sign in with Google</span>
+                </a>
+            </div>
 
-        <div class="d-flex align-items-center my-3">
-            <hr class="flex-grow-1 border-secondary">
-            <span class="px-2 text-muted text-uppercase small">or</span>
-            <hr class="flex-grow-1 border-secondary">
+            <div class="d-flex align-items-center my-3">
+                <hr class="flex-grow-1">
+                <span class="px-2 text-muted text-uppercase small">or</span>
+                <hr class="flex-grow-1">
+            </div>
+
+            <form action="{{ url_for('register') }}" id="registerForm" method="post" novalidate>
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control border-dark" id="collegeEmail" placeholder="name@skit.ac.in" name="email" required>
+                    <label for="collegeEmail">Email</label>
+                    <div class="invalid-feedback"></div>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control border border-dark" id="password" placeholder="Password" name="password" required>
+                    <label for="password">Password</label>
+                    <div class="invalid-feedback">
+                        </div>
+                </div>
+
+                <div class="form-floating mb-4">
+                    <input type="password" class="form-control border border-dark" id="confirmPassword" placeholder="Confirm Password" name="confirm_password" required>
+                    <label for="confirmPassword">Confirm Password</label>
+                    <div class="invalid-feedback">
+                        </div>
+                </div>
+
+                <div class="text-center mb-3">
+                    <button class="btn btn-primary w-50" type="submit">Register</button>
+                </div>
+            </form>
+            <div class="text-center">
+                <span>
+                    Already registered? <a href="{{ url_for('login') }}">Login</a>
+                </span>
+            </div>
         </div>
-
-        <form action="{{ url_for('register') }}" method="post" class="mb-3 text-center">
-            <input class="form-control mb-3" type="email" placeholder="Email" name="email">
-            <input class="form-control mb-3" type="password" placeholder="Pasword" name="password">
-            <input class="form-control mb-3" type="password" placeholder="Confirm Password" name="confirm_password">
-            <button class="btn btn-primary w-75" type="submit">Register</button>
-        </form>
-
-        <p class="mt-3">
-            Already registered? <a href="{{ url_for('login') }}">Login</a>
-        </p>
     </div>
-        
 </div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const email = document.getElementById('collegeEmail');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+
+    // Helper function to show validation state
+    const showValidation = (input, isValid, message) => {
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (isValid) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            feedback.textContent = '';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            feedback.textContent = message;
+        }
+    };
+
+    // 1. Email validation function
+    const validateEmail = () => {
+        const emailValue = email.value.trim();
+        if (emailValue === '') {
+            showValidation(email, false, 'Email is required.');
+            return false;
+        } else if (!emailValue.endsWith('@skit.ac.in')) {
+            showValidation(email, false, 'Email must be from the @skit.ac.in domain.');
+            return false;
+        } else {
+            showValidation(email, true, '');
+            return true;
+        }
+    };
+
+    // 2. Password validation function
+    const validatePassword = () => {
+        const passwordValue = password.value.trim();
+        if (passwordValue.length < 8) {
+            showValidation(password, false, 'Password must be at least 8 characters long.');
+            return false;
+        } else {
+            showValidation(password, true, '');
+            return true;
+        }
+    };
+
+    // 3. Confirm Password validation function
+    const validateConfirmPassword = () => {
+        const passwordValue = password.value.trim();
+        const confirmPasswordValue = confirmPassword.value.trim();
+        
+        // Don't show a "passwords do not match" error if the field is empty
+        if (confirmPasswordValue === '') {
+            showValidation(confirmPassword, false, 'Please confirm your password.');
+            return false;
+        } else if (confirmPasswordValue !== passwordValue) {
+            showValidation(confirmPassword, false, 'Passwords do not match.');
+            return false;
+        } else {
+            showValidation(confirmPassword, true, '');
+            return true;
+        }
+    };
+
+    // --- REVISED EVENT LISTENERS ---
+
+    // Validate email when the user clicks away
+    email.addEventListener('blur', validateEmail);
+
+    // Validate password when the user clicks away
+    password.addEventListener('blur', () => {
+        validatePassword();
+        // IMPORTANT: If confirm password has text, re-validate it now.
+        if (confirmPassword.value.trim() !== '') {
+            validateConfirmPassword();
+        }
+    });
+
+    // Validate confirm password AS THE USER TYPES for instant feedback.
+    // This is better UX for this specific field.
+    confirmPassword.addEventListener('input', validateConfirmPassword);
+
+
+    // Prevent form submission if validation fails
+    form.addEventListener('submit', function(event) {
+        // Run all validations one last time before submitting
+        const isEmailValid = validateEmail();
+        const isPasswordValid = validatePassword();
+        const isConfirmPasswordValid = validateConfirmPassword();
+
+        if (!isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
+            event.preventDefault(); // Stop form submission
+            event.stopPropagation();
+        }
+    });
+});
+</script>
 {% endblock %}
