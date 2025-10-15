@@ -4,191 +4,305 @@
     Faculty List
 {% endblock %}
 
+{% block css %}
+<style>
+    :root {
+        --bs-admin-purple: #4f46e5;
+        --bs-admin-purple-rgb: 79, 70, 229;
+    }
+
+    .page-wrapper {
+        min-height: calc(100vh - 140px);
+        background-color: #f0f2f5;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    .form-title-admin {
+        position: relative;
+        padding-bottom: 0.75rem;
+        font-weight: 700;
+    }
+
+    .form-title-admin::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: var(--bs-admin-purple);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .card-minimalist-admin {
+        border: none;
+        border-top: 5px solid var(--bs-admin-purple);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+    }
+    
+    .btn-admin {
+        background-color: var(--bs-admin-purple);
+        color: white;
+        font-weight: 500;
+    }
+
+    .btn-admin:hover {
+        background-color: #4338ca;
+        color: white;
+        box-shadow: 0 5px 15px rgba(var(--bs-admin-purple-rgb), 0.3);
+    }
+    
+    .table-admin thead {
+        background-color: rgba(var(--bs-admin-purple-rgb), 0.05);
+    }
+    .table-admin th {
+        color: var(--bs-admin-purple);
+        font-weight: 600;
+    }
+    .table-admin td {
+        vertical-align: middle;
+    }
+
+    .modal-header-admin {
+        background-color: var(--bs-admin-purple);
+        color: white;
+    }
+    .modal-header-admin .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+</style>
+{% endblock %}
+
 {% block main %}
 {% include "message.html" %}
+<div class="page-wrapper">
+    <div class="container">
+        <h2 class="text-center mb-5 form-title-admin">Faculty Management</h2>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-end">
-        <button class="btn btn-info" type="button" data-bs-toggle="modal" data-bs-target="#staticBackdrop"><i class="bi bi-person-fill-add"></i> Add New Faculty</button>
+        <div class="card shadow border-secondary">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="m-0 fw-bold">Faculty List</h5>
+                    <div>
+                        <a href="{{ url_for('assign_batch') }}">
+                            <button class="btn btn-admin" type="button">
+                            <i class="bi bi-person-fill-add me-2"></i> Assign Batch
+                            </button>
+                        </a>
+                        <button class="btn btn-admin" type="button" data-bs-toggle="modal" data-bs-target="#addFacultyModal">
+                            <i class="bi bi-person-fill-add me-2"></i> Add New Faculty
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-admin text-center">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width: 40px;">#</th>
+                                <th scope="col">Full Name</th>
+                                <th scope="col">College Email</th>
+                                <th scope="col">Designation</th>
+                                <th scope="col">Department</th>
+                                <th scope="col">Contact</th>
+                                <th scope="col" style="width: 140px;">Operation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for faculty in faculty_data %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ faculty["full_name"] }}</td>
+                                <td>{{ faculty["college_email"] }}</td>
+                                <td>{{ faculty["designation"] }}</td>
+                                <td>{{ faculty["department"] }}</td>
+                                <td>{{ faculty["contact"] }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}"
+                                            data-bs-designation="{{ faculty['designation'] }}"
+                                            data-bs-department="{{ faculty['department'] }}"
+                                            data-bs-contact="{{ faculty['contact'] }}">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
-    <!-- Modal for Add New faculty -->
-    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Enter Details of New Faculty</h1>
+</div>
+
+<!-- Modal for Add New Faculty -->
+<div class="modal fade" id="addFacultyModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="addFacultyModalLabel">Add New Faculty Details</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ url_for('faculty_list') }}" method="post" class="mt-3">
-                <div class="modal-body">
-                    <!-- <h2 style="text-align: center;" class="mt-4">Add New Faculty</h2> -->
-                        <input type="text" name="full_name" placeholder="Full Name" class="form-control mt-3" required>
-                        <input type="email" name="college_email" placeholder="College E-mail" class="form-control mt-3" required>
-
-                        <!-- <input type="text" name="department" placeholder="Department" class="form-control mt-3" required> -->
-                        <select class = "input custom-back form-select mt-3" name = "department" >
-                            <option value = "" selected disabled>Select the New Department</option>
-                            <option value = "Computer Science & Engineering">Computer Science & Engineering</option>
-                            <option value = "Computer Science & Engineering(AI)">Computer Science & Engineering(AI)</option>
-                            <option value = "Computer Science & Engineering(DS)">Computer Science & Engineering(DS)</option>
-                            <option value = "Computer Science & Engineering(IOT)">Computer Science & Engineering(IOT)</option>
-                            <option value = "Civil Engineering">Civil Engineering</option>
-                            <option value = "Electronics & Communication Engineering">Electronics & Communication Engineering</option>
-                            <option value = "Electrical Engineering">Electrical Engineering</option>
-                            <option value = "Information Technology">Information Technology</option>
-                            <option value = "Mechnical Engineering">Mechnical Engineering</option>    
-                        </select>
-
-                        <!-- <input type="text" name="designation" placeholder="Designation" class="form-control mt-3" required> -->
-                            <select class="form-select custom-back mt-3" name="designation" id="deptSelect" required>
-                            <option value="" selected disabled>Select your Designation</option>
-                            <option value="Assistant Professor-1">
-                                Assistant Professor-1
-                            </option>
-                            <option value="Assistant Professor-2">
-                                Assistant Professor-2
-                            </option>
-                            <option value="Associate Professor-1">
-                                Associate Professor-1
-                            </option>
-                            <option value="Associate Professor-2">
-                                Associate Professor-2
-                            </option>
-                            <option value="Professor">
-                                Professor
-                            </option>
-                        </select>
-                        <input type="tel" name="contact" placeholder="Contact details" class="form-control mt-3">
-                </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-danger ms-2" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-outline-success">Add New Record</button>
+            <form action="{{ url_for('faculty_list') }}" method="post">
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="full_name" id="add-full-name" class="form-control" placeholder="Full Name" required>
+                                <label for="add-full-name">Full Name</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="email" name="college_email" id="add-college-email" class="form-control" placeholder="College E-mail" required>
+                                <label for="add-college-email">College E-mail</label>
+                            </div>
+                        </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="designation" id="add-designation" required>
+                                    <option value="" selected disabled>Select Designation</option>
+                                    <option value="Assistant Professor-1">Assistant Professor-1</option>
+                                    <option value="Assistant Professor-2">Assistant Professor-2</option>
+                                    <option value="Associate Professor-1">Associate Professor-1</option>
+                                    <option value="Associate Professor-2">Associate Professor-2</option>
+                                    <option value="Professor">Professor</option>
+                                </select>
+                                <label for="add-designation">Designation</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="department" id="add-department" required>
+                                    <option value="" selected disabled>Select Department</option>
+                                    <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                                    <option value="Computer Science & Engineering(AI)">Computer Science & Engineering(AI)</option>
+                                    <option value="Computer Science & Engineering(DS)">Computer Science & Engineering(DS)</option>
+                                    <option value="Computer Science & Engineering(IOT)">Computer Science & Engineering(IOT)</option>
+                                    <option value="Civil Engineering">Civil Engineering</option>
+                                    <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                                    <option value="Electrical Engineering">Electrical Engineering</option>
+                                    <option value="Information Technology">Information Technology</option>
+                                    <option value="Mechnical Engineering">Mechanical Engineering</option>
+                                </select>
+                                <label for="add-department">Department</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-floating">
+                        <input type="tel" name="contact" id="add-contact" class="form-control" placeholder="Contact Details">
+                        <label for="add-contact">Contact Details</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-admin">Add New Record</button>
                 </div>
             </form>
         </div>
     </div>
+</div>
 
-    <!-- Modal for Edit -->
-    <div class="modal fade" id="Edit" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Edit Details</h1>
+<!-- Modal for Edit -->
+<div class="modal fade" id="editFacultyModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="editFacultyModalLabel">Edit Faculty Details</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <!-- <h2 style="text-align: center;" class="mt-4">Add New Faculty</h2> -->
-                <form id="edit-faculty-form" action="/faculty_list" method="post" class="mt-3">
-                    <div class="mb-3">
-                        <label for="edit-college-email" class="form-label">College E-Mail (Cannot be changed)</label>
-                        <input type="email" name="college_email" id="edit-college-email" class="form-control" readonly>
+            <form id="edit-faculty-form" action="/faculty_list" method="post">
+                <div class="modal-body p-4">
+                    <div class="form-floating mb-3">
+                        <input type="email" name="college_email" id="edit-college-email" class="form-control" placeholder="College E-Mail" readonly>
+                        <label for="edit-college-email">College E-Mail (Cannot be changed)</label>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-full-name" class="form-label">Full Name</label>
-                        <input type="text" name="full_name" id="edit-full-name" class="form-control" required>
-                    </div>                    
-                    <div class="mb-3">
-                        <label for="edit-designation" class="form-label">Designation</label>
-                        <select class="form-select" name="designation" id="edit-designation" required>
-                            <option value="" selected disabled>Select Designation</option>
-                            <option value="Assistant Professor-1">Assistant Professor-1</option>
-                            <option value="Assistant Professor-2">Assistant Professor-2</option>
-                            <option value="Associate Professor-1">Associate Professor-1</option>
-                            <option value="Associate Professor-2">Associate Professor-2</option>
-                            <option value="Professor">Professor</option>
-                        </select>
+                    <div class="row">
+                         <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="full_name" id="edit-full-name" class="form-control" placeholder="Full Name" required>
+                                <label for="edit-full-name">Full Name</label>
+                            </div>
+                        </div>
+                         <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="tel" name="contact" id="edit-contact" class="form-control" placeholder="Contact">
+                                <label for="edit-contact">Contact</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-department" class="form-label">Department</label>
-                        <select class="form-select" name="department" id="edit-department" required>
-                            <option value="" selected disabled>Select Department</option>
-                            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
-                            <option value="Computer Science & Engineering(AI)">Computer Science & Engineering(AI)</option>
-                            <option value="Computer Science & Engineering(DS)">Computer Science & Engineering(DS)</option>
-                            <option value="Computer Science & Engineering(IOT)">Computer Science & Engineering(IOT)</option>
-                            <option value="Civil Engineering">Civil Engineering</option>
-                            <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
-                            <option value="Electrical Engineering">Electrical Engineering</option>
-                            <option value="Information Technology">Information Technology</option>
-                            <option value="Mechnical Engineering">Mechnical Engineering</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="designation" id="edit-designation" required>
+                                    <option value="" disabled>Select Designation</option>
+                                    <option value="Assistant Professor-1">Assistant Professor-1</option>
+                                    <option value="Assistant Professor-2">Assistant Professor-2</option>
+                                    <option value="Associate Professor-1">Associate Professor-1</option>
+                                    <option value="Associate Professor-2">Associate Professor-2</option>
+                                    <option value="Professor">Professor</option>
+                                </select>
+                                <label for="edit-designation">Designation</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="department" id="edit-department" required>
+                                    <option value="" disabled>Select Department</option>
+                                    <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                                    <option value="Computer Science & Engineering(AI)">Computer Science & Engineering(AI)</option>
+                                    <option value="Computer Science & Engineering(DS)">Computer Science & Engineering(DS)</option>
+                                    <option value="Computer Science & Engineering(IOT)">Computer Science & Engineering(IOT)</option>
+                                    <option value="Civil Engineering">Civil Engineering</option>
+                                    <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                                    <option value="Electrical Engineering">Electrical Engineering</option>
+                                    <option value="Information Technology">Information Technology</option>
+                                    <option value="Mechnical Engineering">Mechanical Engineering</option>
+                                </select>
+                                <label for="edit-department">Department</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-contact" class="form-label">Contact</label>
-                        <input type="tel" name="contact" id="edit-contact" class="form-control">
-                    </div>      
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-danger ms-2" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-outline-success">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-admin">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
-
-    <div class="table responsive">
-        <table class="table table-striped table-bordered border-dark table-hover mt-5 text-center">
-            <thead class="table-dark">
-                <tr>
-                    <th scope="col" style="width: 40px;">#</th>
-                    <th scope="col">Full Name</th>
-                    <th scope="col">College Email</th>
-                    <th scope="col">Designation</th>
-                    <th scope="col">Department</th>
-                    <th scope="col">Contact</th>
-                    <th scope="col" style="width: 140px;">Operation</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for faculty in faculty_data %}
-                <tr>
-                    <td>{{ loop.index }}</th>
-                    <td>{{ faculty["full_name"] }}</td>
-                    <td>{{ faculty["college_email"] }}</td>
-                    <td>{{ faculty["designation"] }}</td>
-                    <td>{{ faculty["department"] }}</td>
-                    <td>{{ faculty["contact"] }}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#Edit"
-                            data-bs-email="{{ faculty['college_email'] }}"
-                            data-bs-fullname="{{ faculty['full_name'] }}"
-                            data-bs-designation="{{ faculty['designation'] }}"
-                            data-bs-department="{{ faculty['department'] }}"
-                            data-bs-contact="{{ faculty['contact'] }}">
-                            Edit
-                        </button>                        
-                        <button class="btn btn-danger ms-2 btn-sm" type="button" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#deleteConfirmationModal"
-                            data-bs-email="{{ faculty['college_email'] }}"
-                            data-bs-fullname="{{ faculty['full_name'] }}">
-                            Delete
-                        </button>                    
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div> 
 </div>
+
+<!-- Modal for Delete Confirmation -->
 <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete the following faculty member?</p>
-                <!-- This paragraph will be populated by JavaScript -->
+                <p>Are you sure you want to delete the following faculty member? This action cannot be undone.</p>
                 <p><strong>Name:</strong> <span id="deleteFacultyName"></span></p>
                 <p><strong>Email:</strong> <span id="deleteFacultyEmail"></span></p>
             </div>
             <div class="modal-footer">
                 <form id="delete-faculty-form" action="{{ url_for('delete_faculty') }}" method="post">
-                    <!-- This hidden input will hold the email of the faculty member to delete -->
                     <input type="hidden" name="college_email" id="delete-college-email">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete Faculty Member</button>
@@ -201,56 +315,37 @@
 
 {% block script %}
 <script>
-    // Get the modal element
-    const editModal = document.getElementById('Edit');
+document.addEventListener('DOMContentLoaded', function () {
+    const editModal = document.getElementById('editFacultyModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const email = button.getAttribute('data-bs-email');
+            const fullName = button.getAttribute('data-bs-fullname');
+            const designation = button.getAttribute('data-bs-designation');
+            const department = button.getAttribute('data-bs-department');
+            const contact = button.getAttribute('data-bs-contact');
 
-    // Listen for the 'show.bs.modal' event, which fires when the modal is about to be shown
-    editModal.addEventListener('show.bs.modal', function (event) {
-        // Get the button that triggered the modal
-        const button = event.relatedTarget;
+            editModal.querySelector('#edit-college-email').value = email;
+            editModal.querySelector('#edit-full-name').value = fullName;
+            editModal.querySelector('#edit-designation').value = designation;
+            editModal.querySelector('#edit-department').value = department;
+            editModal.querySelector('#edit-contact').value = contact;
+        });
+    }
 
-        // Extract data from the data-bs-* attributes of the button
-        const email = button.getAttribute('data-bs-email');
-        const fullName = button.getAttribute('data-bs-fullname');
-        const designation = button.getAttribute('data-bs-designation');
-        const department = button.getAttribute('data-bs-department');
-        const contact = button.getAttribute('data-bs-contact');
-
-        // Find the input fields inside the modal
-        const modalEmailInput = editModal.querySelector('#edit-college-email');
-        const modalFullNameInput = editModal.querySelector('#edit-full-name');
-        const modalDesignationSelect = editModal.querySelector('#edit-designation');
-        const modalDepartmentSelect = editModal.querySelector('#edit-department');
-        const modalContactInput = editModal.querySelector('#edit-contact');
-
-        // Update the values of the input fields in the modal
-        modalEmailInput.value = email;
-        modalFullNameInput.value = fullName;
-        modalDesignationSelect.value = designation;
-        modalDepartmentSelect.value = department;
-        modalContactInput.value = contact;
-    });
-    // Get the modal element for deleting
     const deleteModal = document.getElementById('deleteConfirmationModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const email = button.getAttribute('data-bs-email');
+            const fullName = button.getAttribute('data-bs-fullname');
 
-    // Listen for when the DELETE modal is about to be shown
-    deleteModal.addEventListener('show.bs.modal', function(event) {
-        // Get the button that triggered the modal
-        const button = event.relatedTarget;
-
-        // Extract the email and name from the data-bs-* attributes of the delete button
-        const email = button.getAttribute('data-bs-email');
-        const fullName = button.getAttribute('data-bs-fullname');
-
-        // Find the elements inside the delete modal
-        const modalFacultyName = deleteModal.querySelector('#deleteFacultyName');
-        const modalFacultyEmail = deleteModal.querySelector('#deleteFacultyEmail');
-        const modalHiddenEmailInput = deleteModal.querySelector('#delete-college-email');
-
-        // Update the confirmation text and the hidden input's value
-        modalFacultyName.textContent = fullName;
-        modalFacultyEmail.textContent = email;
-        modalHiddenEmailInput.value = email;
-    });
+            deleteModal.querySelector('#deleteFacultyName').textContent = fullName;
+            deleteModal.querySelector('#deleteFacultyEmail').textContent = email;
+            deleteModal.querySelector('#delete-college-email').value = email;
+        });
+    }
+});
 </script>
 {% endblock %}

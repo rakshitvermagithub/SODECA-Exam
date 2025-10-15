@@ -17,7 +17,6 @@ import random
 import smtplib
 import sys
 
-
 app = Flask(__name__)
 app.config.from_object(Config)
 Session(app)
@@ -49,7 +48,10 @@ google_drive_client = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'https://www.googleapis.com/auth/drive.file'},
 )
-PARENT_FOLDER_ID = "1cllojwiiMV2_YtZ93eadi0rrHf6Lg6_-" # Your target Google Drive folder
+DRIVE_FOLDER_ID = {
+    "blood_donor": "18df2_9zxsD3_r4oEqnjuu26pyfekB9zb",
+    "part_in_comp": "1RPc8I2xQZQcA5Z8AcSg53DQX4ecVuF2J"
+} # Your target Google Drive folder
 
 # --- General App Configuration ---
 UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
@@ -1373,6 +1375,8 @@ def send_otp(to_mail):
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
+    if session.get("user_role") == 'admin':
+        return redirect(url_for("super_admin"))
     # If faculty
     if session.get("user_role") == 'faculty':
         return redirect(url_for("faculty_dashboard"))
@@ -1745,7 +1749,7 @@ def student_details():
             flash(f"Database error: {e}")
             return redirect(url_for("student_details"))
         
-        flash("Your details are saved successfully. View on the profile page", "success")
+        flash("Your details were successfully saved.", "success")
         return redirect(url_for("sodeca_forms"))
     
     else:
@@ -1797,7 +1801,7 @@ def verify_student_details():
         session["verified_details"] = verified_details
 
         print(f"Verified: {verified_details}")
-        return redirect("/fill_form")
+        return redirect(url_for('fill_form'))
     else:
         # Get student details if already present
         # Variable stores a list of dictionaries
@@ -1826,7 +1830,7 @@ def fill_form():
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
         flash("Please select atleast one form to submit", "danger")
-        return redirect("/")
+        return redirect(url_for("sodeca_forms"))
 
     user_id = session["user_id"]
     selected_forms = session["selected_forms"]
@@ -1842,7 +1846,7 @@ def fill_form():
         session.pop("verified_details", None)
 
         flash("Kindly check your submissions and their approval status on the hompeage", "success")
-        return redirect("/")
+        return redirect(url_for("sodeca_forms"))
 
     # current_form_index is the key in dict "selected_forms" defined in the start
     current_form = selected_forms[current_form_index]
@@ -2013,8 +2017,12 @@ def faculty_dashboard():
 
         if request.method == "GET":
 
-            if role(session["user_id"]) != 'faculty':
+            if role(session.get("user_id")) != 'faculty':
                 return "Access Denied!", 400
+            
+            if session.get("user_id") == 1:
+                session["user_role"] == "admin"
+                return redirect(url_for("super_admin"))
             
             # Get batch details, assigned to faculty
             batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
@@ -2100,12 +2108,13 @@ def upload_to_drive():
         creds_data.pop('expires_at', None)
         creds_data.pop('expires_in', None)
         creds_data.pop('token_type', None)
+        creds_data.pop('refresh_token_expires_in', None)
 
         credentials = Credentials(**creds_data)
 
         drive_service = build('drive', 'v3', credentials=credentials)
 
-        file_metadata = {'name': filename, 'parents': [PARENT_FOLDER_ID]}
+        file_metadata = {'name': filename, 'parents': [DRIVE_FOLDER_ID[form_name]]}
         media = MediaFileUpload(full_path, resumable=True)
 
         uploaded_file = drive_service.files().create(
@@ -2155,7 +2164,10 @@ def reject_entry():
 @app.route("/super_admin", methods=["GET"])
 @login_required
 def super_admin():
-    return render_template("super_admin.html")
+    if session.get("user_id") == 1:
+        session["user_role"] = 'admin'
+        return render_template("super_admin.html")
+    return "Access Denied!"
 
 @app.route("/faculty_list", methods=["GET", "POST"])
 def faculty_list():
@@ -2277,6 +2289,16 @@ def assign_batch():
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
         return render_template("assign_batch.html", faculty_data=faculty_data)
     
+@app.route("/discharge_faculty", methods=["POST"])
+def discharge_faculty():
+    faculty_email = request.form.get("college_email")
+    db.execute(
+        "UPDATE faculty_details SET semester=NULL, branch=NULL, section=NULL, class_group=NULL WHERE college_email=?",
+        faculty_email
+        )
+    flash(f"Faculty with email {faculty_email} was discharged.", "success")
+    return redirect(url_for("assign_batch"))
+
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
 def student_report():
@@ -2290,9 +2312,9 @@ def student_report():
         filtered_data = []
 
         # Get single roll number
-        university_roll_number = request.form.get("roll_number")
+        university_roll_number = request.form.get("university_roll_number")
         if university_roll_number:
-            where_params.append(f"s.university_roll_number='{university_roll_number}'")
+            where_params.append(f"s.university_roll_no='{university_roll_number}'")
         # Get multiple checkbox values using .getlist()
         semesters = request.form.getlist("semesters[]") # Returns a list like ['1', '3', '5']
         if semesters:
@@ -2304,13 +2326,26 @@ def student_report():
             quoted_branches = [f"'{branch}'" for branch in branches]
             joined_branches = ",".join(quoted_branches)
             where_params.append(f"s.branch IN ({joined_branches})")
+        
+        sections = request.form.getlist("sections[]")
+        if sections:
+            quoted_sections = [f"'{section}'" for section in sections]
+            joined_sections = ",".join(quoted_sections)
+            where_params.append(f"s.section IN ({joined_sections})")
+
+        class_groups = request.form.getlist("class_groups[]")
+        if class_groups:
+            quoted_class_groups = [f"'{section}'" for section in sections]
+            joined_class_groups = ",".join(quoted_class_groups)
+            where_params.append(f"s.class_group IN ({joined_class_groups})")
+
 
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
         forms = request.form.getlist("forms[]")
         for form in forms:
-            base_queries.append(f"SELECT s.student_name, s.university_roll_no, s.section, '{form}' AS category, f.from_date, f.to_date, f.google_file_id FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}")
+            base_queries.append(f"SELECT s.student_name, s.university_roll_no, s.section, '{form}' AS category, f.google_file_id FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}")
 
         if base_queries:
 
@@ -2319,7 +2354,7 @@ def student_report():
             # Wrap the entire UNION in parentheses before ordering.
             # Only wrap the query in parentheses if there is more than one SELECT statement (i.e., a UNION).
             # If there's only one query, don't wrap it.
-            final_query = f"{complete_query} ORDER BY from_date DESC"
+            final_query = f"{complete_query}"
 
             try:
                 print(f"Executing query: {final_query}")  # Debug
@@ -2339,10 +2374,6 @@ def student_report():
         return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
     return render_template("student_report.html", filtered_data=[], FORM_DEFINITIONS=FORM_DEFINITIONS)
-
-@app.route("/tarun", methods=["GET"])
-def tarun():
-    return render_template("tarun.html")
 
 if __name__ == '__main__':
 

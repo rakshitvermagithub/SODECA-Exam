@@ -30,16 +30,17 @@
                     <li class="nav-item"><a href="/" class="btn rounded-3 border-primary pe-3 ps-3">Home</a></li>
                     {% block nav %}
                     {% endblock %}
-                    {% if session["user_id"] %}
+                    {% if session.get("user_id") %}
+                        {% if session["user_id"] != 1 %}
                         <li class="nav-item">
                             <a href="{{ url_for('student_details' )}}" class="btn rounded-3 border-primary pe-3 ps-3">Profile</a>
                         </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a href="/logout" class="btn rounded-3 border-primary pe-3 ps-3">Logout</a>
                         </li>
                     {% else %}
                         <li class="nav-item"><a href="{{ url_for('register') }}" class="btn rounded-3 border-end border-primary pe-3 ps-3">Register</a></li>
-                        <li class="nav-item"><a href="{{ url_for('login') }}" class="btn rounded-3 border-primary pe-3 ps-3">Login</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -56,7 +57,7 @@
     </button>
 
     <footer class="footer-dark">
-        <div class="container">
+        <div class="container" style="max-width: 1200px;">
             <div class="row p-2 align-items-center">
                 <div class="footer foot col-md-6 d-flex justify-content-center justify-content-md-start">
                     <a href="#">Contact</a>

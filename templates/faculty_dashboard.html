@@ -57,13 +57,14 @@
 
     /* Styling for DataTables buttons to match our design */
     .dt-buttons .btn {
+        padding: 10px;
         background-color: white;
-        border: 1px solid #dee2e6;
         color: #495057;
         transition: all 0.2s ease;
     }
     .dt-buttons .btn:hover {
-        background-color: #f8f9fa;
+        background-color: var(--bs-primary);
+        color: white;
         border-color: #adb5bd;
     }
     
@@ -183,8 +184,7 @@
                                                         </td>
                                                     {% elif key == 'google_file_id' and value != 'pending' %}
                                                         <td>
-                                                            <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">View</a>
-                                                            <a href="https://drive.google.com/file/d/{{ value }}/download" target="_blank">Download</a>
+                                                            <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">https://drive.google.com/file/d/{{ value }}/view</a>
                                                         </td>
                                                     {% elif key == 'full_path' or key == 'student_user_id' %}
                                                         <!-- This column is hidden as per the header logic -->
@@ -226,11 +226,11 @@ document.addEventListener('DOMContentLoaded', function() {
             layout: {
                 topStart: {
                     buttons: [
-                        { extend: 'copy', className: 'btn-sm' },
-                        { extend: 'csv', className: 'btn-sm' },
-                        { extend: 'excel', className: 'btn-sm' },
-                        { extend: 'pdf', className: 'btn-sm' },
-                        { extend: 'print', className: 'btn-sm' }
+                        { extend: 'copy', className: 'btn-sm border-secondary-subtle' },
+                        { extend: 'csv', className: 'btn-sm border-secondary-subtle' },
+                        { extend: 'excel', className: 'btn-sm border-secondary-subtle' },
+                        { extend: 'pdf', className: 'btn-sm border-secondary-subtle' },
+                        { extend: 'print', className: 'btn-sm border-secondary-subtle' }
                     ]
                 }
             }

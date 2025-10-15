@@ -5,44 +5,132 @@
 {% endblock %}
 
 {% block css %}
-<link rel="stylesheet" src="../static/super_admin.css">
+<style>
+    /* CORRECTED: The CSS variable is now properly defined */
+    :root {
+        --bs-admin-purple: #4f46e5; /* A modern, deep purple/indigo */
+        --bs-admin-purple-rgb: 79, 70, 229;
+    }
+
+    .page-wrapper {
+        min-height: calc(100vh - 140px); /* Adjust based on header + footer height */
+        background-color: #f0f2f5;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    /* Admin-specific version of our title accent */
+    .form-title-admin {
+        position: relative;
+        padding-bottom: 0.75rem;
+        font-weight: 700;
+    }
+
+    .form-title-admin::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: var(--bs-admin-purple);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Admin-specific version of our minimalist card */
+    .card-minimalist-admin {
+        border: none;
+        border-top: 5px solid var(--bs-admin-purple);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        border-radius: 0.5rem;
+        text-align: center;
+        transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+    }
+
+    .card-minimalist-admin:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+    
+    .admin-icon {
+        font-size: 3.5rem;
+        color: var(--bs-admin-purple);
+    }
+    
+    /* Admin-specific button style */
+    .btn-outline-admin {
+        color: var(--bs-admin-purple);
+        border-color: var(--bs-admin-purple);
+        font-weight: 500;
+    }
+
+    .btn-outline-admin:hover {
+        background-color: var(--bs-admin-purple);
+        color: white;
+        box-shadow: 0 5px 15px rgba(var(--bs-admin-purple-rgb), 0.3);
+    }
+</style>
 {% endblock %}
 
 {% block main %}
 {% include "message.html" %}
+<div class="page-wrapper">
+    <div class="container">
+        <h2 class="text-center mb-5 form-title-admin text-secondary-emphasis">Welcome, Admin!</h2>
+        <div class="row justify-content-center g-4">
 
-<div class="container mt-3 text-secondary">
-    <h2 class="heading">Welcome! <b>SUPER ADMIN</b></h2>
-    <div class="grid ">
-        <div class="row justify-content-center mt-5">
-            <div class="col">
-                <div class="card d-flex" style="width: 18rem">
-                    <img src="../static/image.png" alt="image depicting person sitting">
-                    <b>BATCH COUNSELLOR</b>
-                    <a type="button" class="btn btn-outline-dark m-3" href="{{ url_for('assign_batch') }}">
-                        Know More
-                    </a>
+            <!-- Card 1: Batch Counsellor -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card card-minimalist-admin p-4 h-100">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <i class="bi bi-person-check-fill admin-icon mb-3"></i>
+                            <h5 class="card-title fw-bold">BATCH COUNSELLOR</h5>
+                            <p class="card-text text-muted small">Assign and manage batch counsellors for different student groups.</p>
+                        </div>
+                        <a class="btn btn-outline-admin mt-4" href="{{ url_for('assign_batch') }}">
+                            Manage
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="col">
-                <div class="card d-flex" style="width: 18rem">
-                    <img src="../static/st3.png" alt="student img" >
-                    <b>STUDENT REPORT</b>
-                    <a type="button" class="btn btn-outline-dark m-3" href="{{ url_for('student_report') }}">
-                        Know More
-                    </a>
+
+            <!-- Card 2: Student Report -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card card-minimalist-admin p-4 h-100">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <i class="bi bi-file-earmark-bar-graph-fill admin-icon mb-3"></i>
+                            <h5 class="card-title fw-bold">STUDENT REPORT</h5>
+                             <p class="card-text text-muted small">View detailed reports and submissions for all students.</p>
+                        </div>
+                        <a class="btn btn-outline-admin mt-4" href="{{ url_for('student_report')}}">
+                            View Reports
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="col">
-                <div class="card d-flex" style="width: 18rem">
-                    <img src="../static/image.png" alt="image depicting person sitting">
-                    <b>FACULTY DATA</b>
-                    <a type="button" class="btn btn-outline-dark m-3" href="{{ url_for('faculty_list') }}">
-                        Know More
-                    </a>
+
+            <!-- Card 3: Faculty Data -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card card-minimalist-admin p-4 h-100">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <i class="bi bi-people-fill admin-icon mb-3"></i>
+                            <h5 class="card-title fw-bold">FACULTY DATA</h5>
+                            <p class="card-text text-muted small">Access and manage the list of all faculty members.</p>
+                        </div>
+                        <a class="btn btn-outline-admin mt-4" href="{{ url_for('faculty_list') }}">
+                            View List
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div> 
+
+        </div>
     </div>
 </div>
 {% endblock %}
+
