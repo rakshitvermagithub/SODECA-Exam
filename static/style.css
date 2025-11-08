@@ -12,18 +12,56 @@ body {
     z-index: 1020;
 }
 
-.bar .btn:hover {
-    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+/* --- ADDED: Specific Navbar Button Styles --- */
+/* Target buttons specifically within the collapsed navbar section */
+#navbarNavDropdown .navbar-nav .nav-item .btn {
+    transition: all 0.3s ease;
+    font-weight: normal; /* UPDATED: Changed from 500 to normal */
+    padding: 0.375rem 0.75rem; 
+    margin-left: 0.5rem; 
+    color: #212529; 
+    border: 1px solid var(--bs-primary); 
+    border-radius: 0.375rem; 
 }
 
-.navbar-nav {
-    flex-direction: row;
+#navbarNavDropdown .navbar-nav .nav-item .btn:hover {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white !important; 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+    border-color: transparent !important; 
 }
+
+/* Specific style for faculty logout button */
+#navbarNavDropdown .navbar-nav .nav-item .btn.logout-faculty {
+    border-color: var(--bs-danger);
+    color: var(--bs-danger);
+    font-weight: normal; /* Ensure it's not bold by default */
+}
+#navbarNavDropdown .navbar-nav .nav-item .btn.logout-faculty:hover {
+    background: var(--bs-danger);
+    border-color: transparent !important;
+    color: white !important;
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+    font-weight: 500; /* Keep slightly bolder on hover */
+}
+/* --- End Added Styles --- */
+
+/* --- Mobile Offcanvas Styles --- */
+.navbar-toggler { 
+    border: none; 
+    font-size: 1.5rem; 
+    color: var(--bs-primary); 
+}
+.navbar-toggler:focus { 
+    box-shadow: none; 
+}
+
+
+/* --- Other Styles --- */
+
 .nav-item {
-    padding: 5px;
+    padding: 5px; /* Adds padding around list items */
 }
 
 .form-container {
@@ -32,8 +70,8 @@ body {
 
 /* --- Custom Checkbox Styling --- */
 .form-check-input {
-    border: 1px solid black !important; /* Added solid black border */
-    width: 1.25em; /* Slightly larger for better visibility */
+    border: 1px solid black !important; 
+    width: 1.25em; 
     height: 1.25em;
 }
 .form-check-input:checked {
@@ -105,3 +143,11 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 #scrollTopBtn.show { display: block; }
+
+/* .bug-report-btn {
+    position: fixed !important;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1050;        
+} */
+

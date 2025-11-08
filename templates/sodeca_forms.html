@@ -10,69 +10,173 @@
         min-height: calc(100vh - 56px);
         padding-top: 2rem;
         padding-bottom: 2rem;
+        background-color: #f0f2f5;
     }
 
     .card-minimalist {
-        border: none;
+        border-color: var(--bs-dark-border-subtle);
         border-top: 5px solid var(--bs-primary);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
         border-radius: 0.5rem;
     }
 
-    .form-title {
-        position: relative;
-        padding-bottom: 0.5rem;
-    }
-
-    .form-title::after {
-        content: '';
-        position: absolute;
-        display: block;
-        width: 50px;
-        height: 3px;
-        background: var(--bs-primary);
-        border-radius: 2px;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    /* --- Accordion Enhancements --- */
-    .accordion-item {
+    /* --- Form Item Styling (Replaces Accordion) --- */
+    .form-item {
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        background-color: #fff; /* Ensure it has a white background */
+        display: flex; /* Use flex to ensure h-100 works */
+        flex-direction: column; /* Stack children vertically */
     }
 
-    .accordion-item.selected {
+    .form-item.selected {
         border-color: var(--bs-primary);
         box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.25);
     }
 
-    .form-check-input {
-        width: 1.25em;
-        height: 1.25em;
+    .selection-area {
+        min-height: 80px; 
     }
 
-    .accordion-button:not(.collapsed) {
-        box-shadow: none;
+    /* --- Stepper Control Styles (Unchanged) --- */
+    .stepper-control {
+        display: flex;
+        align-items: center;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 50rem;
+        overflow: hidden;
+    }
+    .stepper-btn {
+        background-color: transparent;
+        border: none;
+        padding: 0.375rem 0.75rem;
+        font-size: 1.25rem;
+        line-height: 1;
+        font-weight: 600;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .stepper-btn.btn-dec { color: var(--bs-danger); }
+    .stepper-btn.btn-inc { color: var(--bs-success); }
+    .stepper-btn.btn-dec:hover {
+        background-color: rgba(var(--bs-danger-rgb), 0.1);
+        transform: scale(1.1);
+    }
+    .stepper-btn.btn-inc:hover {
+        background-color: rgba(var(--bs-success-rgb), 0.1);
+        transform: scale(1.1);
+    }
+    .stepper-count {
+        min-width: 40px;
+        text-align: center;
+        font-weight: 500;
+        font-size: 1.1rem;
+        color: #212529;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+        padding: 0.375rem 0.5rem;
+    }
+
+    /* --- NEW: Help Trigger Styling --- */
+    .form-help-trigger {
+        padding: 0.75rem 1.25rem;
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        color: black;
+        cursor: help; 
+        transition: background-color 0.2s ease;
+        margin-top: auto; 
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+    .form-help-trigger:hover {
+        background-color: #e7f1ff; 
+    }
+
+    /* --- NEW: Custom Popover Styling --- */
+    :root {
+        --bs-popover-border-radius: 0.5rem;
+        --bs-popover-header-bg: #f8f9fa;
+        --bs-popover-border-color: #dee2e6;
+        --bs-popover-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     
-    .accordion-button:focus {
-        box-shadow: none;
-        border-color: transparent;
+    .popover-body {
+        max-height: 250px; /* Set a max height */
+        overflow-y: auto;  /* Add scrollbar if content overflows */
     }
-
+    .popover-body ul {
+        padding-left: 1.25rem;
+        font-size: 0.9rem;
+    }
+    
     /* --- Summary Box Enhancements --- */
     .summary-box {
         background-color: #f8f9fa;
         border-top: 1px solid #dee2e6;
         border-radius: 0.375rem;
     }
-
     #selectedSummary .badge {
         font-size: 0.9em;
         padding: 0.5em 0.75em;
+        white-space: normal; 
+        word-break: break-word; 
+        text-align: left; 
+        max-width: 100%; 
+    }
+    .accordion-item {
+        border: 1px solid #dee2e6;
+        border-left: 5px solid #dee2e6; /* Default gray left border */
+        border-radius: 0.375rem;
+        transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    }
+    
+    .selection-area {
+        flex-grow: 1;
+        min-height: 80px; 
+    }
+    .form-check-input {
+        width: 1.25em;
+        height: 1.25em;
+    }
+    .accordion-button:not(.collapsed) {
+        box-shadow: none;
+        padding: 5px;
+    }
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    .summary-box {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+    #selectedSummary .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.75em;
+    }
+
+    /* --- NEW: Form Color & Icon Styles --- */
+    .form-icon {
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+        color: var(--bs-secondary); /* Default icon color */
+    }
+
+    /* Helper function to set color based on CSS variable */
+    .form-check-input:checked {
+        background-color: var(--form-color, var(--bs-primary));
+        border-color: var(--form-color, var(--bs-primary));
+    }
+    .accordion-item.selected {
+        border-left-color: var(--form-color, var(--bs-primary));
+        border-color: var(--form-color, var(--bs-primary));
+        box-shadow: 0 0 0 3px rgba(var(--form-color-rgb, var(--bs-primary-rgb)), 0.25);
+    }
+    .accordion-item.selected .form-icon {
+        color: var(--form-color, var(--bs-primary));
     }
 </style>
 {% endblock %}
@@ -81,53 +185,105 @@
 {% include "message.html" %}
 
 <div class="page-wrapper d-flex justify-content-center align-items-center">
-    <div class="card card-minimalist p-4" style="max-width: 900px; width: 100%;">
+    <div class="card card-minimalist p-3" style="max-width: 1200px; width: 85%;">
         <div class="card-body">
-            <h1 class="mb-2 text-center form-title">SODECA Forms</h1>
-            <p class="text-muted mb-4 text-center">Select the category of your submission.<br>
-                (Ensure you have valid Proof/Certificate for your selections<span class="text-danger">*</span>)
+            <p class="text-secondary-emphasis fs-4 mb-4">
+                Select the forms for SODECA <span class="fs-5 text-black text-opacity-75">(Ensure you have valid Proof / Certificate for your selections<span class="text-danger">*</span>)</span>
             </p>
 
             <form action="{{ url_for('sodeca_forms') }}" method="post" id="college-form">
-                <div class="accordion" id="formsAccordion">
+                
+                <div class="row row-cols-1 row-cols-lg-2 g-3 mt-1">
                     {% for key, form in FORM_DEFINITIONS.items() %}
-                    <div class="accordion-item mb-3" id="form-item-{{ key }}">
-                        <div class="selection-area p-3 d-flex align-items-center">
-                            <div class="form-check">
-                                <input class="form-check-input form-selector" type="checkbox" id="switch-{{ key }}" name="selected_forms[]" value="{{ key }}" data-form-title="{{ form['title'] }}">
-                                <label class="form-check-label fw-semibold ps-2 fs-4" for="switch-{{ key }}">
-                                    {{ form["title"] }}
+                    {% set form_style = namespace(css_class='', icon='') %}
+                    {% if key == 'blood_donor' %}
+                        {% set form_style.css_class = 'form-blood' %}
+                        {% set form_style.icon = 'bi-droplet-fill' %}
+                    {% elif key == 'part_in_comp' %}
+                        {% set form_style.css_class = 'form-participant' %}
+                        {% set form_style.icon = 'bi-people-fill' %}
+                    {% elif key == 'part_in_work' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-workshop' %}
+                        {% set form_style.icon = 'bi-mortarboard-fill' %}
+                    {% elif key == 'expert_lecture' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-lecture' %}
+                        {% set form_style.icon = 'bi-person-video3' %}
+                    {% elif key == 'organized_event' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-organizer' %}
+                        {% set form_style.icon = 'bi-megaphone-fill' %}
+                    {% elif key == 'winner_award' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-winner' %}
+                        {% set form_style.icon = 'bi-trophy-fill' %}
+                    {% elif key == 'internship' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-internship' %}
+                        {% set form_style.icon = 'bi-briefcase-fill' %}
+                    {% elif key == 'paper_presented' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-paper' %}
+                        {% set form_style.icon = 'bi-journal-text' %}
+                    {% elif key == 'financial_grant' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-grant' %}
+                        {% set form_style.icon = 'bi-cash-coin' %}
+                    {% elif key == 'coursera_edx' %} {# Adjust key #}
+                        {% set form_style.css_class = 'form-certification' %}
+                        {% set form_style.icon = 'bi-patch-check-fill' %}
+                    {% endif %}
+                    <div class="col">
+                        <div class="form-item h-100 border-dark-subtle" id="form-item-{{ key }}">
+                            
+                            <div class="selection-area px-3 py-2 d-flex flex-column align-items-start flex-sm-row justify-content-sm-between align-items-sm-center gap-2">
+                                <label class="form-check-label fw-semibold" style="font-size: 1.3rem;">
+                                    <i class="bi {{ form_style.icon }} form-icon"></i>{{ form["title"] }}
                                 </label>
+                                
+                                <div class="stepper-control flex-shrink-0 align-self-sm-auto">
+                                    <button class="btn stepper-btn btn-stepper btn-dec" type="button" data-form-id="{{ key }}">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <span class="stepper-count" id="count-{{ key }}">0</span>
+                                    <button class="btn stepper-btn btn-stepper btn-inc" type="button" data-form-id="{{ key }}" data-form-title="{{ form['title'] }}">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ key }}" aria-expanded="false" aria-controls="collapse-{{ key }}">
-                                <i class="fas fa-info-circle me-2"></i>View Requirements & Details
-                            </button>
-                        </h2>
-                        <div id="collapse-{{ key }}" class="accordion-collapse collapse fs-6" data-bs-parent="#formsAccordion">
-                            <div class="accordion-body">
-                                <strong>{{ form["title"] }} Requirements:</strong>
-                                <ul class="mt-2 mb-0">
-                                {% for req in form["description"] %}
-                                    <li>{{ req }}</li>
-                                {% endfor %}
+
+                            <div class="form-help-trigger" 
+                                 data-bs-toggle="popover" 
+                                 data-bs-trigger="hover focus"
+                                 data-bs-placement="top"
+                                 data-bs-html="true"
+                                 data-bs-content-id="#popover-content-{{ key }}">
+                                <i class="fas fa-info-circle me-2"></i>View Requirements
+                            </div>
+
+                            <!-- This is the hidden content for the popover -->
+                            <div class="d-none" id="popover-content-{{ key }}">
+                                <ul class="mb-0">
+                                    {% for req in form["description"] %}
+                                        <li>{{ req }}</li>
+                                    {% endfor %}
                                 </ul>
                             </div>
+                            
                         </div>
                     </div>
                     {% endfor %}
                 </div>
 
-                <div class="mt-4 p-4 summary-box">
-                    <h5 class="mb-3">Your Selection</h5>
-                    <div id="selectedSummary" class="mb-3 d-flex flex-wrap gap-2">
-                        <span class="text-muted" id="no-selection-text">No forms selected yet.</span>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary fw-bold py-2" type="submit">
-                            Proceed to Next Step
-                        </button>
+                <div class="mt-3 p-3 summary-box">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-lg col-12" style="min-width: 0; overflow: hidden;">
+                            <div id="selectedSummary" class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="fw-semibold me-2">Your Selection:</span>
+                                <span class="text-muted" id="no-selection-text">No forms selected yet.</span>
+                            </div>
+                        </div>
+                        <div class="col-lg-auto col-12">
+                            <div class="d-grid d-lg-block">
+                                <button class="btn btn-primary fw-bold px-4 py-2" type="submit">
+                                    Proceed Next
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -141,64 +297,149 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const collegeForm = document.getElementById('college-form');
-    const checkboxes = document.querySelectorAll('.form-selector');
     const summaryDiv = document.getElementById('selectedSummary');
-    const noSelectionText = document.getElementById('no-selection-text');
-
+    const selectionTitle = '<span class="fw-semibold me-2">Your Selection:</span>';
+    const noSelectionText = '<span class="text-muted" id="no-selection-text">No forms selected yet.</span>';
     const selections = {};
 
-    function updateSummary() {
-        summaryDiv.innerHTML = '';
-        const selectedItems = Object.values(selections);
+    // --- UPDATED: Popover Initialization ---
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        
+        // Initialize popover with all options set in JS
+        const popover = new bootstrap.Popover(popoverTriggerEl, {
+            html: true,
+            trigger: 'manual', // We will handle show/hide manually
+            placement: popoverTriggerEl.dataset.bsPlacement,
+            content: function () {
+                const contentId = popoverTriggerEl.getAttribute('data-bs-content-id');
+                const contentEl = document.querySelector(contentId);
+                return contentEl ? contentEl.innerHTML : 'Loading...';
+            }
+        });
 
-        if (selectedItems.length === 0) {
-            summaryDiv.appendChild(noSelectionText);
-        } else {
-            selectedItems.forEach(title => {
+        // --- NEW: Logic to keep popover open on hover ---
+        let leaveTimeout;
+
+        // When mouse enters the trigger, show the popover
+        popoverTriggerEl.addEventListener('mouseenter', function () {
+            // Clear any pending hide timeouts
+            clearTimeout(leaveTimeout);
+            // Show this popover
+            popover.show();
+        });
+
+        // When mouse leaves the trigger, set a delay before hiding
+        popoverTriggerEl.addEventListener('mouseleave', function () {
+            leaveTimeout = setTimeout(() => {
+                // Before hiding, check if the mouse is *now* over the popover itself
+                const popoverBody = document.querySelector('.popover:hover');
+                if (!popoverBody) {
+                    popover.hide();
+                }
+            }, 100); // 100ms delay to allow mouse to travel
+        });
+        
+        // We also need to listen for mouse events on the popover itself
+        // We must do this *after* it's shown
+        popoverTriggerEl.addEventListener('shown.bs.popover', function () {
+            const popoverBody = document.getElementById(popoverTriggerEl.getAttribute('aria-describedby'));
+            if (!popoverBody) return;
+
+            // When mouse enters the popover, cancel any hide timeouts
+            popoverBody.addEventListener('mouseenter', function () {
+                clearTimeout(leaveTimeout);
+            });
+
+            // When mouse leaves the popover, hide it
+            popoverBody.addEventListener('mouseleave', function () {
+                popover.hide();
+            });
+        });
+
+        return popover;
+    });
+    // --- End Popover Initialization ---
+
+    function updateSummary() {
+        summaryDiv.innerHTML = selectionTitle; 
+        let totalCount = 0;
+
+        for (const [formId, item] of Object.entries(selections)) {
+            if (item && item.count > 0) {
+                totalCount += item.count;
                 const badge = document.createElement('span');
                 badge.className = 'badge text-bg-primary';
-                badge.textContent = title;
+                badge.textContent = `${item.title} x${item.count}`;
                 summaryDiv.appendChild(badge);
-            });
+            }
+        }
+
+        if (totalCount === 0) {
+            summaryDiv.innerHTML += noSelectionText;
         }
     }
 
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const formId = this.value;
-            const formTitle = this.dataset.formTitle;
-            const accordionItem = document.getElementById(`form-item-${formId}`);
+    collegeForm.addEventListener('click', function(event) {
+        const button = event.target.closest('.btn-stepper');
+        if (!button) return; 
 
-            if (this.checked) {
-                selections[formId] = formTitle;
-                accordionItem.classList.add('selected');
-            } else {
-                delete selections[formId];
-                accordionItem.classList.remove('selected');
+        const formId = button.dataset.formId;
+        
+        if (!selections[formId]) {
+            const incButton = document.querySelector(`.btn-inc[data-form-id="${formId}"]`);
+            selections[formId] = {
+                count: 0,
+                title: incButton.dataset.formTitle
+            };
+        }
+
+        if (button.classList.contains('btn-inc')) {
+            selections[formId].count++;
+        }
+        
+        if (button.classList.contains('btn-dec')) {
+            if (selections[formId].count > 0) {
+                selections[formId].count--;
             }
-            updateSummary();
-        });
+        }
+
+        const countDisplay = document.getElementById(`count-${formId}`);
+        countDisplay.textContent = selections[formId].count;
+
+        const accordionItem = document.getElementById(`form-item-${formId}`);
+        if (selections[formId].count > 0) {
+            accordionItem.classList.add('selected');
+        } else {
+            accordionItem.classList.remove('selected');
+        }
+        updateSummary();
     });
 
     collegeForm.addEventListener('submit', function(event) {
-        const selectedCount = Object.keys(selections).length;
+        event.preventDefault(); 
+        
+        let totalCount = 0;
+        collegeForm.querySelectorAll('input[name="selected_forms[]"]').forEach(input => input.remove());
 
-        if (selectedCount === 0) {
-            // 1. Prevent the form from submitting
-            event.preventDefault();
-
-            // 2. Display a flash message using the function from message.html
-            // This checks if the function exists before calling it.
-            if (typeof showFlashMessage === 'function') {
-                showFlashMessage('Please select at least one form to proceed.', 'danger');
-            } else {
-                // Fallback for safety, though it shouldn't be needed.
-                alert('Please select at least one form to proceed.');
+        for (const [formId, item] of Object.entries(selections)) {
+            totalCount += item.count;
+            for (let i = 0; i < item.count; i++) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'selected_forms[]';
+                hiddenInput.value = formId;
+                collegeForm.appendChild(hiddenInput);
             }
+        }
+
+        if (totalCount === 0) {
+            alert('Please select at least one form to proceed.');
+        } else {
+            collegeForm.submit();
         }
     });
 
-    // Initial call to set the summary on page load
     updateSummary();
 });
 </script>

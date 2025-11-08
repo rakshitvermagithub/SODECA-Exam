@@ -10,6 +10,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
+from urllib.parse import urlparse, urljoin
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
@@ -48,10 +49,7 @@ google_drive_client = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'https://www.googleapis.com/auth/drive.file'},
 )
-DRIVE_FOLDER_ID = {
-    "blood_donor": "18df2_9zxsD3_r4oEqnjuu26pyfekB9zb",
-    "part_in_comp": "1RPc8I2xQZQcA5Z8AcSg53DQX4ecVuF2J"
-} # Your target Google Drive folder
+MASTER_DRIVE_FOLDER_ID = app.config["MASTER_DRIVE_FOLDER"]
 
 # --- General App Configuration ---
 UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
@@ -73,10 +71,16 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if session.get("user_id") is None:
-            flash("Please log in to access this page.", "warning")
+            flash("You are not logged in, login with your SKIT Email ID", "danger")
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
+def is_safe_url(target):
+    """Check if the URL is safe for redirects"""
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
@@ -90,7 +94,7 @@ FORM_DEFINITIONS = {
     'blood_donor': {
         'title': 'Blood Donor',
         'description': [
-            "Certificate for donating  blood in blood donation camp etc.",
+            "Certificate for donating blood in blood donation camp etc.",
             "Only Donor Certificates to be uploaded"
         ],
         'enctype': 'multipart/form-data',  # Important for file uploads
@@ -159,7 +163,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': 'Upload your blood donor certificate or equivalent proof',
                 'validation': {
-                    'accepted_types': ['.pdf', '.jpg', '.jpeg', '.png'],
+                    'accepted_types': '.pdf',
                     'max_size': '5MB'
                 }
             }
@@ -167,24 +171,24 @@ FORM_DEFINITIONS = {
     },
 
     'part_in_comp': {
-        'title': 'Participation in Competition/Contest/Activity',
+        'title': 'Participation in Competition/Contest/ Activity',
         'description': [
-            "Certificate of participation for Cultural / Technical (e.g. Hackathon) /Sports /Non Technical  events in some Competition/Contest/Activity organized by SKIT or any other Institute.", 
+            "Certificate of participation for Cultural / Technical (e.g. Hackathon) / Sports / Non Technical events in any Competition/Contest/Activity organized by SKIT or any other Institute.", 
             "It should be a participation certificate for a competition/contest or some significant events" ,
             "Event should be organized by SKIT or any other institute and you should represent SKIT.",
             "Personal level participation certificate NOT allowed. Only participation in an activity as an SKIT student is valid.", 
-            "Participation certificate should mention your name as student of SKIT. for e.g. Ajay Gupta  of SKIT participated in xyz event.",
-            "Certificate of completion (For e.g  successfully completed an online assesment/course/training etc ) is NOT allowed. Certificate for Appearing  in / Clearing  an online assesment/test is NOT allowed."
-                        ],
+            "Participation certificate should mention your name as student of SKIT. for e.g. Ajay Gupta of SKIT participated in xyz event.",
+            "Certificate of completion (For e.g successfully completed an online assesment/course/training etc) is NOT allowed. Certificate for Appearing in or Clearing an online assesment/test is NOT allowed."
+            ],
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
             {
                 'field_label': 'Name of the Competition/Event/Activity',
                 'field_type': 'text',
                 'field_name': 'event_title',
-                'required': True,  # Boolean instead of string
-                'placeholder': 'e.g., Blood Donation Camp 2024',
-                'help_text': 'Exactly as Mentioned in the Certificate e.g : SUR, Mayukh, Kill With Fire, Game of Quizzes, Mahatma Gandhi Quiz',
+                'required': True, 
+                'placeholder': 'e.g : SUR, Mayukh, Kill With Fire, Game of Quizzes, Mahatma Gandhi Quiz',
+                'help_text': 'Exactly as Mentioned in the Certificate',
                 'field_validation': {
                     'min_length': 3,
                     'max_length': 50
@@ -194,8 +198,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Nature of the Event',
                 'field_type': 'text',
                 'field_name': 'event_nature',
+                'placeholder': 'e.g Dance Competition, Singing Competition, Quiz Competition, Tree Plantation Event',
                 'required': True,
-                'help_text': 'e.g Dance Competition, Singing Competition, Quiz Competition, Tree Plantation Event',
             },
             {
                 'field_label': 'Team/Individual',
@@ -213,11 +217,11 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_level',
                 'required': True,
                 'placeholder': 'e.g. SKIT',
-                'help_text': '''College Level : Event within SKIT only. No other college/university participated.
-                    University Level : Only RTU affiliated college participated.
-                    State Level : Different colleges/universities  all over Rajasthan participated.
-                    National Level : Colleges/Universities outside the Rajasthan (all over from India) participated.
-                    International : Colleges/Universities outside India (all over the world ) participated.''',
+                'help_text': '''College Level: Event within SKIT only. No other college/university participated.
+                    University Level: Only RTU affiliated college participated.
+                    State Level: Different colleges/universities all over Rajasthan participated.
+                    National Level: Colleges/Universities outside the Rajasthan(all over from India) participated.
+                    International: Colleges/Universities outside India(all over the world) participated.''',
                 'options': [
                     {'value': 'College', 'label': 'College'},
                     {'value': 'University', 'label': 'University'},
@@ -263,7 +267,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'from_date',
                 'required': True,
-                'help_text': 'Start date of the donation event',
+                'help_text': 'Start date of the event',
                 'field_validation': {
                     'max_date': 'today'  # Can't be future date
                 }
@@ -273,7 +277,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'to_date',
                 'required': True,
-                'help_text': 'End date of the donation event',
+                'help_text': 'End date of the event',
                 'field_validation': {
                     'max_date': 'today',
                     'after_field': 'from_date'  # Must be after from_date
@@ -297,9 +301,9 @@ FORM_DEFINITIONS = {
                 'field_name': 'venue',
                 'required': True,
                 'placeholder': 'e.g. Civil block, SKIT, Jaipur',
-                'help_text': 'Location where blood donation took place',
+                'help_text': 'Location where the event took place. Write "Online Activity" if evnet mode was online',
                 'field_validation': {
-                    'min_length': 5,
+                    'min_length': 3,
                     'max_length': 200
                 }
             },
@@ -310,7 +314,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': 'Upload your participation certificate or equivalent proof',
                 'validation': {
-                    'accepted_types': ['.pdf'],
+                    'accepted_types': '.pdf',
                     'max_size': '5MB'
                 }
             }
@@ -318,9 +322,9 @@ FORM_DEFINITIONS = {
     },
     
     'part_in_work': {
-        'title': 'Workshop/Seminar/Webinar/Conference Attended',
+        'title': 'Workshop/Seminar/ Webinar/Conference Attended',
         'description': [
-            'Certificate  for participation for attending any Workshop/Seminar/Webinar/Symposium/Conference organized by SKIT or any other Institute'
+            'Certificate of participation for attending any Workshop/ Seminar/ Webinar/ Symposium/ Conference organized by SKIT or any other Institute'
             ],
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
@@ -329,10 +333,9 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'event_title',
                 'required': True,  # Boolean instead of string
-                'placeholder': '',
+                'placeholder': 'Name of the Event',
                 'help_text': 'e.g : Ten Days TEQIP-III Sponsored Student Workshop on Emerging Web Development Trends',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 50
                 }
             },
@@ -377,7 +380,7 @@ FORM_DEFINITIONS = {
                 'help_text': 'End date of the event',
                 'field_validation': {
                     'max_date': 'today',
-                    'after_field': 'from_date'  # Must be after from_date
+                    'after_field': 'from_date'  # Must be after from_date                    
                 }
             },
             {
@@ -394,11 +397,11 @@ FORM_DEFINITIONS = {
                 'field_label': 'Sponsoring Agency',
                 'field_type': 'text',
                 'field_name': 'sponsor',
-                'required': True,  # Boolean instead of string
-                'placeholder': '',
-                'help_text': 'e.g:TEQIP-III/RTU/AICTE/IEEE/Non Sponsored/NA',
+                'required': True, 
+                'placeholder': 'NA if Non-Sponsored',
+                'help_text': 'e.g:TEQIP-III/RTU/AICTE/IEEE/Non-Sponsored/NA',
                 'field_validation': {
-                    'min_length': 3,
+                    'min_length': 2,
                     'max_length': 50
                 }
             },
@@ -406,22 +409,22 @@ FORM_DEFINITIONS = {
                 'field_label': 'Organized By',
                 'field_type': 'text',
                 'field_name': 'organizer',
-                'required': True,  # Boolean instead of string
-                'placeholder': '',
-                'help_text': 'e.g SKIT Jaipur/ Write online if online activity',
+                'required': True, 
+                'placeholder': 'Name of the organizers',
+                'help_text': 'e.g SKIT Jaipur',
                 'field_validation': {
                     'min_length': 3,
                     'max_length': 50
                 }
             },
             {
-                'field_label': 'Workshop/Seminar/Webinar/Conference Certificate/other proof',
+                'field_label': 'Workshop/Seminar/ Webinar/Conference certificate/proof',
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Upload your participation certificate or equivalent proof',
+                'help_text': 'Upload your participation certificate or equivalent proof. Max Size: 5MB',
                 'validation': {
-                    'accepted_types': ['.pdf'],
+                    'accepted_types': '.pdf',
                     'max_size': '5MB'
                 }
             }
@@ -431,8 +434,8 @@ FORM_DEFINITIONS = {
     'expert_lecture': {
         'title': 'Expert Lecture Attended',
         'description': [
-            'Certificate of participation for attending expert talk/guest lecture at SKIT or outside SKIT  in any institute.',
-            'Certificate of participation for attending Key note / Invited Talk (in conference) is allowed.'
+            'Certificate of participation for attending expert talk/guest lecture at SKIT or outside SKIT in any institute.',
+            'Certificate of participation for attending Key note or Invited Talk (in conference) is allowed.'
         ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -441,10 +444,9 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'expert_name',
                 'required': True,
-                'placeholder': 'e.g., Mr. J. Jegathesan',
+                'placeholder': 'e.g. Mr. J. Jegathesan',
                 'help_text': 'Full name and designation of the expert speaker, e.g., Mr.J.Jegathesan, Didactic Engineer, FESTO India, Bengaluru',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 150
                 }
             },
@@ -455,7 +457,6 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'Enter the topic of the lecture',
                 'field_validation': {
-                    'min_length': 5,
                     'max_length': 200
                 }
             },
@@ -464,7 +465,8 @@ FORM_DEFINITIONS = {
                 'field_type': 'radio',
                 'field_name': 'location_type',
                 'required': True,
-                'help_text': 'Select if the event was held at SKIT or outside SKIT.',
+                'help_text': '''In-house: Event held at SKIT outside
+                Away: Event held outside SKIT''',
                 'options': [
                     {'value': 'in-house', 'label': 'In-house'},
                     {'value': 'away', 'label': 'Away'},
@@ -496,7 +498,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'field_validation': {
                     'max_date': 'today',
-                    'after_field': 'from_date'
+                    'after_field': 'from_date'  # Must be after from_date
                 }
             },
             {
@@ -507,7 +509,6 @@ FORM_DEFINITIONS = {
                 'placeholder': 'e.g., ECE Department-SKIT Jaipur',
                 'help_text': 'The department or organization that arranged the event.',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 150
                 }
             },
@@ -516,7 +517,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'venue',
                 'required': True,
-                'placeholder': 'e.g., CS Block Seminar Hall',
+                'placeholder': 'e.g., CS Block Seminar Hall. Write "Online activity" if event mode was online.',
                 'field_validation': {
                     'min_length': 3,
                     'max_length': 200
@@ -527,10 +528,10 @@ FORM_DEFINITIONS = {
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Only PDF file format is acceptable. Rename pdf file as universityroll_studentname_eventname before uploading.',
+                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
                 'validation': {
-                    'accepted_types': ['.pdf'],
-                    'max_size': '10MB'
+                    'accepted_types': '.pdf',
+                    'max_size': '5MB'
                 }
             }
         ]
@@ -539,7 +540,7 @@ FORM_DEFINITIONS = {
     'event_organized': {
         'title': 'Organized an Event',
         'description': [
-            'Organizer/Volunteer/Coordinator/etc certificate for any cultural/technical/sports/non-technical event at SKIT'
+            'Organizer/Volunteer/Coordinator etc certificate for any cultural/technical/ sports/non-technical event at SKIT'
             ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -551,7 +552,6 @@ FORM_DEFINITIONS = {
                 'placeholder': 'e.g., SUR, Mayukh, Kill With Fire',
                 'help_text': 'Exactly as Mentioned in the Certificate.',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 100
                 }
             },
@@ -560,10 +560,9 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'event_nature',
                 'required': True,
-                'placeholder': 'e.g., Dance Competition, Tree Plantation',
+                'placeholder': 'e.g. Dance Competition, Tree Plantation',
                 'help_text': 'e.g Dance Competition, Singing Competition, Quiz Competition, Tree Plantation Event',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 100
                 }
             },
@@ -575,7 +574,6 @@ FORM_DEFINITIONS = {
                 'placeholder': 'e.g., NSS Club SKIT',
                 'help_text': 'Write NA if not a club activity.',
                 'field_validation': {
-                    'min_length': 2,
                     'max_length': 100
                 }
             },
@@ -649,22 +647,21 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'field_validation': {
                     'max_date': 'today',
-                    'after_field': 'from_date'
+                    'after_field': 'from_date'  # Must be after from_date
                 }
             },
             {
-                'field_label': 'Role in event (as mentioned in certificate)',
+                'field_label': 'Role in event(as mentioned in certificate)',
                 'field_type': 'text',
                 'field_name': 'role',
                 'required': True,
                 'placeholder': 'e.g., Volunteer, Coordinator, Organizer',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 50
                 }
             },
             {
-                'field_label': 'No. of Participants in event (approx.)',
+                'field_label': 'No. of Participants in event(approx.)',
                 'field_type': 'number',
                 'field_name': 'participant_count',
                 'required': True,
@@ -680,7 +677,6 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'Write Non Sponsored if not applicable',
                 'field_validation': {
-                    'min_length': 2,
                     'max_length': 100
                 }
             },
@@ -691,7 +687,6 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'e.g., SKIT Jaipur',
                 'field_validation': {
-                    'min_length': 3,
                     'max_length': 150
                 }
             },
@@ -700,7 +695,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'venue',
                 'required': True,
-                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
+                'placeholder': 'e.g., SKIT Jaipur. Write online if event mode was online',
                 'field_validation': {
                     'min_length': 3,
                     'max_length': 200
@@ -711,22 +706,22 @@ FORM_DEFINITIONS = {
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Only PDF file format is acceptable. Rename pdf file as universityroll_studentname_eventname before uploading.',
+                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
                 'validation': {
-                    'accepted_types': ['.pdf'],
-                    'max_size': '10MB'
+                    'accepted_types': '.pdf',
+                    'max_size': '5MB'
                 }
             }
         ]
     },
     
     'winner_achievement': {
-        'title': 'Winner/Award/Other Achievement',
+        'title': 'Winner/Award/ Other Achievement',
         'description':[
-            'Winner/ Runner Up/Consolation/Good Rank or Position/award/prize  in some high level Cultural/Technical(e.g. Hackathon)/Sports/Non Technical competition/contest  organized by SKIT or any other Institute/university/organization.',
-            'for e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as google code Jam / Player of the tournament award in state level cricket league etc'
+            'Winner/Runner Up/ Consolation/Good Rank or Position/award/prize in some high level Cultural/Technical(e.g. Hackathon)/ Sports/Non Technical competition/contest organized by SKIT or any other Institute/university/organization.',
+            'For e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as google code Jam / Player of the tournament award in state level cricket league etc'
             'Certificate should mention some Rank/Place/Position in a competition or some high level achievement like man of the match/player of the tournament etc.'
-            'Non Competition certificates for e.g. Certificate of clearing some exam/test/assessment (with some score) but  without a rank/position/place is NOT allowed. It should be a certificate for only a "competition/contest" activity.'
+            'Non Competition certificates for e.g. Certificate of clearing some exam/test/assessment(with some score) but without a rank/position/place is NOT allowed. It should be a certificate for only a "competition/contest" activity.'
             ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -737,7 +732,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'e.g., Google Code Jam, Smart India Hackathon',
                 'help_text': 'Exactly as Mentioned in the Certificate.',
-                'field_validation': { 'min_length': 3, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Nature of the Event',
@@ -745,7 +740,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_nature',
                 'required': True,
                 'placeholder': 'e.g., Coding Competition, Business Plan Contest',
-                'field_validation': { 'min_length': 3, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Team/Individual',
@@ -771,17 +766,17 @@ FORM_DEFINITIONS = {
                 'field_label': 'Name of the team(If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_name',
-                'required': False,
+                'required': True,
                 'placeholder': 'Write NA if not a Hackathon event',
-                'field_validation': { 'min_length': 2, 'max_length': 100 }
+                'field_validation': { 'max_length': 100 }
             },
             {
                 'field_label': 'Name of all team members (If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_members',
-                'required': False,
+                'required': True,
                 'placeholder': 'Write NA if not a Hackathon event',
-                'field_validation': { 'min_length': 2, 'max_length': 500 }
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Position/Place/Rank',
@@ -800,13 +795,13 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': False,
+                'required': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': { 'min_length': 2, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
-                'field_label': 'Award Given (Other Than Certificate)',
+                'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
                 'required': True,
@@ -823,10 +818,10 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': False,
+                'required': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
-                'field_validation': { 'min_length': 2, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Event Level',
@@ -886,7 +881,10 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'to_date',
                 'required': True,
-                'field_validation': { 'max_date': 'today', 'after_field': 'from_date' }
+                'field_validation': { 
+                    'max_date': 'today',                     
+                    'after_field': 'from_date'  # Must be after from_date
+                }
             },
             {
                 'field_label': 'Date of Receiving Award/Certificate',
@@ -914,12 +912,12 @@ FORM_DEFINITIONS = {
                 'field_validation': { 'min_length': 3, 'max_length': 200 }
             },
             {
-                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization/(Event Organizer)',
+                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
                 'field_type': 'text',
                 'field_name': 'organizer_details',
                 'required': True,
                 'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
-                'field_validation': { 'min_length': 10, 'max_length': 500 }
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
@@ -927,15 +925,15 @@ FORM_DEFINITIONS = {
                 'field_name': 'award_agency_details',
                 'required': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'min_length': 10, 'max_length': 500 }
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Award Certificate/other proof',
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Only PDF file format is acceptable. Rename pdf file as universityroll_studentname_eventname before uploading.',
-                'validation': { 'accepted_types': ['.pdf'], 'max_size': '10MB' }
+                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
+                'validation': { 'accepted_types': '.pdf', 'max_size': '5MB' }
             }
         ]
     },
@@ -954,14 +952,14 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'e.g., Google, Microsoft, Amazon',
                 'help_text': 'The internship/training should be done before the student is placed in a company and got stipend.',
-                'field_validation': { 'min_length': 2, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Location/Address',
                 'field_type': 'text',
                 'field_name': 'location',
                 'required': True,
-                'placeholder': 'e.g., Bengaluru, Karnataka',
+                'placeholder': 'e.g., Bengaluru, Karnataka. Write "Online" if mode was online',
                 'field_validation': { 'min_length': 5, 'max_length': 300 }
             },
             {
@@ -969,8 +967,8 @@ FORM_DEFINITIONS = {
                 'field_type': 'number',
                 'field_name': 'stipend_amount',
                 'required': True,
-                'placeholder': 'e.g., 5000',
-                'help_text': 'Enter the numeric value of the stipend in Rs. Do not include commas or currency symbols.',
+                'placeholder': 'e.g. 5000',
+                'help_text': 'Enter the numeric value of the stipend in Rs. Do NOT include commas or currency symbols.',
                 'field_validation': { 'min': 1 }
             },
             {
@@ -1012,9 +1010,10 @@ FORM_DEFINITIONS = {
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Certificate must contain proof of stipend. If not, merge proof (bank statement, offer letter) into the PDF.',
+                'help_text': '''Certificate must contain proof of stipend. If not, merge proof (bank statement, offer letter) into the PDF.
+                Max Size: 10MB''',
                 'validation': {
-                    'accepted_types': ['.pdf'],
+                    'accepted_types': '.pdf',
                     'max_size': '10MB'
                 }
             }
@@ -1024,7 +1023,7 @@ FORM_DEFINITIONS = {
     'paper_presented': {
         'title': 'Paper Presented in Conference',
         'description': [
-            "Presented paper in any  conference (National/International) at SKIT or outside SKIT",
+            "Presented paper in any conference (National/International) at SKIT or outside SKIT",
         ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -1034,7 +1033,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'conference_name',
                 'required': True,
                 'placeholder': 'e.g., 3rd International Conference on Internet of Things...',
-                'field_validation': { 'min_length': 10, 'max_length': 200 }
+                'field_validation': { 'max_length': 200 }
             },
             {
                 'field_label': 'National/International',
@@ -1066,7 +1065,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'paper_title',
                 'required': True,
                 'placeholder': 'Enter the full title of your paper',
-                'field_validation': { 'min_length': 10, 'max_length': 250 }
+                'field_validation': { 'max_length': 250 }
             },
             {
                 'field_label': 'Other Authors (Name, Branch)',
@@ -1074,7 +1073,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'other_authors',
                 'required': True,
                 'placeholder': 'e.g., 1. Ajay Sharma, CSE 2. Abhay Kumar, CSE.',
-                'field_validation': { 'min_length': 2, 'max_length': 500 }
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Mode of Conference',
@@ -1092,7 +1091,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'organizer',
                 'required': True,
                 'placeholder': 'e.g., IEEE, Springer, SKIT Jaipur',
-                'field_validation': { 'min_length': 3, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Event Venue',
@@ -1107,10 +1106,10 @@ FORM_DEFINITIONS = {
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Proof for paper presentation is mandatory. Rename PDF file as universityroll_studentname_eventname before uploading.',
+                'help_text': 'Proof for paper presentation is mandatory. Max Size: 5MB',
                 'validation': {
-                    'accepted_types': ['.pdf'],
-                    'max_size': '10MB'
+                    'accepted_types': '.pdf',
+                    'max_size': '5MB'
                 }
             }
         ]
@@ -1119,7 +1118,7 @@ FORM_DEFINITIONS = {
     'financial_grant': {
         'title': 'Financial Grant Received',
         'description': [
-            "Received any financial funding for project / start up / DST project etc. from private/government agency."
+            "Received any financial funding for project/start up/DST project etc. from private/government agency."
         ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -1129,7 +1128,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'agency_name',
                 'required': True,
                 'placeholder': 'e.g., Department of Science & Technology, Govt. of India',
-                'field_validation': { 'min_length': 3, 'max_length': 200 }
+                'field_validation': { 'max_length': 200 }
             },
             {
                 'field_label': 'Funded Amount',
@@ -1145,7 +1144,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'funded_for',
                 'required': True,
                 'placeholder': 'e.g., Research Project, Startup Idea, Conference Travel',
-                'field_validation': { 'min_length': 5, 'max_length': 250 }
+                'field_validation': { 'max_length': 250 }
             },
             {
                 'field_label': 'Status of Funding Agency',
@@ -1169,10 +1168,10 @@ FORM_DEFINITIONS = {
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Only PDF file format is acceptable. Rename PDF file as universityroll_studentname_financialgrant before uploading.',
+                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
                 'validation': {
-                    'accepted_types': ['.pdf'],
-                    'max_size': '10MB'
+                    'accepted_types': '.pdf',
+                    'max_size': '5MB'
                 }
             }
         ]
@@ -1181,7 +1180,7 @@ FORM_DEFINITIONS = {
     'online_course': {
         'title': 'Coursera / edX Certification',
         'description': [
-            "Only Upload Coursera/edX Certificates. Course certificates from other platforms such Udemy NOT allowed to be uploaded."
+            "Only Upload Coursera/edX Certificates. Course certificates from other platforms such as Udemy are NOT allowed."
         ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -1191,7 +1190,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'course_name',
                 'required': True,
                 'placeholder': 'e.g., Python for Everybody',
-                'field_validation': { 'min_length': 5, 'max_length': 150 }
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Platform',
@@ -1199,7 +1198,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'platform',
                 'required': True,
                 'placeholder': 'e.g., Coursera, edX, Udemy',
-                'field_validation': { 'min_length': 2, 'max_length': 100 }
+                'field_validation': { 'max_length': 100 }
             },
             {
                 'field_label': 'Date of Completion',
@@ -1213,10 +1212,10 @@ FORM_DEFINITIONS = {
                 'field_type': 'file',
                 'field_name': 'certificate',
                 'required': True,
-                'help_text': 'Rename the file with your University Roll No.',
+                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
                 'validation': {
-                    'accepted_types': ['.pdf'],
-                    'max_size': '10MB'
+                    'accepted_types': '.pdf',
+                    'max_size': '5MB'
                 }
             }
         ]
@@ -1256,7 +1255,6 @@ db.execute("""
     """)
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
-
     # Check if table named the form exists
     table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
 
@@ -1279,13 +1277,16 @@ for form in form_name_list:
         # Dynamically create SQL tables for all forms
         db.execute(
             f"""CREATE TABLE IF NOT EXISTS {form}(
-            student_id INTEGER PRIMARY KEY NOT NULL,
+            entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            student_id INTEGER NOT NULL,
             {field_cols_sql},
             full_path TEXT NOT NULL,
             google_file_id TEXT NOT NULL DEFAULT 'pending',
             status TEXT DEFAULT 'pending' NOT NULL,
+            submitted_at TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')),
+            withdrawn_at TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES student_details(student_user_id),
-            CHECK (status IN ('pending', 'approved', 'rejected'))
+            CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
 
@@ -1392,10 +1393,9 @@ def register():
 
         # email id
         email = request.form.get("email")
-        if not email or '@' not in email:
-            # Flash error message
-            flash("Please enter a valid email address", "danger")
-            return redirect("/register")
+        if not email.endswith('@skit.ac.in'):
+            flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
+            return redirect(url_for("register"))
 
         # password
         password = request.form.get("password")
@@ -1464,9 +1464,9 @@ def register():
 @app.route("/otp_verify", methods=["GET", "POST"])
 def otp_verify():
     # Make sure the user has started the registration process
-    if 'unverified_user' not in session or 'otp_secret' not in session:
-        flash("Please start the registration process first.", "warning")
-        return redirect(url_for("register"))
+    # if 'unverified_user' not in session or 'otp_secret' not in session:
+    #     flash("Please start the registration process first.", "warning")
+    #     return redirect(url_for("register"))
 
     if request.method == "POST":
         # OTP entered by user
@@ -1534,9 +1534,19 @@ def login_callback():
         user_info = token.get('userinfo')
 
         if user_info:
-            # --- Your existing logic to handle user creation/login ---
+            email = user_info.get('email')
+
+            # Check if email was retrieved
+            if not email:
+                flash("Could not retrieve email from Google. Please try again.", "danger")
+                return redirect(url_for("login"))
+                
+            # Check if the email belongs to the SKIT domain
+            if not email.endswith('@skit.ac.in'):
+                flash("Access Denied. You must log in with a your SKIT email address.", "danger")
+                return redirect(url_for("login"))
+
             google_id = user_info['sub']
-            email = user_info['email']
             first_name = user_info.get('given_name', '')
             last_name = user_info.get('family_name', '')
             profile_picture = user_info.get('picture', '')
@@ -1604,15 +1614,19 @@ def login_callback():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # Forget any past user
-    session.clear()
+    # If user already logged in
+    if session.get("user_id"):
+        return redirect(url_for('sodeca_home'))
 
     if request.method == "POST":
 
         email = request.form.get("email")
-        if not email or '@' not in email:
-            flash("Invalid email", "danger")
-            return redirect("/register")
+        if not email:
+            flash("Valid SKIT Email is required", "danger")
+            return redirect(url_for("login"))
+        if not email.endswith('@skit.ac.in'):
+            flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
+            return redirect(url_for("login"))
 
         password = request.form.get("password")
         if not password:
@@ -1750,6 +1764,15 @@ def student_details():
             return redirect(url_for("student_details"))
         
         flash("Your details were successfully saved.", "success")
+
+        # Get the next URL from form or query parameter
+        next_url = request.args.get('next')
+        
+        print(next_url)
+        # Validate the URL for security
+        if next_url and is_safe_url(next_url):
+            return redirect(next_url)
+    
         return redirect(url_for("sodeca_forms"))
     
     else:
@@ -1784,10 +1807,13 @@ def sodeca_forms():
         # Store the list and the starting point (index 0) in the session
         session['selected_forms'] = selected_forms
         session['current_form_index'] = 0
+        
+        session.pop("verified_details", None)
 
         # redirect to fill form
         return redirect("/verify_student_details")
     else:
+        print("then I got here")
         return render_template("sodeca_forms.html", FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 @app.route("/verify_student_details", methods=["GET", "POST"])
@@ -1821,7 +1847,7 @@ def verify_student_details():
 @app.route("/fill_form", methods=["GET", "POST"])
 @login_required
 def fill_form():
-
+    # Safety fix    
     # If user has not verified details
     if session.get("verified_details") == None:
         flash("Kindly confirm details by checking the checkbox", "warning")
@@ -1829,7 +1855,8 @@ def fill_form():
     
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
-        flash("Please select atleast one form to submit", "danger")
+        # flash("Please select atleast one form to submit", "danger")
+        flash("Kindly check your submissions and their approval status on the hompeage", "success")
         return redirect(url_for("sodeca_forms"))
 
     user_id = session["user_id"]
@@ -1837,15 +1864,16 @@ def fill_form():
     current_form_index = session["current_form_index"]
     total_count = len(selected_forms)
 
+    print(f"{current_form_index} and {total_count}")
     # If all forms are completed
     if current_form_index >= len(selected_forms):
 
         # Clean up the session
         session.pop("selected_forms", None)
         session.pop("current_form_index", None)
-        session.pop("verified_details", None)
 
-        flash("Kindly check your submissions and their approval status on the hompeage", "success")
+        flash("Kindly check your submissions and their approval status on your submissions page", "success")
+        print("I am here!")
         return redirect(url_for("sodeca_forms"))
 
     # current_form_index is the key in dict "selected_forms" defined in the start
@@ -1924,22 +1952,29 @@ def fill_form():
                         student_name = student_details[0]["student_name"]
                         event_name = request.form.get("event_title", "unknown_event")
 
-                        certificate.filename =  f"{uni_roll_no}_{student_name}_{event_name}{file_extension}"
+                        certificate.filename = f"{uni_roll_no}_{student_name}_{event_name}{file_extension}"
 
                     # Secure the filename to prevent security risks (e.g., directory traversal)
                     filename = secure_filename(certificate.filename)
+                    
+                    # Handle duplicate filenames by adding a number in parentheses
+                    base_name, extension = os.path.splitext(filename)
+                    save_path = os.path.join(UPLOAD_FOLDER, filename)
+                    counter = 1
+                    
+                    while os.path.exists(save_path):
+                        filename = f"{base_name}({counter}){extension}"
+                        save_path = os.path.join(UPLOAD_FOLDER, filename)
+                        counter += 1
+                    
                     # Save filename in form_inputs
                     form_inputs[field_name] = filename
 
-                    save_path = os.path.join(UPLOAD_FOLDER, filename)
-
                     # Save the file to the local server
                     certificate.save(save_path)
-
                 else:
                     flash("Invalid file type. Allowed types are: pdf", "danger")
                     return redirect(request.url)
-
             # Text and Radio inputs
             else:
                 # Update form_inputs dict
@@ -1962,7 +1997,7 @@ def fill_form():
                 flash("Error: From date is greater than To date", "danger")
                 return redirect(request.url)
             today = date.today()
-            if from_date >= today or to_date >= today:
+            if from_date > today or to_date > today:
                 print(f"today: {today}, from_date: {from_date}, to_date: {to_date} ")
                 flash("Error: Dates cannot be for in future activites", "danger")
                 return redirect(request.url)
@@ -1979,18 +2014,14 @@ def fill_form():
             try:
                 # Dynamically store form entries in respective tables in database
                 db.execute(f"""
-                    INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status)
-                    VALUES(?, {placeholder_sql}, ?, ?, ?)
-                    ON CONFLICT(student_id) DO UPDATE SET {update_clause},
-                    full_path = EXCLUDED.full_path,
-                    google_file_id = EXCLUDED.google_file_id,
-                    status = EXCLUDED.status
+                    INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
+                    VALUES(?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
                 """, session["user_id"], *values_list, # *values_list gives a string eg. "Value1", "Value2"...
                 save_path, "pending", "pending", )
 
             except Exception as e:
                 print(f"Database error: {e}", file=sys.stderr)
-                flash("A database error occurred while saving the form. Please try again.", "danger")
+                flash("A database error occurred while saving the form. Please try again later.", "danger")
 
                 # IMPORTANT: If the DB save fails, we should delete the file we just saved
 
@@ -2000,73 +2031,123 @@ def fill_form():
         session["current_form_index"] += 1
 
         # Form submission successful, show success page
-        percentage = (current_form_index + 1 / total_count) * 100
-        return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=(current_form_index + 1) , progress_width=percentage, total=total_count)
-        # return render_template("fill_form.html", success=True, form_to_show=form_to_show)
+        percentage = (current_form_index+1 / total_count) * 100
+        return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=current_form_index, progress_width=percentage, total=total_count)
 
     # Just show the form to be filled
     percentage = (current_form_index / total_count) * 100
     return render_template("fill_form.html", success=False, form_to_show=form_to_show, count=current_form_index, progress_width = percentage, total=total_count)
-    # return render_template("fill_form.html", success=False, form_to_show=form_to_show)
+
+# View user submissions route
+@app.route("/your_submissions", methods=["GET"])
+@login_required
+def your_submissions():
+    student_id = session.get("user_id")
+    base_queries = []
+    params = {'sid': student_id}
+
+    for key, value in FORM_DEFINITIONS.items():
+        base_queries.append(
+                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS category, certificate, status, submitted_at, withdrawn_at 
+                FROM {key} WHERE student_id = :sid"""
+                )
+    if base_queries:
+        complete_query = " UNION ALL ".join(base_queries)
+        final_sql = f"{complete_query} ORDER BY submitted_at DESC"
+
+        try:
+            # Execute the combined query with the named parameter
+            submissions = db.execute(final_sql, **params)
+        except Exception as e:
+            print(f"Error fetching submissions for student {student_id}: {e}")
+            flash("An error occurred while fetching your submissions.", "danger")
+            return redirect(url_for('sodeca_forms'))
+
+    return render_template("your_submissions.html", submissions=submissions)
+
+@app.route("/withdraw_entry", methods=["POST"])
+@login_required
+def withdraw_entry():
+    entry_id = request.form.get("entry_id")
+    form = request.form.get("form_name")
+    try:
+        db.execute(f"UPDATE {form} SET withdrawn_at = datetime('now', '+5 hours', '+30 minutes') WHERE entry_id = ?", entry_id)
+    except Exception as e:
+        print(f"Database error: {e}")
+        flash(f"Could not withdraw, error: {e}")
+    flash("Entry withdrawn", "success")
+    return redirect(url_for("your_submissions"))
 
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
 @app.route("/faculty_dashboard", methods=["GET"])
 @login_required
 def faculty_dashboard():
+    if request.method == "GET":
 
-        if request.method == "GET":
+        if role(session.get("user_id")) != 'faculty':
+            return "Access Denied!", 400
+        
+        if session.get("user_id") == 1:
+            session["user_role"] == "admin"
+            return redirect(url_for("super_admin"))
+        
+        # Get batch details, assigned to faculty
+        batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
+        batch_details = batch[0]
+        batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
 
-            if role(session.get("user_id")) != 'faculty':
-                return "Access Denied!", 400
-            
-            if session.get("user_id") == 1:
-                session["user_role"] == "admin"
-                return redirect(url_for("super_admin"))
-            
-            # Get batch details, assigned to faculty
-            batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
+        is_authorized = 'drive_auth_token' in session
+        print(session.get('drive_auth_token'))
+        print(is_authorized)
+        if not is_authorized:
+            flash("Drive authorization is required. Please authorize your account first", "warning")
 
-            is_authorized = 'drive_auth_token' in session
-            print(session.get('drive_auth_token'))
-            print(is_authorized)
-            if not is_authorized:
-                flash("Drive authorization is required. Please authorize your account first", "warning")
+        # Empty list to store data from each form in db
+        all_forms_data = []
+        pending_entries = []
 
-            # Empty list to store data from each form in db
-            all_forms_data = []
-    
-            # Get all forms available in form's definitions
-            for form in form_name_list:
-                # Get the data for different forms with BATCH SPECIFIED
-                form_data = db.execute(f"""
-                    SELECT 
-                        s.*,
-                        f.*
-                    FROM student_details s
-                    INNER JOIN {form} f ON s.student_user_id = f.student_id
-                    WHERE s.semester = ? AND s.branch = ? AND s.section = ? AND s.class_group = ?
-                """, batch[0]["semester"], batch[0]["branch"], batch[0]["section"], batch[0]["class_group"])
+        # Get all forms available in form's definitions
+        for form in form_name_list:
+            # Get the data for different forms with BATCH SPECIFIED
+            form_data = db.execute(f"""
+                SELECT 
+                    s.*,
+                    f.*
+                FROM student_details s
+                INNER JOIN {form} f ON s.student_user_id = f.student_id
+                WHERE s.semester = ? 
+                AND s.branch = ? 
+                AND s.section = ? 
+                AND s.class_group = ? 
+                AND f.withdrawn_at IS NULL
+            """, batch_details["semester"], batch_details["branch"], batch_details["section"], batch_details["class_group"])
 
-                # Append it in list of differnet forms' with data
-                all_forms_data.append(form_data)
+            # Append it in list of differnet forms' with data
+            all_forms_data.append(form_data)
+            pending_count = 0
+            for row in form_data:
+                if row['status'] == 'pending':
+                    pending_count += 1
+                
+            # 4. Append the final, correct count (just the number) to your new list
+            pending_entries.append(pending_count)
 
-            return render_template("faculty_dashboard.html", 
-                                   forms_data=all_forms_data,
-                                   form_title_list=form_title,
-                                   form_names=form_name_list,
-                                   is_authorized=is_authorized)
-        else:
-            return redirect("/")
+        return render_template("faculty_dashboard.html", 
+                                forms_data=all_forms_data,
+                                form_title_list=form_title,
+                                form_names=form_name_list,
+                                is_authorized=is_authorized,
+                                batch_details=batch_details,
+                                pending_entries=pending_entries,
+                                batch_is=batch_is
+                                )
 
 @app.route('/view_submission/<path:filename>') 
 @login_required
 def view_submission(filename):
 
     """Securely serves a file from the local upload folder for faculty to view."""
-    if role(session["user_id"]) != 'faculty':
-        return "Access Denied: You must be a faculty member to view submissions.", 403
-
     try:
         # send_from_directory is the secure way to send files.
         # It prevents users from accessing files outside the LOCAL_UPLOAD_FOLDER.
@@ -2089,7 +2170,7 @@ def upload_to_drive():
         return redirect(url_for('faculty_dashboard'))
 
     filename = request.form.get('filename')
-    student_id = request.form.get('student_id')
+    entry_id = request.form.get('entry_id')
     form_name = request.form.get('form_name')
     print(filename)
     print(UPLOAD_FOLDER)
@@ -2104,17 +2185,16 @@ def upload_to_drive():
         if 'access_token' in creds_data:
             creds_data['token'] = creds_data.pop('access_token')
         creds_data.pop('scope', None)
-        creds_data.pop('userinfo', None)
+        # creds_data.pop('userinfo', None)
         creds_data.pop('expires_at', None)
         creds_data.pop('expires_in', None)
         creds_data.pop('token_type', None)
         creds_data.pop('refresh_token_expires_in', None)
 
         credentials = Credentials(**creds_data)
-
         drive_service = build('drive', 'v3', credentials=credentials)
 
-        file_metadata = {'name': filename, 'parents': [DRIVE_FOLDER_ID[form_name]]}
+        file_metadata = {'name': filename, 'parents': MASTER_DRIVE_FOLDER_ID}
         media = MediaFileUpload(full_path, resumable=True)
 
         uploaded_file = drive_service.files().create(
@@ -2123,8 +2203,8 @@ def upload_to_drive():
 
         google_file_id = uploaded_file.get('id')
 
-        sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE student_id = :sid"
-        db.execute(sql_query, status="approved", gfid=google_file_id, sid=student_id)
+        sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
+        db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
 
         flash(f"Successfully uploaded file '{uploaded_file.get('name')}' (ID: {google_file_id})", "success")
 
@@ -2150,11 +2230,11 @@ def upload_to_drive():
 @app.route("/reject_entry", methods=["POST"])
 @login_required
 def reject_entry():
-    student_id = request.form.get("student_id")
+    entry_id = request.form.get("entry_id")
     form_name = request.form.get("form_name")
     full_path = request.form.get("full_path")
     try:
-        db.execute(f"UPDATE {form_name} SET status='rejected' WHERE student_id=?", student_id)
+        db.execute(f"UPDATE {form_name} SET status='rejected' WHERE entry_id=?", entry_id)
     except Exception as e:
         flash(f"Database error: {e}")
         return redirect(url_for('faculty_dashboard'))
@@ -2165,7 +2245,6 @@ def reject_entry():
 @login_required
 def super_admin():
     if session.get("user_id") == 1:
-        session["user_role"] = 'admin'
         return render_template("super_admin.html")
     return "Access Denied!"
 
@@ -2285,9 +2364,13 @@ def assign_batch():
         return redirect (url_for("assign_batch"))
     
     else:
-
+        referrer = request.referrer
+        if referrer and "/faculty_list" in referrer:
+            show_modal = True
+        else:
+            show_modal = False
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
-        return render_template("assign_batch.html", faculty_data=faculty_data)
+        return render_template("assign_batch.html", faculty_data=faculty_data, show_modal=show_modal)
     
 @app.route("/discharge_faculty", methods=["POST"])
 def discharge_faculty():
@@ -2302,13 +2385,15 @@ def discharge_faculty():
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
 def student_report():
+
+    # Queries as per the number of forms selected
+    base_queries = []
+
     if request.method == "POST":
 
         # where_clause will have parameter inputs
         where_params = []
         where_clause = ""
-        # Queries as per the number of forms selected
-        base_queries = []
         filtered_data = []
 
         # Get single roll number
@@ -2339,13 +2424,15 @@ def student_report():
             joined_class_groups = ",".join(quoted_class_groups)
             where_params.append(f"s.class_group IN ({joined_class_groups})")
 
-
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
         forms = request.form.getlist("forms[]")
         for form in forms:
-            base_queries.append(f"SELECT s.student_name, s.university_roll_no, s.section, '{form}' AS category, f.google_file_id FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}")
+            base_queries.append(
+                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group, '{form}' AS category, f.google_file_id, f.submitted_at, f.withdrawn_at 
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
+                )
 
         if base_queries:
 
@@ -2373,8 +2460,54 @@ def student_report():
 
         return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
-    return render_template("student_report.html", filtered_data=[], FORM_DEFINITIONS=FORM_DEFINITIONS)
+    for form in form_name_list:
+        base_queries.append(
+            f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at 
+            FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
+            )
+    complete_query = " UNION ALL ".join(base_queries) 
+    print(complete_query)            
+    universal_report = db.execute(complete_query)
+    return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
+@app.route("/view_details", methods=["POST"])
+@login_required
+def view_details():
+    """
+    Handles a background request to fetch details for a single submission.
+    Expects JSON: { "entry_id": 123, "form_name": "blood_donor" }
+    Returns JSON: { "details": {...} }
+    """
+    try:
+        data = request.get_json()
+        entry_id = data.get('entry_id')
+        form_name = data.get('form_name')
+
+        # --- CRITICAL SECURITY CHECK ---
+        if form_name not in FORM_DEFINITIONS:
+            print(f"Error: Invalid form name requested: {form_name}", file=sys.stderr)
+            return jsonify({"error": "Invalid form type."}), 400
+
+        if not entry_id:
+            return jsonify({"error": "Entry id not available"}), 400
+
+        # Securely query the database
+        entry_details = db.execute(
+            f"SELECT * FROM {form_name} WHERE entry_id = :sid",
+            sid=entry_id
+        )
+
+        if not entry_details:
+            return jsonify({"error": "Entry not found."}), 404
+            
+        details_dict = entry_details[0]
+        
+        return jsonify({"details": details_dict})
+
+    except Exception as e:
+        print(f"Error in /view_details: {e}", file=sys.stderr)
+        return jsonify({"error": "A server error occurred. Please try again."}), 500
+    
 if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):

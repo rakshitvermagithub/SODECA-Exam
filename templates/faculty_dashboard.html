@@ -5,8 +5,6 @@
 {% endblock %}
 
 {% block css %}
-<link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
-<link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 <style>
     .page-wrapper {
         min-height: calc(100vh - 140px); /* Adjust 140px based on header + footer height */
@@ -75,7 +73,14 @@
         display: block;
     }
 </style>
+<link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 {% endblock %}
+
+{% block batch %}
+    {{ batch_is }}
+{% endblock %}
+
 
 {% block main %}
 {% include "message.html" %}
@@ -115,7 +120,14 @@
                                                 <a href="#{{ form_names[loop.index0] }}-anchor">
                                                     <div class="d-flex justify-content-between align-items-center fs-5">
                                                         <span>{{loop.index}}. {{ name }}</span>
-                                                        <i class="bi bi-box-arrow-up-right text-primary"></i>
+                                                        <!-- Badge for pending entries -->
+                                                        <span class="d-flex align-items-center">
+                                                            {% set pending_count = pending_entries[loop.index0]%}
+                                                            {% if pending_count != 0 %}
+                                                            <span class="badge fw-medium bg-danger rounded-pill me-3">{{ pending_entries[loop.index0] }}</span>
+                                                            {% endif %}
+                                                            <i class="bi bi-box-arrow-up-right text-primary"></i>
+                                                        </span>
                                                     </div>
                                                 </a>
                                             </td>
@@ -139,13 +151,13 @@
                     <div class="col-12">
                         <div class="card shadow border-dark-subtle">
                             <div class="card-body p-4">
-                                <h3 class="text-center mb-4 form-title">{{ form_title_list[(outer_loop.index0)] }}</h3>
+                                <h3 class="text-center mb-4 form-title">{{ form_title_list[(outer_loop.index0)] }} ({{ batch_is }})</h3>
                                 <div class="table-responsive">
                                     <table class="table table-bordered border-dark-subtle table-hover" id="{{ form_names[(outer_loop.index0)] }}" style="width:100%">
                                         <thead>
                                             <tr>
                                                 {% for header in form[0] %}
-                                                    {% if header != 'full_path' and header != 'student_user_id' %}
+                                                    {% if header != 'full_path' and header != 'student_id' and header != 'student_user_id' %}
                                                         <th>{{ header }}</th>
                                                     {% endif %}
                                                 {% endfor %}
@@ -161,20 +173,24 @@
                                                         </td>
                                                     {% elif key == 'status' %}
                                                         <td>
-                                                            {% if value == 'approved' %}
-                                                                <span class="badge bg-success">Approved</span>
+                                                            {% if value == 'accepted' %}
+                                                                <span class="badge bg-success">Accepted</span>
                                                             {% elif value == 'rejected' %}
                                                                 <span class="badge bg-danger">Rejected</span>
                                                             {% else %}
                                                                 <div class="btn-group btn-group-sm">
                                                                     <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
-                                                                        <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
+                                                                        <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
+                                                                        <input type="hidden" name="semester" value="{{ batch_details['batch_details'] }}">
+                                                                        <input type="hidden" name="branch" value="{{ batch_details['branch'] }}">
+                                                                        <input type="hidden" name="section" value="{{ batch_details['section'] }}">
+                                                                        <input type="hidden" name="class_group" value="{{ batch_details['class_group'] }}">
                                                                         <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
                                                                         <input type="hidden" name="filename" value="{{ row['certificate'] }}">
-                                                                        <button type="submit" class="btn btn-outline-success">Approve</button>
+                                                                        <button type="submit" class="btn btn-outline-success">Accept</button>
                                                                     </form>
                                                                     <form action="{{ url_for('reject_entry') }}" method="POST" style="display: inline;">
-                                                                        <input type="hidden" name="student_id" value="{{ row['student_id'] }}">
+                                                                        <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
                                                                         <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
                                                                         <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
                                                                         <button type="submit" class="btn btn-outline-danger">Reject</button>
@@ -186,7 +202,7 @@
                                                         <td>
                                                             <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">https://drive.google.com/file/d/{{ value }}/view</a>
                                                         </td>
-                                                    {% elif key == 'full_path' or key == 'student_user_id' %}
+                                                    {% elif key == 'full_path' or key == 'student_id' or key == 'student_user_id' %}
                                                         <!-- This column is hidden as per the header logic -->
                                                     {% else %}
                                                         <td>{{ value }}</td>

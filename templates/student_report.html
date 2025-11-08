@@ -56,8 +56,7 @@
         color: white;
     }
     .btn-outline-admin {
-        color: var(--bs-admin-purple);
-        padding: 8px;
+        color: black;
         background-color: white;
         border-color: var(--bs-admin-purple);
     }
@@ -66,34 +65,22 @@
         color: white;
     }
 
-    /* --- Filter Sidebar & Content --- */
-    .filter-sidebar {
-        border-right: 1px solid #dee2e6;
+    /* Modal Styling */
+    .modal-header-admin {
+        background-color: var(--bs-admin-purple);
+        color: white;
     }
-    .filter-item {
-        padding: 0.875rem 1.5rem;
-        cursor: pointer;
-        border-left: 4px solid transparent;
-        transition: background-color 0.2s, border-color 0.2s;
+    .modal-header-admin .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
     }
-    .filter-item:hover {
-        background: rgba(var(--bs-admin-purple-rgb), 0.05);
+    .filter-step { display: none; } 
+    .filter-step.active { display: block; } 
+
+    /* Ensure modal body scrolls */
+    #filterModal .modal-body {
+        overflow-y: auto; 
+        max-height: 65vh; /* Ensure a max height to trigger scroll */
     }
-    .filter-item.active {
-        background: rgba(var(--bs-admin-purple-rgb), 0.1);
-        border-left-color: var(--bs-admin-purple);
-        font-weight: 500;
-        color: var(--bs-admin-purple);
-    }
-    .filter-count {
-        font-size: 0.8rem;
-        color: #4338ca;
-        background-color: rgba(var(--bs-admin-purple-rgb), 0.15);
-        padding: 0.1rem 0.4rem;
-        border-radius: 0.5rem;
-    }
-    .filter-content { display: none; }
-    .filter-content.active { display: block; }
 
     /* Custom Admin Table Style */
     .table-admin thead {
@@ -106,6 +93,11 @@
     .table-admin td {
         vertical-align: middle;
     }
+    
+    #submissionDetailsModalBody {
+        overflow-wrap: break-word;
+        word-wrap: break-word; /* Fallback for older browsers */
+    }
 </style>
 {% endblock %}
 
@@ -113,108 +105,15 @@
 {% include "message.html" %}
 
 <div class="page-wrapper">
-    <!-- UPDATED: Changed container-fluid to container for max-width -->
     <div class="container">
-        <h2 class="text-center mb-3 form-title-admin">Student SODECA Report</h2>
-        <p class="text-center text-muted mt-n4 mb-5">Use the filters below to generate a specific report and export the data.</p>
+        <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
         
-        <!-- Filter Section -->
-        <div class="card shadow border-secondary mb-5">
-            <div class="row g-0">
-                <!-- Left Sidebar - Filter Labels -->
-                <div class="col-lg-3 filter-sidebar">
-                    <div class="p-4">
-                        <h5 class="fw-bold mb-3">Filters</h5>
-                        <div id="filter-nav">
-                            <div class="filter-item active" data-filter="student">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-people me-2"></i>Student</span>
-                                    <span class="filter-count" id="student-count">0 active</span>
-                                </div>
-                            </div>
-                            <div class="filter-item" data-filter="form">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-file-earmark-text me-2"></i>Form</span>
-                                    <span class="filter-count" id="form-count">0 selected</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-auto border-top p-3">
-                        <button type="submit" form="filterForm" class="btn btn-admin w-100 mb-2">Apply Filters</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="resetFiltersBtn">Reset All</button>
-                    </div>
-                </div>
-
-                <!-- Right Panel - Filter Options -->
-                <div class="col-lg-9">
-                    <div class="p-4">
-                        <form method="POST" action="{{url_for('student_report')}}" id="filterForm">
-                            <!-- Student Filter Content -->
-                            <div class="filter-content active" id="content-student">
-                                <h5 class="fw-semibold mb-3">Filter by Student Criteria</h5>
-                                <div class="row g-3">
-                                    <div class="col-12"><div class="form-floating">
-                                        <input type="text" class="form-control" name="university_roll_number" id="roll_number" placeholder="e.g., 21ESKCS123">
-                                        <label for="university_roll_no">University Roll Number</label>
-                                    </div></div>
-                                    <div class="col-12"><label class="form-label">Semester</label>
-                                        <div>
-                                        {% for i in range(3, 9) %}
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem{{ i }}"><label class="form-check-label" for="sem{{ i }}">{{ i }}</label>
-                                        </div>
-                                        {% endfor %}
-                                        </div>
-                                    </div>
-                                    <div class="col-12"><label class="form-label">Branch</label><div>
-                                        {% set branches = ['CSE', 'CSE(AI)', 'CSE(DS)', 'CSE(IOT)'] %}
-                                        {% for branch in branches %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branch{{ branch }}"><label class="form-check-label" for="branch{{ branch }}">{{ branch }}</label>
-                                        </div>{% endfor %}
-                                    </div></div>
-                                     <div class="col-12"><label class="form-label">Section</label><div>
-                                        {% set sections = ['A', 'B', 'C', 'D', 'E', 'F'] %}
-                                        {% for section in sections %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="section{{ section }}"><label class="form-check-label" for="section{{ section }}">{{ section }}</label>
-                                        </div>{% endfor %}
-                                    </div></div>
-                                    <div class="col-12"><label class="form-label">Group</label><div>
-                                        {% set groups = ['G1', 'G2'] %}
-                                        {% for group in groups %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="class_groups[]" value="{{ group }}" id="group{{ group }}"><label class="form-check-label" for="group{{ group }}">{{ group }}</label>
-                                        </div>{% endfor %}
-                                    </div></div>
-                                </div>
-                            </div>
-
-                            <!-- Form Filter Content -->
-                            <div class="filter-content" id="content-form">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="fw-semibold m-0">Filter by Form Type</h5>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="selectAllForms">
-                                        <label class="form-check-label" for="selectAllForms">Select All</label>
-                                    </div>
-                                </div>
-                                <div class="row row-cols-1 row-cols-md-2 g-2">
-                                    {% for key, form in FORM_DEFINITIONS.items() %}
-                                    <div class="col">
-                                        <div class="form-check fs-6 mb-1 p-2 rounded-2 form-filter-item">
-                                            <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form-{{ key }}">
-                                            <label class="form-check-label ms-2" for="form-{{ key }}">{{ form["title"] }}</label>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <div class="text-center mb-4">
+             <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="bi bi-funnel-fill me-2"></i> Apply Filters
+            </button>
         </div>
 
-        <!-- Results Table -->
         <div class="card card-minimalist-admin">
              <div class="card-body p-4">
                 <div class="table-responsive">
@@ -228,6 +127,9 @@
                                 <th>Batch</th>
                                 <th>Category</th>
                                 <th>Proof</th>
+                                <th>Submitted at</th>
+                                <th>Withdrawn at</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -236,9 +138,20 @@
                                 <td>{{ loop.index }}</td>
                                 <td>{{ data["student_name"] }}</td>
                                 <td>{{ data["university_roll_no"] }}</td>
-                                <td>{{ data["section"] }}</td>
+                                <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
                                 <td>{{ data["category"] }}</td>
-                                <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">https://drive.google.com/file/d/{{ data['google_file_id'] }}</a></td>
+                                <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">View Proof</a></td>
+                                <td>{{ data["submitted_at"] }}</td>
+                                <td>{{ data["withdrawn_at"] }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary view-details-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#submissionDetailsModal"
+                                            data-entry-id="{{ data.entry_id }}"
+                                            data-form-name="{{ data.category }}">
+                                        View details
+                                    </button>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -248,6 +161,144 @@
         </div>
     </div>
 </div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    {# Ensures the entire modal dialog allows scrolling of the body #}
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="filterModalLabel">Apply Report Filters</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{url_for('student_report')}}" id="filterForm">
+                <div class="modal-body p-4">
+                    
+                    <!-- Step 1: Student Filters -->
+                    <div class="filter-step active" id="filterStep1">
+                        <h5 class="fw-semibold mb-4"><i class="bi bi-people me-2"></i>Filter by Student Criteria</h5>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="roll_number" class="form-label">University Roll Number</label>
+                                <input type="text" class="form-control" name="university_roll_number" id="roll_number" placeholder="e.g., 21ESKCS123">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-checkbox-group">
+                                    <label class="form-label">Semester</label>
+                                    <div>
+                                        {% for i in range(3, 9) %}<div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem{{ i }}"><label class="form-check-label" for="sem{{ i }}">{{ i }}</label>
+                                        </div>{% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="filter-checkbox-group">
+                                    <label class="form-label">Branch</label>
+                                    <div>
+                                        {% set branches = ['CSE', 'CSE(AI)', 'CSE(DS)', 'CSE(IOT)'] %}
+                                        {% for branch in branches %}<div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branch{{ branch }}"><label class="form-check-label" for="branch{{ branch }}">{{ branch }}</label>
+                                        </div>{% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-checkbox-group">
+                                    <label class="form-label">Section</label>
+                                    <div>
+                                        {% set sections = ['A', 'B', 'C', 'D', 'E', 'F'] %}
+                                        {% for section in sections %}<div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="section{{ section }}"><label class="form-check-label" for="section{{ section }}">{{ section }}</label>
+                                        </div>{% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6"> 
+                                <div class="filter-checkbox-group">
+                                    <label class="form-label">Group</label>
+                                    <div>
+                                        {% set groups = ['G1', 'G2'] %}
+                                        {% for group in groups %}<div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="class_groups[]" value="{{ group }}" id="group{{ group }}"><label class="form-check-label" for="group{{ group }}">{{ group }}</label>
+                                        </div>{% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Form Filters -->
+                    <div class="filter-step" id="filterStep2">
+                         <h5 class="fw-semibold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Filter by Form Type</h5>
+                         <div class="d-flex justify-content-end mb-3">
+                             <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="selectAllForms">
+                                <label class="form-check-label" for="selectAllForms">Select All</label>
+                            </div>
+                         </div>
+                         <div class="row row-cols-1 row-cols-md-3 g-2"> 
+                            {% for key, form in FORM_DEFINITIONS.items() %}
+                            <div class="col">
+                                <div class="form-check fs-6 mb-1 rounded-2">
+                                    <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form-{{ key }}">
+                                    <label class="form-check-label ms-1" for="form-{{ key }}">{{ form["title"] }}</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn">Reset All</button>
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary me-2" id="backBtn" style="display: none;">Back</button>
+                        <button type="button" class="btn btn-admin" id="nextBtn">Next</button>
+                        <button type="submit" class="btn btn-admin" id="submitBtn" style="display: none;">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    
+    <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
+      
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="submissionDetailsModalLabel">
+            <i class="bi bi-file-earmark-text me-2"></i>Loading...
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body p-4" id="submissionDetailsModalBody">
+        
+        <!-- This is the default loading state that your JS will replace -->
+        <div class="text-center py-4" id="modal-loading-state">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading details...</p>
+        </div>
+        <!-- 
+          Your JavaScript will replace the contents of this modal-body.
+          Any long text it injects will now be forced to wrap.
+        -->
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block script %}
@@ -263,87 +314,185 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const filterNav = document.getElementById('filter-nav');
-    const filterContents = document.querySelectorAll('.filter-content');
-    const filterForm = document.getElementById('filterForm');
-    const selectAllFormsCheckbox = document.getElementById('selectAllForms');
-    const formCheckboxes = filterForm.querySelectorAll('input[name="forms[]"]');
-
-    // Handle sidebar navigation
-    filterNav.addEventListener('click', function(event) {
-        const filterItem = event.target.closest('.filter-item');
-        if (!filterItem) return;
-        filterNav.querySelectorAll('.filter-item').forEach(item => item.classList.remove('active'));
-        filterItem.classList.add('active');
-        const filterName = filterItem.dataset.filter;
-        filterContents.forEach(content => {
-            content.classList.toggle('active', content.id === `content-${filterName}`);
-        });
-    });
-
-    // Handle "Reset All" button
-    document.getElementById('resetFiltersBtn').addEventListener('click', function() {
-        filterForm.reset();
-        selectAllFormsCheckbox.checked = false; // Also reset the select all checkbox
-        updateAllCounts();
-    });
-
-    // Update counts when any form input changes
-    filterForm.addEventListener('change', updateAllCounts);
+    const filterModalElement = document.getElementById('filterModal');
+    let filterModal;
+    if (filterModalElement) {
+        filterModal = new bootstrap.Modal(filterModalElement); 
+    }
     
-    // "Select All" functionality
-    selectAllFormsCheckbox.addEventListener('change', function() {
-        formCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-        updateAllCounts(); // Manually trigger count update
-    });
+    const filterForm = document.getElementById('filterForm');
+    const step1 = document.getElementById('filterStep1');
+    const step2 = document.getElementById('filterStep2');
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetFiltersBtn');
+    const selectAllFormsCheckbox = document.getElementById('selectAllForms');
+    const formCheckboxes = filterForm ? filterForm.querySelectorAll('input[name="forms[]"]') : [];
+    const multiSelects = filterForm ? filterForm.querySelectorAll('select[multiple]') : []; 
 
-    // Sync "Select All" checkbox if individual boxes are changed
+    // --- Modal Step Navigation ---
+    if(nextBtn && step1 && step2 && backBtn && submitBtn) { 
+        nextBtn.addEventListener('click', function() {
+            step1.classList.remove('active');
+            step2.classList.add('active');
+            nextBtn.style.display = 'none';
+            backBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'inline-block';
+        });
+    }
+
+    if (backBtn && step1 && step2 && nextBtn && submitBtn) { 
+        backBtn.addEventListener('click', function() {
+            step2.classList.remove('active');
+            step1.classList.add('active');
+            nextBtn.style.display = 'inline-block';
+            backBtn.style.display = 'none';
+            submitBtn.style.display = 'none';
+        });
+    }
+    
+    if (filterModalElement && step1 && step2 && nextBtn && backBtn && submitBtn) { 
+        filterModalElement.addEventListener('hidden.bs.modal', function () {
+             step2.classList.remove('active');
+             step1.classList.add('active');
+             nextBtn.style.display = 'inline-block';
+             backBtn.style.display = 'none';
+             submitBtn.style.display = 'none';
+        });
+    }
+
+    // --- Filter Logic ---
+    if (resetBtn && filterForm) {
+        resetBtn.addEventListener('click', function() {
+            filterForm.reset();
+            // Clear multiselect dropdowns
+            multiSelects.forEach(select => {
+                 Array.from(select.options).forEach(option => option.selected = false);
+            });
+            if (selectAllFormsCheckbox) {
+                 selectAllFormsCheckbox.checked = false; 
+            }
+        });
+    }
+
+    if (selectAllFormsCheckbox) {
+        selectAllFormsCheckbox.addEventListener('change', function() {
+            formCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+
     formCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            if (!this.checked) {
+            if (!this.checked && selectAllFormsCheckbox) {
                 selectAllFormsCheckbox.checked = false;
-            } else {
+            } else if (selectAllFormsCheckbox){
                 const allChecked = Array.from(formCheckboxes).every(cb => cb.checked);
                 selectAllFormsCheckbox.checked = allChecked;
             }
         });
     });
 
-    function updateAllCounts() {
-        // Count student filters
-        const studentInputs = filterForm.querySelectorAll('#content-student input:checked, #content-student input[type="text"]');
-        let studentCount = 0;
-        studentInputs.forEach(input => {
-            if ((input.type === 'checkbox' && input.checked) || (input.type === 'text' && input.value)) {
-                studentCount++;
-            }
-        });
-        document.getElementById('student-count').textContent = `${studentCount} active`;
-
-        // Count form filters
-        const formFilters = filterForm.querySelectorAll('#content-form input[name="forms[]"]:checked');
-        document.getElementById('form-count').textContent = `${formFilters.length} selected`;
+    // --- DataTable Initialization ---
+    if (document.getElementById('report-table')) {
+        try { 
+            $('#report-table').DataTable({
+                responsive: true,
+                layout: {
+                    topStart: {
+                        buttons: [
+                            { extend: 'copy', className: 'btn-sm btn-outline-admin' },
+                            { extend: 'csv', className: 'btn-sm btn-outline-admin' },
+                            { extend: 'excel', className: 'btn-sm btn-outline-admin' },
+                            { extend: 'pdf', className: 'btn-sm btn-outline-admin' },
+                            { extend: 'print', className: 'btn-sm btn-outline-admin' }
+                        ]
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Error initializing DataTable:", e);
+        }
     }
 
-    // Initial count on page load
-    updateAllCounts();
+        const detailsModal = document.getElementById('submissionDetailsModal');
+    if (!detailsModal) return;
+    
+    detailsModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const entryId = button.dataset.entryId;
+        const formName = button.dataset.formName;
 
-    // Initialize DataTable
-    $('#report-table').DataTable({
-        responsive: true,
-        layout: {
-            topStart: {
-                buttons: [
-                    { extend: 'copy', className: 'btn-sm btn-outline-admin' },
-                    { extend: 'csv', className: 'btn-sm btn-outline-admin' },
-                    { extend: 'excel', className: 'btn-sm btn-outline-admin' },
-                    { extend: 'pdf', className: 'btn-sm btn-outline-admin' },
-                    { extend: 'print', className: 'btn-sm btn-outline-admin' }
-                ]
+        const modalTitle = detailsModal.querySelector('.modal-title');
+        const modalBody = detailsModal.querySelector('.modal-body');
+
+        // 1. Set loading state
+        modalTitle.textContent = 'Loading Submission Details...';
+        modalBody.innerHTML = `<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
+
+        // 2. Fetch data from the backend
+        fetch('/view_details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                entry_id: entryId,
+                form_name: formName
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                modalTitle.textContent = 'Error';
+                modalBody.innerHTML = `<p class="text-danger">${data.error}</p>`;
+            } else {
+                // 3. Build the HTML with the frontend filter
+                const details = data.details;
+                modalTitle.textContent = `Details for: ${details.event_title || formName.replace('_', ' ')}`;
+                
+                let html = '<dl class="row">';
+                
+                // Define the keys you DON'T want to show.
+                // Add any column name to this list to hide it from the modal.
+                const keysToHide = [ 
+                    'proof',
+                    'full_path', 
+                    'google_file_id',
+                ];
+
+                for (const [key, value] of Object.entries(details)) {
+                    // If the key is in our hide list, skip this loop iteration
+                    if (keysToHide.includes(key)) {
+                        continue; 
+                    }
+                    
+                    // Format the key for display (e.g., 'event_title' -> 'Event Title')
+                    let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    
+                    html += `<dt class="col-sm-4">${cleanKey}</dt>`;
+                    
+                    // Special formatting for 'status'
+                    if (key === 'status') {
+                        let badgeClass = 'bg-secondary';
+                        if (value === 'approved') badgeClass = 'bg-success';
+                        if (value === 'rejected') badgeClass = 'bg-danger';
+                        if (value === 'pending') badgeClass = 'bg-warning text-dark';
+                        html += `<dd class="col-sm-8"><span class="badge ${badgeClass}">${value}</span></dd>`;
+                    } else {
+                        html += `<dd class="col-sm-8">${value || 'N/A'}</dd>`;
+                    }
+                }
+                
+                html += '</dl>';
+                modalBody.innerHTML = html;
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error fetching details:', error);
+            modalTitle.textContent = 'Error';
+            modalBody.innerHTML = '<p class="text-danger">Could not load details. Please try again.</p>';
+        });
     });
 });
 </script>

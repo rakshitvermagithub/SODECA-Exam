@@ -28,3 +28,6 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
     DRIVE_CLIENT_ID = os.getenv('DRIVE_CLIENT_ID')
     DRIVE_CLIENT_SECRET = os.getenv('DRIVE_CLIENT_SECRET')
+
+    # Master Drive Folder ID
+    MASTER_DRIVE_FOLDER = os.getenv('MASTER_DRIVE_FOLDER')

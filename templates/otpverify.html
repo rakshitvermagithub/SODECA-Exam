@@ -7,9 +7,9 @@
 {% block main %}
 {% include "message.html" %}
 
-<div class="page-wrapper">
+<div class="page-wrapper d-flex justify-content-center align-items-center">
 
-    <div class="card p-5 pt-4 pb-4">
+    <div class="card p-5 pt-4 pb-4" style="max-width: 450px; width: 100%;">
         <h4 class="text-center mb-4">OTP Verify</h4>
 
         <form action="{{ url_for('otp_verify') }}" method="post" class="mb-3 text-center">

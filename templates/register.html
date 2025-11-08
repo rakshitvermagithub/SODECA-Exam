@@ -36,7 +36,7 @@
 {% include "message.html" %}
 
 <div class="page-wrapper d-flex justify-content-center align-items-center">
-    <div class="card p-4 shadow rounded-3 border-dark-subtle" style="max-width: 450px; width: 100%;">
+    <div class="card p-4 m-4 shadow rounded-3 border-dark-subtle" style="max-width: 450px; width: 100%;">
         <div class="card-body">
 
             <h3 class="card-title text-center mb-4 form-title"><!-- <svg class="reg-icon" xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#e3e3e3"><path d="M240-160q-33 0-56.5-23.5T160-240q0-33 23.5-56.5T240-320q33 0 56.5 23.5T320-240q0 33-23.5 56.5T240-160Zm0-240q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm0-240q-33 0-56.5-23.5T160-720q0-33 23.5-56.5T240-800q33 0 56.5 23.5T320-720q0 33-23.5 56.5T240-640Zm240 0q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Zm240 0q-33 0-56.5-23.5T640-720q0-33 23.5-56.5T720-800q33 0 56.5 23.5T800-720q0 33-23.5 56.5T720-640ZM480-400q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm40 240v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T863-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z"/></svg> -->
@@ -58,24 +58,19 @@
             </div>
 
             <form action="{{ url_for('register') }}" id="registerForm" method="post" novalidate>
-                <div class="form-floating mb-3">
-                    <input type="email" class="form-control border-dark" id="collegeEmail" placeholder="name@skit.ac.in" name="email" required>
-                    <label for="collegeEmail">Email</label>
+                <div class="mb-3">
+                    <input type="email" class="form-control border-dark" id="collegeEmail" placeholder="Email" name="email" required>
                     <div class="invalid-feedback"></div>
                 </div>
 
-                <div class="form-floating mb-3">
+                <div class="mb-3">
                     <input type="password" class="form-control border border-dark" id="password" placeholder="Password" name="password" required>
-                    <label for="password">Password</label>
-                    <div class="invalid-feedback">
-                        </div>
+                    <div class="invalid-feedback"></div>
                 </div>
 
-                <div class="form-floating mb-4">
+                <div class="mb-4">
                     <input type="password" class="form-control border border-dark" id="confirmPassword" placeholder="Confirm Password" name="confirm_password" required>
-                    <label for="confirmPassword">Confirm Password</label>
-                    <div class="invalid-feedback">
-                        </div>
+                    <div class="invalid-feedback"></div>
                 </div>
 
                 <div class="text-center mb-3">
@@ -121,9 +116,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (emailValue === '') {
             showValidation(email, false, 'Email is required.');
             return false;
-        } // else if (!emailValue.endsWith('@skit.ac.in')) {
-        //     showValidation(email, false, 'Email must be from the @skit.ac.in domain.');
-        //     return false;} 
+        } else if (!emailValue.endsWith('@skit.ac.in')) {
+            showValidation(email, false, 'Email must be from the @skit.ac.in domain.');
+            return false;} 
         else {
             showValidation(email, true, '');
             return true;

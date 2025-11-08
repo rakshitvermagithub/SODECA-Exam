@@ -1,5 +1,4 @@
 <!-- 1. The container for all flash messages -->
-<!-- IMPORTANT: Make sure you have the Bootstrap Icons stylesheet linked in your main layout.html file for the icons to appear! -->
 <div id="flash-message-container"></div>
 
 <!-- 2. CSS with the new slide-out animation -->
@@ -24,55 +23,39 @@
         display: flex;
         align-items: center;
         border: 1px solid;
-        animation: slideInFromRight 0.35s ease-out forwards; /* Added 'forwards' */
+        animation: slideInFromRight 0.35s ease-out forwards;
     }
 
-    /* --- NEW --- Add a class for the closing animation */
     .flash-alert.closing {
         animation: slideOutToRight 0.28s ease-in forwards;
     }
 
-    /* Animation for the alert appearing */
     @keyframes slideInFromRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
     
-    /* --- NEW --- Animation for the alert disappearing */
     @keyframes slideOutToRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(110%); /* Move slightly further out */
-            opacity: 0;
-        }
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(110%); opacity: 0; }
     }
-
 
     .flash-alert .flash-icon {
         font-size: 1.25rem;
         margin-right: 0.75rem;
     }
 
-    /* Category-specific text, icon, and border colors */
     .flash-alert.danger { color: #dc3545; }
     .flash-alert.success { color: #198754; }
     .flash-alert.warning { color: #664d03; }
     .flash-alert.info { color: #0dcaf0; }
-
 </style>
 
-<!-- 3. The JavaScript logic updated for the new animation -->
+<!-- 3. The JavaScript logic (CORRECTED) -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+    // --- FUNCTION IS NOW GLOBAL ---
+    // Moved the function definition outside of the DOMContentLoaded listener.
+    // Now other scripts (like on sodeca_forms.html) can find and call it.
     function showFlashMessage(message, category = 'info', duration = 4000) {
         const container = document.getElementById('flash-message-container');
         if (!container) return;
@@ -95,12 +78,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         container.appendChild(alertDiv);
 
-        // Set a timeout to add the closing animation, then remove the element
-        const animationDuration = 400; // Corresponds to the 0.4s in CSS
+        const animationDuration = 400; 
         setTimeout(() => {
             alertDiv.classList.add('closing');
             
-            // Wait for the slide-out animation to finish before removing the element
             setTimeout(() => {
                 alertDiv.remove();
             }, animationDuration);
@@ -108,18 +89,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }, duration);
     }
 
-    // --- Connects Jinja to JavaScript (No changes here) ---
-    try {
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    showFlashMessage({{ message|tojson }}, {{ category|tojson }});
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    } catch (e) {
-        console.error("Error displaying flashed messages:", e);
-    }
-});
+    // This part *waits* for the page to load, then calls the global function
+    // for any messages flashed from the Flask backend.
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        showFlashMessage({{ message|tojson }}, {{ category|tojson }});
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        } catch (e) {
+            console.error("Error displaying flashed messages:", e);
+        }
+    });
 </script>
-

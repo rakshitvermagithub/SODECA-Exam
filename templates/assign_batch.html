@@ -250,6 +250,11 @@ document.addEventListener('DOMContentLoaded', function() {
             fullNameInput.value = correspondingName || ''; // Set to empty if no name found
         });
     }
+
+    {% if show_modal %}
+        var myModal = new bootstrap.Modal(document.getElementById('assignmentModal'));
+        myModal.show();
+    {% endif %}
 });
 </script>
 {% endblock %}

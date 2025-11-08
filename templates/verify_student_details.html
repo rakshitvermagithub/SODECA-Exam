@@ -49,10 +49,9 @@
 {% include 'message.html' %}
 
 <div class="page-wrapper d-flex justify-content-center align-items-center">
-    <div class="card shadow p-4" style="max-width: 700px; width: 100%;">
+    <div class="card shadow p-3" style="max-width: 700px; width: 100%;">
         <div class="card-body">
-            <h4 class="card-title text-center mb-4 form-title">Verify Your Details</h4>
-            <p class="text-center text-muted mb-4">Please confirm that the following information is correct before proceeding.</p>
+            <p class="text-muted mb-4 text-center fs-5">Please verify your details.</p>
 
             <!-- Display Student Details -->
             <div class="row">
@@ -106,7 +105,7 @@
                 </div>
             </div>
 
-            <hr class="my-4">
+            <hr class="my-3">
 
             <!-- Confirmation Form -->
             <form action="/verify_student_details" method="post">
@@ -126,7 +125,10 @@
                 </div>
             </form>
             <div class="text-center">
-                You want to edit your details? <a class="link link-offset-1" href="{{url_for('student_details')}}">Click here</a> 
+                You want to edit your details? 
+                <a class="link link-offset-1" href="{{ url_for('student_details', next=request.path) }}">
+                    Click here
+                </a> 
             </div>
         </div>
     </div>
