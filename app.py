@@ -1585,10 +1585,10 @@ def login_callback():
 
                         # Add user_id in faculty_details
                         db.execute("""
-                            UPDATE faculty_details SET faculty_user_id = ? WHERE email = ?
+                            UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?
                         """, user_id, email) 
 
-                        flash("Welcome Faculty! Account created with Google!", "success")
+                        flash("Welcome Faculty! Account created with Google.", "success")
                         return redirect(url_for("faculty_dashboard"))
                     else:
                         # New student, create a new account in the database with default role 'student'
@@ -1598,7 +1598,7 @@ def login_callback():
                         """, email, google_id, profile_picture, first_name, last_name)
 
                     session["user_id"] = user_id
-                    flash("Welcome Student! Account created with Google!", "success")
+                    flash("Welcome Student! Account created with Google.", "success")
                     return redirect("/student_details")
                 
             if is_faculty:
@@ -2092,10 +2092,13 @@ def faculty_dashboard():
             session["user_role"] == "admin"
             return redirect(url_for("super_admin"))
         
-        # Get batch details, assigned to faculty
-        batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
-        batch_details = batch[0]
-        batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
+        if session.get("user_id"):
+            # Get batch details, assigned to faculty
+            batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
+            batch_details = batch[0]
+            batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
+        else:
+            batch_is = None
 
         is_authorized = 'drive_auth_token' in session
         print(session.get('drive_auth_token'))
