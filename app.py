@@ -2247,7 +2247,7 @@ def reject_entry():
 @app.route("/super_admin", methods=["GET"])
 @login_required
 def super_admin():
-    if session.get("user_id") == 1:
+    if session.get("user_role") == "admin":
         return render_template("super_admin.html")
     return "Access Denied!"
 
