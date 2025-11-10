@@ -1646,8 +1646,14 @@ def login():
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
 
+        session["user_role"] = role(session.get("user_id"))
+
+        # if admin
+        if session.get("user_role") == 'admin':
+            return redirect(url_for("super_admin"))
+        
         # if faculty
-        if email in faculty_emails:
+        elif email in faculty_emails:
             session["user_role"] = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
