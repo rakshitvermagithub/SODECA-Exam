@@ -2093,11 +2093,7 @@ def faculty_dashboard():
 
         if role(session.get("user_id")) != 'faculty':
             return "Access Denied!", 400
-        
-        if session.get("user_id") == 1:
-            session["user_role"] == "admin"
-            return redirect(url_for("super_admin"))
-        
+                
         if session.get("user_id"):
             # Get batch details, assigned to faculty
             batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
