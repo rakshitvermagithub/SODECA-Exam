@@ -1,0 +1,15 @@
+{
+  "name": "SODECA Project (Python 3.12 & SQLite)",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "forwardPorts": [5000],
+
+  "postCreateCommand": "pip install -r requirements.txt",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "alexcvzz.vscode-sqlite"
+      ]
+    }
+  }
+}
