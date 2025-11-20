@@ -1236,7 +1236,7 @@ db.execute("""
     auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT,
     first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, role TEXT NOT NULL DEFAULT 'student'
-    CHECK (role IN ('student', 'faculty', 'admin')))
+    CHECK (role IN ('student', 'faculty', 'admin', 'tester')))
 """)
 # Initialise table to store student details
 db.execute("""
@@ -1551,8 +1551,8 @@ def login_callback():
             last_name = user_info.get('family_name', '')
             profile_picture = user_info.get('picture', '')
 
-            is_faculty = email in faculty_emails
-            session['user_role'] = 'faculty' if is_faculty else 'student'
+            session["user_role"] = role(session.get("user_id"))
+            user_role = session.get("user_role")
 
             # Check if user already exists with this Google ID
             existing_user = db.execute("SELECT * FROM users WHERE google_id = ?", google_id)
@@ -1562,9 +1562,11 @@ def login_callback():
                 session["user_id"] = existing_user[0]["user_id"]
                 session["auth_provider"] = "google"
                 flash("Logged in successfully with Google!", "success")
+
             else:
                 # No user with this Google ID, check if the email is already registered
                 email_user = db.execute("SELECT * FROM users WHERE email = ?", email)
+
                 if email_user:
                     # Email exists, link this Google ID to the existing account
                     db.execute("""
@@ -1574,8 +1576,10 @@ def login_callback():
                     """, google_id, profile_picture, first_name, last_name, email)
                     session["user_id"] = email_user[0]["user_id"]
                     flash("Google account linked successfully!", "success")
-                else:
-                    if is_faculty:
+
+                # Or new user
+                else: 
+                    if user_role == "faculty":
                         # New faculty, create a new account in the database with role 'faculty'
                         user_id = db.execute("""
                             INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name, role)
@@ -1590,21 +1594,22 @@ def login_callback():
 
                         flash("Welcome Faculty! Account created with Google.", "success")
                         return redirect(url_for("faculty_dashboard"))
-                    else:
+                    
+                    elif user_role == 'student':
                         # New student, create a new account in the database with default role 'student'
                         user_id = db.execute("""
                             INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name)
                             VALUES (?, ?, 'google', ?, ?, ?)
                         """, email, google_id, profile_picture, first_name, last_name)
 
-                    session["user_id"] = user_id
-                    flash("Welcome Student! Account created with Google.", "success")
-                    return redirect("/student_details")
-                
-            if is_faculty:
+                        session["user_id"] = user_id
+                        flash("Welcome Student! Account created with Google.", "success")
+                        return redirect("/student_details")
+              
+            if user_role == 'faculty':
                 return redirect(url_for("faculty_dashboard"))
-            
-            return redirect(url_for("sodeca_forms")) # Or wherever users go after login
+            else:
+                return redirect(url_for("sodeca_forms"))
         else:
             flash("Could not fetch user info from Google.", "danger")
             return redirect("/login")
@@ -1658,8 +1663,7 @@ def login():
             return redirect(url_for("faculty_dashboard"))
         
         # if student
-        else:    
-            session["user_role"] = 'student'
+        elif session.get("user_role") =='student':    
             details_filled = db.execute("SELECT * FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
             # if student has not filled details
             if not details_filled:
@@ -1668,6 +1672,10 @@ def login():
                 return redirect(url_for("student_details"))
             
             return redirect(url_for("sodeca_forms"))
+        
+        elif session.get("user_role") == 'tester':
+            return redirect(url_for('sodeca_home'))
+
     else:
         return render_template("login.html")
 
@@ -2091,7 +2099,7 @@ def withdraw_entry():
 def faculty_dashboard():
     if request.method == "GET":
 
-        if role(session.get("user_id")) != 'faculty':
+        if role(session.get("user_id")) != 'faculty' and role(session.get("user_id")) != 'tester':
             return "Access Denied!", 400
                 
         if session.get("user_id"):
@@ -2249,7 +2257,7 @@ def reject_entry():
 @app.route("/super_admin", methods=["GET"])
 @login_required
 def super_admin():
-    if session.get("user_role") == "admin":
+    if session.get("user_role") == "admin" or session.get("user_role") == 'tester':
         return render_template("super_admin.html")
     return "Access Denied!"
 
