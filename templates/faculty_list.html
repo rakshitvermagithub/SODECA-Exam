@@ -93,9 +93,14 @@
                             <i class="bi bi-person-fill-add me-2"></i> Go to Assign Batch
                             </button>
                         </a>
-                        <button class="btn btn-admin" type="button" data-bs-toggle="modal" data-bs-target="#addFacultyModal">
-                            <i class="bi bi-person-fill-add me-2"></i> Add New Faculty
-                        </button>
+                        
+                            <button class="btn btn-admin dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-target="#addFacultyModal">
+                                <i class="bi bi-person-fill-add me-2"></i> Add New Faculty
+                            </button>
+                            <ul class = "dropdown-menu">
+                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addFacultyModal">Single Entry</a></li>
+                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadExcel">Upload Excel</a></li>
+                            </ul>
                     </div>
                 </div>
 
@@ -311,6 +316,28 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for upload excel -->
+ <div class="modal fade" id="uploadExcel" tabindex="-1" aria-labelledby="uploadExcel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin text-white">
+                <h5 class="modal-title" id="uploadExcelFile">Upload Excel File</h5>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" action="{{ url_for('uploadExcel') }}" method="post">
+                    <input type = "file" name = "uploadedExcelFile" accept = ".xlsx">
+                    <button class = "btn btn-admin" type = "submit">Upload File</button>
+                </form>
+            </div>
+            <div class = "modal-footer" style = "justify-content: space-between;">
+                <a href = "/static/faculty_data_excel_sample.png" class = "text-info" target="_blank">Click here for sample of Excel</a>
+                <button class = 'btn btn-success' type = "button" onclick="window.location.href='/static/faculty_data.xlsx'">Download Sample File</button>
+            </div>  
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block script %}

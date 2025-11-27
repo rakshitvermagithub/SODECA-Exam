@@ -17,10 +17,19 @@ import os
 import random
 import smtplib
 import sys
+import pandas as pd
+from sqlalchemy import create_engine
+# ... (Assuming your Flask app and db object are set up)
+
+# Use your existing SQLAlchemy connection string
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
 Session(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
+DATABASE_URL = app.config['SQLALCHEMY_DATABASE_URI'] 
+engine = create_engine(DATABASE_URL)
 
 app.secret_key = app.config["SECRET_KEY"]
 
@@ -1251,7 +1260,7 @@ db.execute("""
     faculty_user_id INTEGER UNIQUE, full_name TEXT NOT NULL, designation TEXT NOT NULL,
     department TEXT NOT NULL, semester INTEGER, branch TEXT, section TEXT, class_group TEXT, 
     contact TEXT NOT NULL DEFAULT 'to be updated',
-    FOREIGN KEY (faculty_user_id) REFERENCES users(user_id) )
+    FOREIGN KEY (faculty_user_id) REFERENCES users(user_id))
     """)
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
@@ -2353,6 +2362,36 @@ def delete_faculty():
 
     return redirect(url_for("faculty_list"))
 
+@app.route("/uploadExcel", methods=["POST"])
+def uploadExcel():
+   
+    facutly_data = request.files.get('uploadedExcelFile')
+    if not facutly_data or facutly_data.filename == '':
+        return "No file selected or invalid file", 400
+
+    try:
+        
+        df = pd.read_excel(facutly_data)
+
+        # 1. Clean up column names (CRITICAL step for matching SQL names)
+        df.columns = df.columns.str.lower().str.replace(' ', '_').str.strip()
+        df['full_name'] = df['full_name'].str.lower()
+        
+    
+        df.to_sql(
+            name='faculty_details', 
+            con=engine, 
+            if_exists='append', 
+            index=False
+        )
+
+        flash("Data updated successfully!","success")
+    except Exception as e:
+        flash(f"Data import failed. Check if table name/columns match. Error: {e}")
+        print(f"Insertion Error: {e}")
+
+    return redirect(url_for('faculty_list'))
+
 @app.route("/assign_batch", methods=["GET", "POST"])
 @login_required
 def assign_batch():
@@ -2531,4 +2570,3 @@ if __name__ == '__main__':
             pass
 
     app.run(host="0.0.0.0", debug=True)
-
