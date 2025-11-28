@@ -2370,22 +2370,96 @@ def uploadExcel():
         return "No file selected or invalid file", 400
 
     try:
+        # Check the filename to decide which pandas function to use
+        filename = facutly_data.filename.lower()
         
-        df = pd.read_excel(facutly_data)
+        if filename.endswith('.csv'):
+            # Read as CSV
+            df = pd.read_csv(facutly_data)
+        else:
+            # Read as Excel (default for .xlsx, .xls)
+            df = pd.read_excel(facutly_data)
 
-        # 1. Clean up column names (CRITICAL step for matching SQL names)
+        # Clean up column names (CRITICAL step for matching SQL names)
+        # This ensures 'Full Name' becomes 'full_name', 'College Email' becomes 'college_email'
         df.columns = df.columns.str.lower().str.replace(' ', '_').str.strip()
-        df['full_name'] = df['full_name'].str.lower()
+
+        # Define the columns that MUST have data
+        compulsory_cols = ['college_email', 'full_name', 'designation', 'department']
         
-    
-        df.to_sql(
-            name='faculty_details', 
-            con=engine, 
-            if_exists='append', 
-            index=False
-        )
+        # A. Check if the columns exist in the file
+        missing_cols = [col for col in compulsory_cols if col not in df.columns]
+        if missing_cols:
+            flash(f"Upload Failed: The file is missing these required columns: {', '.join(missing_cols)}", "danger")
+            return redirect(url_for("faculty_list"))
+
+        # B. Check for Null/Empty values in these columns
+        # First, convert pure whitespace strings to NaN (null) so we can catch them
+        # (regex=True allows checking for strings that are just spaces)
+        df[compulsory_cols] = df[compulsory_cols].replace(r'^\s*$', pd.NA, regex=True)
+
+        # Check if any row has a null value in the compulsory columns
+        if df[compulsory_cols].isnull().any().any():
+            # Find the rows that have missing data
+            invalid_rows = df[df[compulsory_cols].isnull().any(axis=1)]
+            
+            # Get the Excel row numbers (Index starts at 0, +2 accounts for 0-index and Header row)
+            error_row_numbers = (invalid_rows.index + 2).tolist()
+            
+            flash(f"Upload Failed: Missing compulsory details (Name, Email, Designation, or Dept) on Excel rows: {error_row_numbers[:10]}{'...' if len(error_row_numbers) > 10 else ''}. Please fix and try again.", "danger")
+            return redirect(url_for("faculty_list"))
+        
+        # Convert emails to string, lower and strip any leading/trailing space 
+        df['college_email'] = df['college_email'].astype(str).str.lower().str.strip()
+
+        print("emails data simplified")
+
+        # Verify faculty email is of SKIT domain
+        invalid_emails_df = df[~df['college_email'].str.endswith('@skit.ac.in')] 
+        if not invalid_emails_df.empty:
+            bad_email_list = invalid_emails_df['college_email'].tolist()
+            flash(f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}", "danger")
+            return redirect(url_for("faculty_list"))
+        
+        print("Checked for invalid emails")
+
+        # Replace NaN (Not a Number) with None (which becomes NULL in SQL)
+        df = df.where(pd.notnull(df), None)
+
+        print("Converted Nan to None")
+
+        # Convert data frame to list of dictionaries
+        rows_to_insert = df.to_dict(orient='records')
+
+        print("Converted data to dictionaries")
+
+        print("Good until here")
+
+        for row in rows_to_insert:
+
+            contact_val = row.get("contact")
+            if not contact_val: # This catches None and empty strings
+                contact_val = 'to be updated'
+                
+            db.execute("""
+                INSERT INTO faculty_details (
+                    college_email, full_name, designation, department, contact
+                ) VALUES (?,?,?,?,?)
+                ON CONFLICT(college_email) DO UPDATE SET
+                    full_name = excluded.full_name,
+                    designation = excluded.designation,
+                    department = excluded.department,
+                    contact = excluded.contact
+            """,
+            row.get("college_email"),
+            row.get("full_name"),
+            row.get("designation"),
+            row.get("department"),
+            contact_val
+            )
 
         flash("Data updated successfully!","success")
+
     except Exception as e:
         flash(f"Data import failed. Check if table name/columns match. Error: {e}")
         print(f"Insertion Error: {e}")
