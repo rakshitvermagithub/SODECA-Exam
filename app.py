@@ -18,18 +18,10 @@ import random
 import smtplib
 import sys
 import pandas as pd
-from sqlalchemy import create_engine
-# ... (Assuming your Flask app and db object are set up)
-
-# Use your existing SQLAlchemy connection string
-
 
 app = Flask(__name__)
 app.config.from_object(Config)
 Session(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
-DATABASE_URL = app.config['SQLALCHEMY_DATABASE_URI'] 
-engine = create_engine(DATABASE_URL)
 
 app.secret_key = app.config["SECRET_KEY"]
 
