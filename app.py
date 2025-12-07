@@ -2324,7 +2324,7 @@ def upload_to_drive():
     token = session.get('drive_auth_token')
     if not token:
         flash("Drive authorization required. Please authorize your account first.", "warning")
-        return redirect(url_for('faculty_dashboard'))
+        return redirect(request.referrer)
 
     filename = request.form.get('filename')
     entry_id = request.form.get('entry_id')
@@ -2335,7 +2335,24 @@ def upload_to_drive():
 
     if not os.path.exists(full_path):
         flash(f"Error: Local file not found at {full_path}", "danger")
-        return redirect(url_for('faculty_dashboard'))
+        return redirect(request.referrer)
+
+    sem = request.form.get("semester")
+    branch = request.form.get("branch")
+    section = request.form.get("section")
+    group = request.form.get("class_group")
+    form_name = request.form.get("form_name")
+    
+    to_search_id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+    drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
+    if drive_folder:
+        drive_folder_id = drive_folder[0]["drive_folder_id"]
+        print(drive_folder_id)
+    else:
+        # Handle the error gracefully
+        print(f"Critical Error: Drive folder not found for ID: {to_search_id}")
+        flash("Destination folder not found in Drive map. Please contact admin.", "danger")
+        return redirect(request.referrer)
 
     try:
         creds_data = token.copy()
@@ -2351,7 +2368,7 @@ def upload_to_drive():
         credentials = Credentials(**creds_data)
         drive_service = build('drive', 'v3', credentials=credentials)
 
-        file_metadata = {'name': filename, 'parents': MASTER_DRIVE_FOLDER_ID}
+        file_metadata = {'name': filename, 'parents': [drive_folder_id]}
         media = MediaFileUpload(full_path, resumable=True)
 
         uploaded_file = drive_service.files().create(
@@ -2373,7 +2390,7 @@ def upload_to_drive():
             # Send the user a helpful message and prompt them to log in again.
             flash("Your Google authorization has expired or was revoked. Please authorize again.", "warning")
             # Redirecting to the dashboard will now show the "Login with Google" button.
-            return redirect(url_for('faculty_dashboard'))
+            return redirect(request.referrer)
         else:
             # For other API errors (e.g., 500 server error), just show the error.
             flash(f"An API error occurred: {error}", "danger")
@@ -2382,7 +2399,7 @@ def upload_to_drive():
         print(f"An unexpected error occurred in upload_to_drive: {e}", file=sys.stderr)
         flash(f"An unexpected error occurred: {e}", "danger")
 
-    return redirect(url_for('faculty_dashboard'))
+    return redirect(request.referrer)
 
 @app.route("/reject_entry", methods=["POST"])
 @login_required

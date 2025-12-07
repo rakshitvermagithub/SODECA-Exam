@@ -181,7 +181,7 @@
                                                                 <div class="btn-group btn-group-sm">
                                                                     <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
                                                                         <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
-                                                                        <input type="hidden" name="semester" value="{{ batch_details['batch_details'] }}">
+                                                                        <input type="hidden" name="semester" value="{{ batch_details['semester'] }}">
                                                                         <input type="hidden" name="branch" value="{{ batch_details['branch'] }}">
                                                                         <input type="hidden" name="section" value="{{ batch_details['section'] }}">
                                                                         <input type="hidden" name="class_group" value="{{ batch_details['class_group'] }}">
