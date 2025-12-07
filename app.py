@@ -1230,6 +1230,9 @@ form_title = []
 for form in FORM_DEFINITIONS:
     form_title.append(FORM_DEFINITIONS[form]["title"])
 
+# form name and title dictionary
+form_dict = dict(zip(form_name_list, form_title))
+
 # Initialise table to store user login details
 db.execute("""
     CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -1290,6 +1293,60 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
+
+# Create a table to store and map drive folder ids
+db.execute("""
+    CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
+    drive_folder_id TEXT UNIQUE NOT NULL, branch TEXT NOT NULL, 
+    semester TEXT NOT NULL, section TEXT NOT NULL, 
+    class_group TEXT NOT NULL, form_name TEXT NOT NULL) 
+    """)
+
+# Hardcoded drive folder directory levels
+dfolder_lvl_1 = ["CSE", "CSE(AI)"]
+# Level 2 is operated using a dict so that the folder names in it can be related with the actual values stored in student details table
+dfolder_lvl_2 = {"3": "III Semester", "4": "IV Semester"}
+dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2", "C-G1"]
+# Last level is form_title list
+
+def get_or_create_folder(service, folder_name, parent_id):
+    """
+    Searches for a specific folder inside a parent folder.
+    If it exists, returns its ID. If not, creates it and returns the new ID.
+    """
+    try:
+        # 1. Search Query: Find folders with this specific name inside the parent
+        query = f"mimeType = 'application/vnd.google-apps.folder' and name = '{folder_name}' and '{parent_id}' in parents and trashed = false"
+        
+        results = service.files().list(
+            q=query, 
+            spaces='drive', 
+            fields='files(id, name)'
+        ).execute()
+        
+        files = results.get('files', [])
+
+        if files:
+            # Found it! Return the existing ID
+            print(f"Found existing folder: {folder_name} ({files[0]['id']})")
+            return files[0]['id']
+        else:
+            # Not found. Create it!
+            file_metadata = {
+                'name': folder_name,
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [parent_id]
+            }
+            folder = service.files().create(
+                body=file_metadata, 
+                fields='id'
+            ).execute()
+            print(f"Created new folder: {folder_name} ({folder.get('id')})")
+            return folder.get('id')
+
+    except Exception as e:
+        print(f"Error in get_or_create_folder: {e}")
+        return None
 
 # Returns if user is student, faculty or admin
 def role(user_id):
@@ -1552,15 +1609,13 @@ def login_callback():
             last_name = user_info.get('family_name', '')
             profile_picture = user_info.get('picture', '')
 
-            session["user_role"] = role(session.get("user_id"))
-            user_role = session.get("user_role")
-
             # Check if user already exists with this Google ID
             existing_user = db.execute("SELECT * FROM users WHERE google_id = ?", google_id)
 
             if existing_user:
                 # User exists, log them into the application session
                 session["user_id"] = existing_user[0]["user_id"]
+                session["user_role"] = role(session.get("user_id"))
                 session["auth_provider"] = "google"
                 flash("Logged in successfully with Google!", "success")
 
@@ -1568,7 +1623,7 @@ def login_callback():
                 # No user with this Google ID, check if the email is already registered
                 email_user = db.execute("SELECT * FROM users WHERE email = ?", email)
 
-                if email_user:
+                if email_user: 
                     # Email exists, link this Google ID to the existing account
                     db.execute("""
                         UPDATE users SET google_id = ?, profile_picture = ?, first_name = ?, last_name = ?,
@@ -1576,10 +1631,16 @@ def login_callback():
                         WHERE email = ?
                     """, google_id, profile_picture, first_name, last_name, email)
                     session["user_id"] = email_user[0]["user_id"]
+
+                    session["user_role"] = role(session.get("user_id"))
+
                     flash("Google account linked successfully!", "success")
 
                 # Or new user
-                else: 
+                else:
+                    session["user_role"] = "student"
+                    user_role = session["user_role"] 
+
                     if user_role == "faculty":
                         # New faculty, create a new account in the database with role 'faculty'
                         user_id = db.execute("""
@@ -1605,9 +1666,9 @@ def login_callback():
 
                         session["user_id"] = user_id
                         flash("Welcome Student! Account created with Google.", "success")
-                        return redirect("/student_details")
+                        return redirect(url_for("student_details"))
               
-            if user_role == 'faculty':
+            if session.get("user_role") == 'faculty':
                 return redirect(url_for("faculty_dashboard"))
             else:
                 return redirect(url_for("sodeca_forms"))
@@ -1681,12 +1742,23 @@ def login():
         return render_template("login.html")
 
 @app.route('/authorize_drive')
+@login_required
 def authorize_drive():
     """Handles Drive AUTHORIZATION for faculty. Asks only for Drive permission."""
+    
+    # We store this in the session to "remember" it across the Google redirect
+    session['drive_auth_redirect_target'] = request.referrer or url_for('faculty_dashboard')
+
     redirect_uri = url_for('drive_callback', _external=True)
-    return google_drive_client.authorize_redirect(redirect_uri)
+    
+    return google_drive_client.authorize_redirect(
+        redirect_uri, 
+        access_type="offline", 
+        prompt="consent"
+    )
 
 @app.route('/auth/google/drive_callback')
+@login_required
 def drive_callback():
     """Handles the callback for the faculty DRIVE authorization flow."""
     try:
@@ -1698,8 +1770,12 @@ def drive_callback():
         flash("Google Drive has been successfully authorized.", "success")
     except Exception as e:
         flash(f"Drive authorization failed: {e}", "danger")
+    
+    # 3. Retrieve the stashed URL (and remove it from session so it doesn't linger)
+    # If the key is missing for some reason, fallback to 'faculty_dashboard'
+    next_url = session.pop('drive_auth_redirect_target', url_for('faculty_dashboard'))
 
-    return redirect(url_for('faculty_dashboard'))
+    return redirect(next_url)
 
 @app.route("/logout")
 @login_required
@@ -2174,6 +2250,73 @@ def view_submission(filename):
         flash("Error: The requested file could not be found on the server.", "danger")
         return redirect(url_for('faculty_dashboard'))
 
+@app.route('/create_drive_structure', methods=["POST"])
+@login_required 
+def create_drive_structure():
+
+    # 1. Check if we have the token from Step 1
+    token = session.get('drive_auth_token')
+    if not token:
+        flash("Please authorize Google Drive first.", "warning")
+        return redirect(url_for('super_admin'))
+    
+    try:
+        # 2. Build the Drive Service using the token
+        # We assume the token in session has what we need
+        creds = Credentials(
+            token=token.get('access_token'),
+            refresh_token=token.get('refresh_token'),
+            token_uri=app.config.get('GOOGLE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
+            client_id=app.config['DRIVE_CLIENT_ID'],
+            client_secret=app.config['DRIVE_CLIENT_SECRET'],
+            scopes=token.get('scope', [])
+        )
+        
+        service = build('drive', 'v3', credentials=creds)
+        
+        # LOOP 1: Departments (e.g., CSE, CSE(AI)) inside Master Folder
+        for branch in dfolder_lvl_1:
+            
+            # Check/Create the Dept Folder
+            branch_folder_id = get_or_create_folder(service, branch, MASTER_DRIVE_FOLDER_ID)
+            
+            if branch_folder_id:
+                # LOOP 2: Create semester folders
+                for sem, sem_folder in dfolder_lvl_2.items():
+                        
+                    # Check/Create the Category Folder
+                    sem_folder_id = get_or_create_folder(service, sem_folder, branch_folder_id)
+
+                    if sem_folder_id:
+                        # LOOP 3: Create section-group folders 
+                        for section_grp in dfolder_lvl_3:
+
+                            section_grp_folder_id = get_or_create_folder(service, section_grp, sem_folder_id)
+
+                            if section_grp_folder_id:
+                                section, group = section_grp.split('-')
+                                # LOOP 4: Create form categories folders using form_title list
+                                for form_name, form_title in form_dict.items():
+                                    print(f"{form_name}: {form_title}")
+                                    form_folder_id = get_or_create_folder(service, form_title, section_grp_folder_id)
+
+                                    if form_folder_id:
+                                        id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+
+                                        db.execute("""
+                                            INSERT INTO drive_folder_map (id, drive_folder_id, branch, semester, section,
+                                            class_group, form_name) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET
+                                            drive_folder_id = excluded.drive_folder_id 
+                                        """, id, form_folder_id, branch, sem, section, group, form_name)
+
+        flash(f"Drive structure sync complete!", "success")
+
+    except Exception as e:
+        print(f"Structure creation failed: {e}")
+        flash(f"An error occurred: {e}", "danger")
+
+    return redirect(url_for('super_admin'))
+
 @app.route("/upload_to_drive", methods=["POST"])
 @login_required
 def upload_to_drive():
@@ -2181,7 +2324,7 @@ def upload_to_drive():
     token = session.get('drive_auth_token')
     if not token:
         flash("Drive authorization required. Please authorize your account first.", "warning")
-        return redirect(url_for('faculty_dashboard'))
+        return redirect(request.referrer)
 
     filename = request.form.get('filename')
     entry_id = request.form.get('entry_id')
@@ -2192,7 +2335,24 @@ def upload_to_drive():
 
     if not os.path.exists(full_path):
         flash(f"Error: Local file not found at {full_path}", "danger")
-        return redirect(url_for('faculty_dashboard'))
+        return redirect(request.referrer)
+
+    sem = request.form.get("semester")
+    branch = request.form.get("branch")
+    section = request.form.get("section")
+    group = request.form.get("class_group")
+    form_name = request.form.get("form_name")
+    
+    to_search_id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+    drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
+    if drive_folder:
+        drive_folder_id = drive_folder[0]["drive_folder_id"]
+        print(drive_folder_id)
+    else:
+        # Handle the error gracefully
+        print(f"Critical Error: Drive folder not found for ID: {to_search_id}")
+        flash("Destination folder not found in Drive map. Please contact admin.", "danger")
+        return redirect(request.referrer)
 
     try:
         creds_data = token.copy()
@@ -2208,7 +2368,7 @@ def upload_to_drive():
         credentials = Credentials(**creds_data)
         drive_service = build('drive', 'v3', credentials=credentials)
 
-        file_metadata = {'name': filename, 'parents': MASTER_DRIVE_FOLDER_ID}
+        file_metadata = {'name': filename, 'parents': [drive_folder_id]}
         media = MediaFileUpload(full_path, resumable=True)
 
         uploaded_file = drive_service.files().create(
@@ -2230,7 +2390,7 @@ def upload_to_drive():
             # Send the user a helpful message and prompt them to log in again.
             flash("Your Google authorization has expired or was revoked. Please authorize again.", "warning")
             # Redirecting to the dashboard will now show the "Login with Google" button.
-            return redirect(url_for('faculty_dashboard'))
+            return redirect(request.referrer)
         else:
             # For other API errors (e.g., 500 server error), just show the error.
             flash(f"An API error occurred: {error}", "danger")
@@ -2239,7 +2399,7 @@ def upload_to_drive():
         print(f"An unexpected error occurred in upload_to_drive: {e}", file=sys.stderr)
         flash(f"An unexpected error occurred: {e}", "danger")
 
-    return redirect(url_for('faculty_dashboard'))
+    return redirect(request.referrer)
 
 @app.route("/reject_entry", methods=["POST"])
 @login_required
