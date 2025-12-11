@@ -1293,9 +1293,6 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
-        db.execute("""
-            ALTER TABLE blood_donor ADD COLUMN rejection_note TEXT
-        """)
 
 # Create a table to store and map drive folder ids
 db.execute("""
@@ -2142,7 +2139,8 @@ def your_submissions():
 
     for key, value in FORM_DEFINITIONS.items():
         base_queries.append(
-                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS category, certificate, status, submitted_at, withdrawn_at, rejection_note AS note
+                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS form_title, 
+                certificate, status, submitted_at, withdrawn_at, rejection_note
                 FROM {key} WHERE student_id = :sid"""
                 )
     if base_queries:
@@ -2158,6 +2156,44 @@ def your_submissions():
             return redirect(url_for('sodeca_forms'))
 
     return render_template("your_submissions.html", submissions=submissions)
+
+@app.route("/view_details", methods=["POST"])
+@login_required
+def view_details():
+    """
+    Handles a background request to fetch details for a single submission.
+    Expects JSON: { "entry_id": 123, "form_name": "blood_donor" }
+    Returns JSON: { "details": {...} }
+    """
+    try:
+        data = request.get_json()
+        entry_id = data.get('entry_id')
+        form_name = data.get('form_name')
+
+        # --- CRITICAL SECURITY CHECK ---
+        if form_name not in FORM_DEFINITIONS:
+            print(f"Error: Invalid form name requested: {form_name}", file=sys.stderr)
+            return jsonify({"error": "Invalid form type."}), 400
+
+        if not entry_id:
+            return jsonify({"error": "Entry id not available"}), 400
+
+        # Securely query the database
+        entry_details = db.execute(
+            f"SELECT * FROM {form_name} WHERE entry_id = :sid",
+            sid=entry_id
+        )
+
+        if not entry_details:
+            return jsonify({"error": "Entry not found."}), 404
+            
+        details_dict = entry_details[0]
+        
+        return jsonify({"details": details_dict})
+
+    except Exception as e:
+        print(f"Error in /view_details: {e}", file=sys.stderr)
+        return jsonify({"error": "A server error occurred. Please try again."}), 500
 
 @app.route("/withdraw_entry", methods=["POST"])
 @login_required
@@ -2410,10 +2446,14 @@ def reject_entry():
     entry_id = request.form.get("entry_id")
     form_name = request.form.get("form_name")
     full_path = request.form.get("full_path")
-    note = request.form.get("rejected_note")
+    rejection_note = request.form.get("rejection_note", None)
+    if rejection_note == '':
+        rejection_note = None
+        
     try:
+        # Update status of entry and add the rejection_note
         sql_query = f"UPDATE {form_name} SET status='rejected', rejection_note=? WHERE entry_id=?"
-        db.execute(sql_query, note, entry_id)
+        db.execute(sql_query, rejection_note, entry_id)
 
     except Exception as e:
         flash(f"Database error: {e}")
@@ -2754,43 +2794,6 @@ def student_report():
     universal_report = db.execute(complete_query)
     return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
-@app.route("/view_details", methods=["POST"])
-@login_required
-def view_details():
-    """
-    Handles a background request to fetch details for a single submission.
-    Expects JSON: { "entry_id": 123, "form_name": "blood_donor" }
-    Returns JSON: { "details": {...} }
-    """
-    try:
-        data = request.get_json()
-        entry_id = data.get('entry_id')
-        form_name = data.get('form_name')
-
-        # --- CRITICAL SECURITY CHECK ---
-        if form_name not in FORM_DEFINITIONS:
-            print(f"Error: Invalid form name requested: {form_name}", file=sys.stderr)
-            return jsonify({"error": "Invalid form type."}), 400
-
-        if not entry_id:
-            return jsonify({"error": "Entry id not available"}), 400
-
-        # Securely query the database
-        entry_details = db.execute(
-            f"SELECT * FROM {form_name} WHERE entry_id = :sid",
-            sid=entry_id
-        )
-
-        if not entry_details:
-            return jsonify({"error": "Entry not found."}), 404
-            
-        details_dict = entry_details[0]
-        
-        return jsonify({"details": details_dict})
-
-    except Exception as e:
-        print(f"Error in /view_details: {e}", file=sys.stderr)
-        return jsonify({"error": "A server error occurred. Please try again."}), 500
     
 if __name__ == '__main__':
 
