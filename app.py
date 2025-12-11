@@ -1288,11 +1288,14 @@ for form in form_name_list:
             google_file_id TEXT NOT NULL DEFAULT 'pending',
             status TEXT DEFAULT 'pending' NOT NULL,
             submitted_at TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')),
-            withdrawn_at TIMESTAMP,
+            withdrawn_at TIMESTAMP, rejection_note TEXT,
             FOREIGN KEY (student_id) REFERENCES student_details(student_user_id),
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
+        db.execute("""
+            ALTER TABLE blood_donor ADD COLUMN rejection_note TEXT
+        """)
 
 # Create a table to store and map drive folder ids
 db.execute("""
@@ -2139,7 +2142,7 @@ def your_submissions():
 
     for key, value in FORM_DEFINITIONS.items():
         base_queries.append(
-                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS category, certificate, status, submitted_at, withdrawn_at 
+                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS category, certificate, status, submitted_at, withdrawn_at, rejection_note AS note
                 FROM {key} WHERE student_id = :sid"""
                 )
     if base_queries:
@@ -2407,8 +2410,11 @@ def reject_entry():
     entry_id = request.form.get("entry_id")
     form_name = request.form.get("form_name")
     full_path = request.form.get("full_path")
+    note = request.form.get("rejected_note")
     try:
-        db.execute(f"UPDATE {form_name} SET status='rejected' WHERE entry_id=?", entry_id)
+        sql_query = f"UPDATE {form_name} SET status='rejected', rejection_note=? WHERE entry_id=?"
+        db.execute(sql_query, note, entry_id)
+
     except Exception as e:
         flash(f"Database error: {e}")
         return redirect(url_for('faculty_dashboard'))

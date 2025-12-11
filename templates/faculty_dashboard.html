@@ -72,6 +72,12 @@
         color: inherit;
         display: block;
     }
+    .form-row {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border-top: 4px solid #0d6efd;
+    }
 </style>
 <link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
@@ -189,11 +195,11 @@
                                                                         <input type="hidden" name="filename" value="{{ row['certificate'] }}">
                                                                         <button type="submit" class="btn btn-outline-success">Accept</button>
                                                                     </form>
-                                                                    <form action="{{ url_for('reject_entry') }}" method="POST" style="display: inline;">
+                                                                    <form action="" method="POST" style="display: inline;">
                                                                         <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
                                                                         <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
                                                                         <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
-                                                                        <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                                                        <button type = "button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejected" data-entry-id = "{{ row['entry_id'] }}" data-form-name = "{{ form_names[outer_loop.index0] }}" data-full-path = "{{ row['full_path'] }}">Reject</button>
                                                                     </form>
                                                                 </div>
                                                             {% endif %}
@@ -221,6 +227,42 @@
         {% endfor %}
     {% endif %}
 </div>
+<!-- The Modal -->
+<div class="modal" id="rejected">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header" style="border-top: #0d6efd;">
+        <h4 class="modal-title">Add a Note</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        <form action="{{ url_for('reject_entry') }}" method="post">
+            <div class="row form-row m-2">
+                <input type="hidden" name="entry_id" value="" id = "entry_id">
+                <input type="hidden" name="form_name" value="" id="form_name">
+                <input type="hidden" name="full_path" value="" id="full_path">
+                <label class = "form-label" for="rejected_note"><strong>Note</strong>:
+                    <textarea class="form-control mt-1" placeholder="Enter a rejection note....." type="text" id="rejected_note" name="rejected_note" cols = "5" rows="3"></textarea>
+                </label>
+                <div class="d-flex justify-content-end mt-1">
+                    <button class = "btn btn-success" type="submit">Submit</button>
+                </div>
+            </div>
+        </form>
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block script %}
@@ -235,23 +277,37 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const list = {{ form_names | tojson }};
-    list.forEach((item) => {
-        new DataTable(`#${item}`, {
-            layout: {
-                topStart: {
-                    buttons: [
-                        { extend: 'copy', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'csv', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'excel', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'pdf', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'print', className: 'btn-sm border-secondary-subtle' }
-                    ]
+    document.addEventListener('DOMContentLoaded', function() {
+        const list = {{ form_names | tojson }};
+        list.forEach((item) => {
+            new DataTable(`#${item}`, {
+                layout: {
+                    topStart: {
+                        buttons: [
+                            { extend: 'copy', className: 'btn-sm border-secondary-subtle' },
+                            { extend: 'csv', className: 'btn-sm border-secondary-subtle' },
+                            { extend: 'excel', className: 'btn-sm border-secondary-subtle' },
+                            { extend: 'pdf', className: 'btn-sm border-secondary-subtle' },
+                            { extend: 'print', className: 'btn-sm border-secondary-subtle' }
+                        ]
+                    }
                 }
-            }
+            });
         });
     });
-});
+    $(document).ready(function() {
+        $('#rejected').on('show.bs.modal', function(event) {
+            var link =  $(event.relatedTarget);
+            var entry_id = link.data('entryId');
+            var form_name = link.data('formName');
+            var full_path = link.data('fullPath');
+
+            var modal = $(this);
+            modal.find('#entry_id').val(entry_id);
+            modal.find('#form_name').val(form_name);
+            modal.find('#full_path').val(full_path);
+
+        });
+    });
 </script>
 {% endblock %}
