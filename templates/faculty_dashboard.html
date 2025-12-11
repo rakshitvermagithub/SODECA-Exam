@@ -116,7 +116,6 @@
                     <div class="card card-minimalist">
                         <div class="card-body p-4">
                              <h3 class="text-center mb-4 form-title">Forms list</h3>
-                            <div class="table-responsive">
                                 <table class="table table-hover nav-table">
                                     <tbody>
                                     {% for name in form_title_list %}
@@ -141,7 +140,6 @@
                                     {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -196,10 +194,12 @@
                                                                         <button type="submit" class="btn btn-outline-success">Accept</button>
                                                                     </form>
                                                                     <form action="" method="POST" style="display: inline;">
-                                                                        <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
-                                                                        <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
-                                                                        <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
-                                                                        <button type = "button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejected" data-entry-id = "{{ row['entry_id'] }}" data-form-name = "{{ form_names[outer_loop.index0] }}" data-full-path = "{{ row['full_path'] }}">Reject</button>
+                                                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" 
+                                                                            data-bs-target="#rejectionModal" data-entry-id = "{{ row['entry_id'] }}" 
+                                                                            data-form-name = "{{ form_names[outer_loop.index0] }}" 
+                                                                            data-full-path = "{{ row['full_path'] }}">
+                                                                            Reject
+                                                                        </button>
                                                                     </form>
                                                                 </div>
                                                             {% endif %}
@@ -225,43 +225,44 @@
                 </div>
             </div>
         {% endfor %}
-    {% endif %}
-</div>
-<!-- The Modal -->
-<div class="modal" id="rejected">
-  <div class="modal-dialog">
-    <div class="modal-content">
+        <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-3 border-0 shadow">
+                    
+                    <!-- Header: Aligned with design language (Primary Blue) -->
+                    <div class="modal-header bg-primary text-white border-bottom-0">
+                        <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
 
-      <!-- Modal Header -->
-      <div class="modal-header" style="border-top: #0d6efd;">
-        <h4 class="modal-title">Add a Note</h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
+                    <form action="{{ url_for('reject_entry') }}" method="post" id="rejectionForm">
+                        <div class="modal-body">
+                            <!-- Hidden Inputs for logic -->
+                            <input type="hidden" name="entry_id" id="reject_entry_id">
+                            <input type="hidden" name="form_name" id="reject_form_name">
+                            <input type="hidden" name="full_path" id="reject_full_path">
+                        
+                            <!-- Standard Label (Simple/Official Style) -->
+                            <div class="mb-1">
+                                <label for="rejected_note" class="form-label text-secondary fw-bold small text-uppercase">Reason for Rejection</label>
+                                <input type="text" class="form-control bg-light" id="rejected_note" name="rejection_note" rows="4" placeholder="Type your note here...">
+                            </div>
+                        </div>
 
-      <!-- Modal body -->
-      <div class="modal-body">
-        <form action="{{ url_for('reject_entry') }}" method="post">
-            <div class="row form-row m-2">
-                <input type="hidden" name="entry_id" value="" id = "entry_id">
-                <input type="hidden" name="form_name" value="" id="form_name">
-                <input type="hidden" name="full_path" value="" id="full_path">
-                <label class = "form-label" for="rejected_note"><strong>Note</strong>:
-                    <textarea class="form-control mt-1" placeholder="Enter a rejection note....." type="text" id="rejected_note" name="rejected_note" cols = "5" rows="3"></textarea>
-                </label>
-                <div class="d-flex justify-content-end mt-1">
-                    <button class = "btn btn-success" type="submit">Submit</button>
+                        <!-- Footer -->
+                        <div class="modal-footer border-top-0 pt-0">
+                            <!-- Skip button acts as Cancel/Close -->
+                            <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted" 
+                            onclick="submitWithoutNote()">Skip (Reject without Note)</button>
+
+                            <!-- Submit Button: Aligned with design language (Primary Blue) -->
+                            <button type="submit" class="btn btn-primary px-4">Submit</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </form>
-      </div>
-
-      <!-- Modal footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
-      </div>
-
-    </div>
-  </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -278,36 +279,53 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
+        // Initialize DataTables
         const list = {{ form_names | tojson }};
         list.forEach((item) => {
             new DataTable(`#${item}`, {
                 layout: {
                     topStart: {
                         buttons: [
-                            { extend: 'copy', className: 'btn-sm border-secondary-subtle' },
-                            { extend: 'csv', className: 'btn-sm border-secondary-subtle' },
-                            { extend: 'excel', className: 'btn-sm border-secondary-subtle' },
-                            { extend: 'pdf', className: 'btn-sm border-secondary-subtle' },
-                            { extend: 'print', className: 'btn-sm border-secondary-subtle' }
+                            { extend: 'copy', className: 'btn-sm border-primary-subtle' },
+                            { extend: 'csv', className: 'btn-sm border-primary-subtle' },
+                            { extend: 'excel', className: 'btn-sm border-primary-subtle' },
+                            { extend: 'pdf', className: 'btn-sm border-primary-subtle' },
+                            { extend: 'print', className: 'btn-sm border-primary-subtle' }
                         ]
                     }
-                }
+                },
+                scrollY: '400px',
+                scrollX: true,
+                scrollCollapse: true, // Optional, collapses table height if data is small
             });
         });
-    });
-    $(document).ready(function() {
-        $('#rejected').on('show.bs.modal', function(event) {
-            var link =  $(event.relatedTarget);
-            var entry_id = link.data('entryId');
-            var form_name = link.data('formName');
-            var full_path = link.data('fullPath');
 
-            var modal = $(this);
-            modal.find('#entry_id').val(entry_id);
-            modal.find('#form_name').val(form_name);
-            modal.find('#full_path').val(full_path);
-
+        // Handle modal data population
+        const rejectedModal = document.getElementById('rejectionModal');
+        
+        rejectedModal.addEventListener('show.bs.modal', function(event) {
+            // Get the button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract data from data-* attributes
+            const entry_id = button.getAttribute('data-entry-id');
+            const form_name = button.getAttribute('data-form-name');
+            const full_path = button.getAttribute('data-full-path');
+            
+            // Update the modal's hidden input fields
+            rejectedModal.querySelector('#reject_entry_id').value = entry_id;
+            rejectedModal.querySelector('#reject_form_name').value = form_name;
+            rejectedModal.querySelector('#reject_full_path').value = full_path;
         });
+
+        function submitWithoutNote() {
+        // 1. Clear the text input so it sends an empty string (which acts as None)
+        document.getElementById('rejected_note').value = '';
+        
+        // 2. Submit the form
+        document.getElementById('rejectionForm').submit();
+        }
     });
 </script>
 {% endblock %}
