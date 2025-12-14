@@ -196,8 +196,7 @@
                                                                     <form action="" method="POST" style="display: inline;">
                                                                         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" 
                                                                             data-bs-target="#rejectionModal" data-entry-id = "{{ row['entry_id'] }}" 
-                                                                            data-form-name = "{{ form_names[outer_loop.index0] }}" 
-                                                                            data-full-path = "{{ row['full_path'] }}">
+                                                                            data-form-name = "{{ form_names[outer_loop.index0] }}">
                                                                             Reject
                                                                         </button>
                                                                     </form>
@@ -358,12 +357,10 @@
             // Extract data from data-* attributes
             const entry_id = button.getAttribute('data-entry-id');
             const form_name = button.getAttribute('data-form-name');
-            const full_path = button.getAttribute('data-full-path');
             
             // Update the modal's hidden input fields
             rejectedModal.querySelector('#reject_entry_id').value = entry_id;
             rejectedModal.querySelector('#reject_form_name').value = form_name;
-            rejectedModal.querySelector('#reject_full_path').value = full_path;
         });
 
         const skipBtn = document.getElementById('skipAddNote');
