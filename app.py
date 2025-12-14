@@ -2266,6 +2266,7 @@ def faculty_dashboard():
                                 forms_data=all_forms_data,
                                 form_title_list=form_title,
                                 form_names=form_name_list,
+                                form_dict=form_dict,
                                 is_authorized=is_authorized,
                                 batch_details=batch_details,
                                 pending_entries=pending_entries,
