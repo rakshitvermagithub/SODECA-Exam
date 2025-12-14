@@ -1,20 +1,22 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Your Submissions
+    My Submissions
 {% endblock %}
 
 {% block css %}
 <style>
     .page-wrapper {
-        min-height: calc(100vh - 140px); /* Adjust based on header + footer */
+        min-height: calc(100vh - 140px);
         background-color: #f0f2f5;
         padding-top: 3rem;
         padding-bottom: 3rem;
     }
 
     .card-minimalist {
-        border-color: var(--bs-dark-border-subtle);
+        border: none;
+        border-top: 5px solid var(--bs-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
         border-radius: 0.5rem;
         background-color: #fff;
     }
@@ -38,12 +40,12 @@
         transform: translateX(-50%);
     }
 
-    /* Custom Table Styles for Student View */
+    /* Table Styles */
     .table-submissions thead {
-        background-color: #e7f1ff; /* Light blue header */
+        background-color: #e7f1ff;
     }
     .table-submissions th {
-        color: #0d6efd; /* Primary blue text */
+        color: #0d6efd;
         font-weight: 600;
         border-bottom-width: 1px;
     }
@@ -51,21 +53,27 @@
         vertical-align: middle;
     }
     .table-submissions tbody tr:hover {
-        background-color: #f8f9fa; /* Subtle hover effect */
+        background-color: #f8f9fa;
     }
     
-    /* Center text in table cells */
     .table-submissions th, .table-submissions td {
         text-align: center;
     }
-    /* Left align the form name for readability */
      .table-submissions td:nth-child(2) {
         text-align: left;
     }
+    
+    /* Popover Customization */
+    .popover-header {
+        background-color: #ffe5e5; /* Light red for rejection context */
+        color: #dc3545;
+        font-weight: 600;
+    }
 
+    /* Modal Text Wrapping */
     #submissionDetailsModalBody {
         overflow-wrap: break-word;
-        word-wrap: break-word; /* Fallback for older browsers */
+        word-wrap: break-word;
     }
 </style>
 {% endblock %}
@@ -84,11 +92,11 @@
                         <thead>
                             <tr>
                                 <th scope="col" style="width: 5%;">#</th>
-                                <th scope="col" style="width: 20%; text-align: left;">Form Category</th>
-                                <th scope="col" style="width: 25%;">Proof</th>
-                                <th scope="col" style="width: 25%;">Status</th>
-                                <th scope="col" style="width: 25%;">Submitted At</th>
-                                <th scope="col" style="width: 25%">Details</th> 
+                                <th scope="col" style="width: 25%; text-align: left;">Form Category</th>
+                                <th scope="col" style="width: 15%;">Proof</th>
+                                <th scope="col" style="width: 15%;">Status</th>
+                                <th scope="col" style="width: 15%;">Submitted At</th>
+                                <th scope="col" style="width: 25%">Actions</th> 
                             </tr>
                         </thead>
                         <tbody>
@@ -96,56 +104,78 @@
                                 {% for entry in submissions %}
                                 <tr>
                                     <td>{{ loop.index }}</td>
-                                    <td style="text-align: left;">{{ entry["category"] }}</td>
+                                    <td style="text-align: left;">{{ entry["form_title"] }}</td>
                                     <td>
-                                        <a href="{{ url_for('view_submission', filename=entry['certificate']) }}" target="_blank">View Proof</a>
+                                        {% if entry['certificate'] %}
+                                        <a href="{{ url_for('view_submission', filename=entry['certificate']) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-file-earmark-pdf"></i> View
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
                                     </td>
-                                    {% set status = entry.status %}
+                                    {% set status = entry['status'] %}
                                     <td>
                                         {% if status == 'pending' %}
                                             <span class="badge bg-warning text-dark">Pending</span>
-                                        {% elif status == 'accepted' %}
-                                             <span class="badge bg-success">Accepted</span>
+                                        {% elif status == 'approved' %}
+                                             <span class="badge bg-success">Approved</span>
                                         {% elif status == 'rejected' %}
-                                             <span class="badge bg-danger">Rejected</span>
+                                             <div class="d-flex flex-column align-items-center">
+                                                <span class="badge bg-danger mb-1">Rejected</span>
+                                                {% if entry['rejection_note'] %}
+                                                    <a tabindex="0" 
+                                                       class="text-danger text-decoration-none small" 
+                                                       role="button" 
+                                                       data-bs-toggle="popover" 
+                                                       data-bs-trigger="focus" 
+                                                       data-bs-title="Rejection Reason" 
+                                                       data-bs-content="{{ entry.rejection_note }}">
+                                                        <i class="bi bi-info-circle me-1"></i>View Reason
+                                                    </a>
+                                                {% endif %}
+                                             </div>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {{ entry.submitted_at }}
+                                        <small class="text-muted">{{ entry['submitted_at'] }}</small>
                                     </td>
                                     <td>
-                                    <!-- Entry not withdrawn -->
-                                    {% if entry.withdrawn_at == none %}
-                                        <!-- Do not allow withdrawal if request is already evaluated -->
-                                        {% if status != 'pending' %}
-                                            <button class="btn btn-danger" disabled>Withdraw</button>
-                                        {% else %}
-                                        <!-- If not evaluated then give button -->
-                                        <form action="/withdraw_entry" method="post">
-                                            <input type="hidden" name="entry_id" value="{{ entry.entry_id }}">
-                                            <input type="hidden" name="form_name" value="{{ entry.form_name }}">
-                                            <button class="btn btn-danger" type="submit">Withdraw</button>
-                                        </form>
-                                        {% endif %}
-                                    <!-- else entry is withdrawn, show withdrawn -->
-                                    {% else %}
-                                        <button class="btn btn-danger" disabled>Withdrawn</button>
-                                    {% endif %}
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-primary view-details-btn"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#submissionDetailsModal"
-                                                data-entry-id="{{ entry.entry_id }}"
-                                                data-form-name="{{ entry.form_name }}">
-                                            View Details
-                                        </button>
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <!-- View Details Button -->
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#submissionDetailsModal"
+                                                    data-entry-id="{{ entry.entry_id }}"
+                                                    data-form-name="{{ entry.form_name }}"
+                                                    data-form-title="{{ entry.form_title }}">
+                                                <i class="bi bi-eye-fill me-1"></i>Details
+                                            </button>
+
+                                            <!-- Withdraw Button Logic -->
+                                            {% if entry['withdrawn_at'] == none %}
+                                                {% if status == 'pending' %}
+                                                    <form action="/withdraw_entry" method="post" onsubmit="return confirm('Are you sure you want to withdraw this submission?');">
+                                                        <input type="hidden" name="entry_id" value="{{ entry.entry_id }}">
+                                                        <input type="hidden" name="form_title" value="{{ entry['form_title'] }}">
+                                                        <button class="btn btn-sm btn-outline-danger" type="submit">
+                                                            <i class="bi bi-x-circle me-1"></i>Withdraw
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-secondary">Withdrawn</span>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted p-4">You haven't submitted any forms yet.</td>
+                                    <td colspan="6" class="text-center text-muted p-5">
+                                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                        You haven't submitted any forms yet.
+                                    </td>
                                 </tr>
                             {% endif %}
                         </tbody>
@@ -156,11 +186,10 @@
     </div>
 </div>
 
+<!-- Entry Details Modal -->
 <div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-    
     <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
-      
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="submissionDetailsModalLabel">
             <i class="bi bi-file-earmark-text me-2"></i>Loading...
@@ -169,108 +198,116 @@
       </div>
       
       <div class="modal-body p-4" id="submissionDetailsModalBody">
-        
-        <!-- This is the default loading state that your JS will replace -->
         <div class="text-center py-4" id="modal-loading-state">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
             <p class="mt-3 text-muted">Loading details...</p>
         </div>
-        <!-- 
-          Your JavaScript will replace the contents of this modal-body.
-          Any long text it injects will now be forced to wrap.
-        -->
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
 
-
 {% block script %}
-<!-- 
-  This script connects the button click to the modal and fetches the data.
--->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const detailsModal = document.getElementById('submissionDetailsModal');
-    if (!detailsModal) return;
-    
-    detailsModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const entryId = button.dataset.entryId;
-        const formName = button.dataset.formName;
-
-        const modalTitle = detailsModal.querySelector('.modal-title');
-        const modalBody = detailsModal.querySelector('.modal-body');
-
-        // 1. Set loading state
-        modalTitle.textContent = 'Loading Submission Details...';
-        modalBody.innerHTML = `<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
-
-        // 2. Fetch data from the backend
-        fetch('/view_details', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                entry_id: entryId,
-                form_name: formName
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                modalTitle.textContent = 'Error';
-                modalBody.innerHTML = `<p class="text-danger">${data.error}</p>`;
-            } else {
-                // 3. Build the HTML with the frontend filter
-                const details = data.details;
-                modalTitle.textContent = `Details for: ${details.event_title || formName.replace('_', ' ')}`;
-                
-                let html = '<dl class="row">';
-                
-                // Define the keys you DON'T want to show.
-                // Add any column name to this list to hide it from the modal.
-                const keysToHide = [ 
-                    'proof',
-                    'full_path', 
-                    'google_file_id',
-                ];
-
-                for (const [key, value] of Object.entries(details)) {
-                    // If the key is in our hide list, skip this loop iteration
-                    if (keysToHide.includes(key)) {
-                        continue; 
-                    }
-                    
-                    // Format the key for display (e.g., 'event_title' -> 'Event Title')
-                    let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    
-                    html += `<dt class="col-sm-4">${cleanKey}</dt>`;
-                    
-                    // Special formatting for 'status'
-                    if (key === 'status') {
-                        let badgeClass = 'bg-secondary';
-                        if (value === 'approved') badgeClass = 'bg-success';
-                        if (value === 'rejected') badgeClass = 'bg-danger';
-                        if (value === 'pending') badgeClass = 'bg-warning text-dark';
-                        html += `<dd class="col-sm-8"><span class="badge ${badgeClass}">${value}</span></dd>`;
-                    } else {
-                        html += `<dd class="col-sm-8">${value || 'N/A'}</dd>`;
-                    }
-                }
-                
-                html += '</dl>';
-                modalBody.innerHTML = html;
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching details:', error);
-            modalTitle.textContent = 'Error';
-            modalBody.innerHTML = '<p class="text-danger">Could not load details. Please try again.</p>';
-        });
+    // Initialize Bootstrap Popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
     });
+
+    const detailsModal = document.getElementById('submissionDetailsModal');
+    if (detailsModal) {
+        detailsModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const entryId = button.dataset.entryId;
+            const formName = button.dataset.formName;
+            const formTitle = button.dataset.formTitle;
+
+            const modalTitle = detailsModal.querySelector('.modal-title');
+            const modalBody = detailsModal.querySelector('#submissionDetailsModalBody'); // Ensure ID matches
+
+            // 1. Set loading state
+            modalTitle.textContent = formTitle;
+            // Reset to spinner
+            modalBody.innerHTML = `
+                <div class="text-center py-4" id="modal-loading-state">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading details...</p>
+                </div>`;
+
+            // 2. Fetch data from the backend
+            fetch('/view_details', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    entry_id: entryId,
+                    form_name: formName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    modalTitle.textContent = 'Error';
+                    modalBody.innerHTML = `<p class="text-danger text-center py-3">${data.error}</p>`;
+                } else {
+                    // 3. Build the HTML with the frontend filter
+                    const details = data.details;
+                    modalTitle.textContent = `Details for: ${formTitle || formName.replace('_', ' ')}`;
+                    
+                    let html = '<dl class="row mb-0">';
+                    
+                    // Define the keys you DON'T want to show.
+                    const keysToHide = [ 
+                        'proof',
+                        'full_path', 
+                        'google_file_id',
+                        'student_id', // Often internal ID isn't needed for user view
+                        'entry_id'
+                    ];
+
+                    for (const [key, value] of Object.entries(details)) {
+                        // If the key is in our hide list, skip this loop iteration
+                        if (keysToHide.includes(key)) {
+                            continue; 
+                        }
+                        
+                        // Format the key for display (e.g., 'event_title' -> 'Event Title')
+                        let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        
+                        html += `<dt class="col-sm-4 text-secondary">${cleanKey}</dt>`;
+                        
+                        // Special formatting for 'status'
+                        if (key === 'status') {
+                            let badgeClass = 'bg-secondary';
+                            let statusText = value;
+                            if (value === 'approved') badgeClass = 'bg-success';
+                            if (value === 'rejected') badgeClass = 'bg-danger';
+                            if (value === 'pending') { badgeClass = 'bg-warning text-dark'; statusText = 'Pending'; }
+                            
+                            html += `<dd class="col-sm-8"><span class="badge ${badgeClass}">${statusText}</span></dd>`;
+                        } else {
+                            html += `<dd class="col-sm-8 fw-medium">${value || '<span class="text-muted fst-italic">N/A</span>'}</dd>`;
+                        }
+                    }
+                    
+                    html += '</dl>';
+                    modalBody.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching details:', error);
+                modalTitle.textContent = 'Error';
+                modalBody.innerHTML = '<p class="text-danger text-center py-3">Could not load details. Please try again.</p>';
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

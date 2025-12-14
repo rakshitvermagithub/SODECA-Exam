@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Check Submissions
+    Faculty Dashboard
 {% endblock %}
 
 {% block css %}
@@ -72,6 +72,12 @@
         color: inherit;
         display: block;
     }
+    .form-row {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border-top: 4px solid #0d6efd;
+    }
 </style>
 <link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
@@ -110,7 +116,6 @@
                     <div class="card card-minimalist">
                         <div class="card-body p-4">
                              <h3 class="text-center mb-4 form-title">Forms list</h3>
-                            <div class="table-responsive">
                                 <table class="table table-hover nav-table">
                                     <tbody>
                                     {% for name in form_title_list %}
@@ -135,7 +140,6 @@
                                     {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,7 +161,7 @@
                                         <thead>
                                             <tr>
                                                 {% for header in form[0] %}
-                                                    {% if header != 'full_path' and header != 'student_id' and header != 'student_user_id' %}
+                                                    {% if header != 'full_path' and header != 'student_id' and header != 'student_user_id' and header != 'entry_id' %}
                                                         <th>{{ header }}</th>
                                                     {% endif %}
                                                 {% endfor %}
@@ -189,11 +193,13 @@
                                                                         <input type="hidden" name="filename" value="{{ row['certificate'] }}">
                                                                         <button type="submit" class="btn btn-outline-success">Accept</button>
                                                                     </form>
-                                                                    <form action="{{ url_for('reject_entry') }}" method="POST" style="display: inline;">
-                                                                        <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
-                                                                        <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
-                                                                        <input type="hidden" name="full_path" value="{{ row['full_path'] }}">
-                                                                        <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                                                    <form action="" method="POST" style="display: inline;">
+                                                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" 
+                                                                            data-bs-target="#rejectionModal" data-entry-id = "{{ row['entry_id'] }}" 
+                                                                            data-form-name = "{{ form_names[outer_loop.index0] }}" 
+                                                                            data-full-path = "{{ row['full_path'] }}">
+                                                                            Reject
+                                                                        </button>
                                                                     </form>
                                                                 </div>
                                                             {% endif %}
@@ -202,7 +208,21 @@
                                                         <td>
                                                             <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">https://drive.google.com/file/d/{{ value }}/view</a>
                                                         </td>
-                                                    {% elif key == 'full_path' or key == 'student_id' or key == 'student_user_id' %}
+                                                    {% elif key == 'rejection_note' %}
+                                                        <td class="text-center">
+                                                            {% if value %}
+                                                                <!-- Button triggers the new View Note modal -->
+                                                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#viewNoteModal" 
+                                                                        data-note="{{ value }}">
+                                                                    <i class="bi bi-eye-fill"></i> View
+                                                                </button>
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% elif key == 'full_path' or key == 'student_id' or key == 'student_user_id' or key == 'entry_id' %}
                                                         <!-- This column is hidden as per the header logic -->
                                                     {% else %}
                                                         <td>{{ value }}</td>
@@ -219,6 +239,63 @@
                 </div>
             </div>
         {% endfor %}
+        <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-3 border-0 shadow">
+                    
+                    <!-- Header: Aligned with design language (Primary Blue) -->
+                    <div class="modal-header bg-primary text-white border-bottom-0">
+                        <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <form action="{{ url_for('reject_entry') }}" method="post" id="rejectionForm">
+                        <div class="modal-body">
+                            <!-- Hidden Inputs for logic -->
+                            <input type="hidden" name="entry_id" id="reject_entry_id">
+                            <input type="hidden" name="form_name" id="reject_form_name">
+                            <input type="hidden" name="full_path" id="reject_full_path">
+                        
+                            <!-- Standard Label (Simple/Official Style) -->
+                            <div class="mb-1">
+                                <label for="rejected_note" class="form-label text-secondary fw-bold small text-uppercase">Reason for Rejection</label>
+                                <input type="text" class="form-control bg-light" id="rejected_note" name="rejection_note" rows="4" placeholder="Type your note here...">
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="modal-footer border-top-0 pt-0">
+                            <!-- Skip button rejects entry without a reason -->
+                            <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted">
+                                Skip (Reject without Note)
+                            </button>
+
+                            <!-- Submit Button: Aligned with design language (Primary Blue) -->
+                            <button type="submit" class="btn btn-primary px-4">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- View Rejection Note Modal -->
+        <div class="modal fade" id="viewNoteModal" tabindex="-1" aria-labelledby="viewNoteModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-3 border-0 shadow">
+                    <div class="modal-header bg-info-subtle text-info-emphasis border-bottom-0">
+                        <h5 class="modal-title fw-bold" id="viewNoteModalLabel">Rejection Note</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="p-3 bg-light rounded border">
+                            <p id="noteContent" class="mb-0 text-break" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 </div>
 {% endblock %}
@@ -235,23 +312,87 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const list = {{ form_names | tojson }};
-    list.forEach((item) => {
-        new DataTable(`#${item}`, {
-            layout: {
-                topStart: {
-                    buttons: [
-                        { extend: 'copy', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'csv', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'excel', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'pdf', className: 'btn-sm border-secondary-subtle' },
-                        { extend: 'print', className: 'btn-sm border-secondary-subtle' }
-                    ]
-                }
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+
+        
+        // 1. Get the dictionary directly from Jinja
+        // Expected format: {"blood_donor": "Blood Donor", "participation": "Participation", ...}
+        const formsMap = {{ form_dict | tojson }};
+
+        // 2. Iterate using Object.entries()
+        // This gives us [key, value] for every item in the dictionary
+        Object.entries(formsMap).forEach(([formId, formTitle]) => {   
+            // formId = "blood_donor"
+            // formTitle = "Blood Donor"
+
+            // Create a clean filename (e.g., "SODECA_Report_Blood_Donor")
+            const cleanTitle = formTitle.replace(/ /g, '_');
+            const fileName = `SODECA_${cleanTitle}`;
+
+            // Initialise data tables
+            new DataTable(`#${formId}`, {
+                layout: {
+                    topStart: {
+                        buttons: [
+                            { extend: 'copy', className: 'btn-sm border-primary-subtle'},
+                            { extend: 'csv', className: 'btn-sm border-primary-subtle'},
+                            { extend: 'excel', className: 'btn-sm border-primary-subtle', filename: fileName},
+                            { extend: 'pdf', className: 'btn-sm border-primary-subtle', filename: fileName },
+                            { extend: 'print', className: 'btn-sm border-primary-subtle' }
+                        ]
+                    }
+                },
+                scrollY: '400px',
+                scrollX: true,
+                scrollCollapse: true, // Optional, collapses table height if data is small
+            });
         });
+
+        // Handle modal data population
+        const rejectedModal = document.getElementById('rejectionModal');
+        
+        rejectedModal.addEventListener('show.bs.modal', function(event) {
+            // Get the button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract data from data-* attributes
+            const entry_id = button.getAttribute('data-entry-id');
+            const form_name = button.getAttribute('data-form-name');
+            const full_path = button.getAttribute('data-full-path');
+            
+            // Update the modal's hidden input fields
+            rejectedModal.querySelector('#reject_entry_id').value = entry_id;
+            rejectedModal.querySelector('#reject_form_name').value = form_name;
+            rejectedModal.querySelector('#reject_full_path').value = full_path;
+        });
+
+        const skipBtn = document.getElementById('skipAddNote');
+        if (skipBtn) {
+            skipBtn.addEventListener('click', function() {
+                // 1. Clear the text input
+                document.getElementById('rejected_note').value = '';
+                
+                // 2. Submit the form
+                document.getElementById('rejectionForm').submit();
+            });
+        }
+        // ... existing DataTables code ...
+
+        // --- Handle View Note Modal ---
+        const viewNoteModal = document.getElementById('viewNoteModal');
+        if (viewNoteModal) {
+            viewNoteModal.addEventListener('show.bs.modal', function(event) {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+                // Extract info from data-note attribute
+                const note = button.getAttribute('data-note');
+                // Update the modal's content
+                const noteContent = viewNoteModal.querySelector('#noteContent');
+                
+                // Handle case where note might be empty string logically (though Jinja handles null)
+                noteContent.textContent = note ? note : "No detail provided.";
+            });
+        }
     });
-});
 </script>
 {% endblock %}

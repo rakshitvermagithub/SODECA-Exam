@@ -1288,7 +1288,7 @@ for form in form_name_list:
             google_file_id TEXT NOT NULL DEFAULT 'pending',
             status TEXT DEFAULT 'pending' NOT NULL,
             submitted_at TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')),
-            withdrawn_at TIMESTAMP,
+            withdrawn_at TIMESTAMP, rejection_note TEXT,
             FOREIGN KEY (student_id) REFERENCES student_details(student_user_id),
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
@@ -2139,7 +2139,8 @@ def your_submissions():
 
     for key, value in FORM_DEFINITIONS.items():
         base_queries.append(
-                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS category, certificate, status, submitted_at, withdrawn_at 
+                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS form_title, 
+                certificate, status, submitted_at, withdrawn_at, rejection_note
                 FROM {key} WHERE student_id = :sid"""
                 )
     if base_queries:
@@ -2155,6 +2156,44 @@ def your_submissions():
             return redirect(url_for('sodeca_forms'))
 
     return render_template("your_submissions.html", submissions=submissions)
+
+@app.route("/view_details", methods=["POST"])
+@login_required
+def view_details():
+    """
+    Handles a background request to fetch details for a single submission.
+    Expects JSON: { "entry_id": 123, "form_name": "blood_donor" }
+    Returns JSON: { "details": {...} }
+    """
+    try:
+        data = request.get_json()
+        entry_id = data.get('entry_id')
+        form_name = data.get('form_name')
+
+        # --- CRITICAL SECURITY CHECK ---
+        if form_name not in FORM_DEFINITIONS:
+            print(f"Error: Invalid form name requested: {form_name}", file=sys.stderr)
+            return jsonify({"error": "Invalid form type."}), 400
+
+        if not entry_id:
+            return jsonify({"error": "Entry id not available"}), 400
+
+        # Securely query the database
+        entry_details = db.execute(
+            f"SELECT * FROM {form_name} WHERE entry_id = :sid",
+            sid=entry_id
+        )
+
+        if not entry_details:
+            return jsonify({"error": "Entry not found."}), 404
+            
+        details_dict = entry_details[0]
+        
+        return jsonify({"details": details_dict})
+
+    except Exception as e:
+        print(f"Error in /view_details: {e}", file=sys.stderr)
+        return jsonify({"error": "A server error occurred. Please try again."}), 500
 
 @app.route("/withdraw_entry", methods=["POST"])
 @login_required
@@ -2227,6 +2266,7 @@ def faculty_dashboard():
                                 forms_data=all_forms_data,
                                 form_title_list=form_title,
                                 form_names=form_name_list,
+                                form_dict=form_dict,
                                 is_authorized=is_authorized,
                                 batch_details=batch_details,
                                 pending_entries=pending_entries,
@@ -2407,8 +2447,15 @@ def reject_entry():
     entry_id = request.form.get("entry_id")
     form_name = request.form.get("form_name")
     full_path = request.form.get("full_path")
+    rejection_note = request.form.get("rejection_note", None)
+    if rejection_note == '':
+        rejection_note = None
+        
     try:
-        db.execute(f"UPDATE {form_name} SET status='rejected' WHERE entry_id=?", entry_id)
+        # Update status of entry and add the rejection_note
+        sql_query = f"UPDATE {form_name} SET status='rejected', rejection_note=? WHERE entry_id=?"
+        db.execute(sql_query, rejection_note, entry_id)
+
     except Exception as e:
         flash(f"Database error: {e}")
         return redirect(url_for('faculty_dashboard'))
@@ -2748,43 +2795,6 @@ def student_report():
     universal_report = db.execute(complete_query)
     return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
-@app.route("/view_details", methods=["POST"])
-@login_required
-def view_details():
-    """
-    Handles a background request to fetch details for a single submission.
-    Expects JSON: { "entry_id": 123, "form_name": "blood_donor" }
-    Returns JSON: { "details": {...} }
-    """
-    try:
-        data = request.get_json()
-        entry_id = data.get('entry_id')
-        form_name = data.get('form_name')
-
-        # --- CRITICAL SECURITY CHECK ---
-        if form_name not in FORM_DEFINITIONS:
-            print(f"Error: Invalid form name requested: {form_name}", file=sys.stderr)
-            return jsonify({"error": "Invalid form type."}), 400
-
-        if not entry_id:
-            return jsonify({"error": "Entry id not available"}), 400
-
-        # Securely query the database
-        entry_details = db.execute(
-            f"SELECT * FROM {form_name} WHERE entry_id = :sid",
-            sid=entry_id
-        )
-
-        if not entry_details:
-            return jsonify({"error": "Entry not found."}), 404
-            
-        details_dict = entry_details[0]
-        
-        return jsonify({"details": details_dict})
-
-    except Exception as e:
-        print(f"Error in /view_details: {e}", file=sys.stderr)
-        return jsonify({"error": "A server error occurred. Please try again."}), 500
     
 if __name__ == '__main__':
 
