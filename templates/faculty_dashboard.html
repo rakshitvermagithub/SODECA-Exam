@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Check Submissions
+    Faculty Dashboard
 {% endblock %}
 
 {% block css %}
@@ -161,7 +161,7 @@
                                         <thead>
                                             <tr>
                                                 {% for header in form[0] %}
-                                                    {% if header != 'full_path' and header != 'student_id' and header != 'student_user_id' %}
+                                                    {% if header != 'full_path' and header != 'student_id' and header != 'student_user_id' and header != 'entry_id' %}
                                                         <th>{{ header }}</th>
                                                     {% endif %}
                                                 {% endfor %}
@@ -208,7 +208,21 @@
                                                         <td>
                                                             <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">https://drive.google.com/file/d/{{ value }}/view</a>
                                                         </td>
-                                                    {% elif key == 'full_path' or key == 'student_id' or key == 'student_user_id' %}
+                                                    {% elif key == 'rejection_note' %}
+                                                        <td class="text-center">
+                                                            {% if value %}
+                                                                <!-- Button triggers the new View Note modal -->
+                                                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                                                        data-bs-toggle="modal" 
+                                                                        data-bs-target="#viewNoteModal" 
+                                                                        data-note="{{ value }}">
+                                                                    <i class="bi bi-eye-fill"></i> View
+                                                                </button>
+                                                            {% else %}
+                                                                <span class="text-muted">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% elif key == 'full_path' or key == 'student_id' or key == 'student_user_id' or key == 'entry_id' %}
                                                         <!-- This column is hidden as per the header logic -->
                                                     {% else %}
                                                         <td>{{ value }}</td>
@@ -251,14 +265,34 @@
 
                         <!-- Footer -->
                         <div class="modal-footer border-top-0 pt-0">
-                            <!-- Skip button acts as Cancel/Close -->
-                            <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted" 
-                            onclick="submitWithoutNote()">Skip (Reject without Note)</button>
+                            <!-- Skip button rejects entry without a reason -->
+                            <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted">
+                                Skip (Reject without Note)
+                            </button>
 
                             <!-- Submit Button: Aligned with design language (Primary Blue) -->
                             <button type="submit" class="btn btn-primary px-4">Submit</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+        <!-- View Rejection Note Modal -->
+        <div class="modal fade" id="viewNoteModal" tabindex="-1" aria-labelledby="viewNoteModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-3 border-0 shadow">
+                    <div class="modal-header bg-info-subtle text-info-emphasis border-bottom-0">
+                        <h5 class="modal-title fw-bold" id="viewNoteModalLabel">Rejection Note</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="p-3 bg-light rounded border">
+                            <p id="noteContent" class="mb-0 text-break" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -280,17 +314,30 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        // Initialize DataTables
-        const list = {{ form_names | tojson }};
-        list.forEach((item) => {
-            new DataTable(`#${item}`, {
+        
+        // 1. Get the dictionary directly from Jinja
+        // Expected format: {"blood_donor": "Blood Donor", "participation": "Participation", ...}
+        const formsMap = {{ form_dict | tojson }};
+
+        // 2. Iterate using Object.entries()
+        // This gives us [key, value] for every item in the dictionary
+        Object.entries(formsMap).forEach(([formId, formTitle]) => {   
+            // formId = "blood_donor"
+            // formTitle = "Blood Donor"
+
+            // Create a clean filename (e.g., "SODECA_Report_Blood_Donor")
+            const cleanTitle = formTitle.replace(/ /g, '_');
+            const fileName = `SODECA_${cleanTitle}`;
+
+            // Initialise data tables
+            new DataTable(`#${formId}`, {
                 layout: {
                     topStart: {
                         buttons: [
-                            { extend: 'copy', className: 'btn-sm border-primary-subtle' },
-                            { extend: 'csv', className: 'btn-sm border-primary-subtle' },
-                            { extend: 'excel', className: 'btn-sm border-primary-subtle' },
-                            { extend: 'pdf', className: 'btn-sm border-primary-subtle' },
+                            { extend: 'copy', className: 'btn-sm border-primary-subtle'},
+                            { extend: 'csv', className: 'btn-sm border-primary-subtle'},
+                            { extend: 'excel', className: 'btn-sm border-primary-subtle', filename: fileName},
+                            { extend: 'pdf', className: 'btn-sm border-primary-subtle', filename: fileName },
                             { extend: 'print', className: 'btn-sm border-primary-subtle' }
                         ]
                     }
@@ -319,12 +366,32 @@
             rejectedModal.querySelector('#reject_full_path').value = full_path;
         });
 
-        function submitWithoutNote() {
-        // 1. Clear the text input so it sends an empty string (which acts as None)
-        document.getElementById('rejected_note').value = '';
-        
-        // 2. Submit the form
-        document.getElementById('rejectionForm').submit();
+        const skipBtn = document.getElementById('skipAddNote');
+        if (skipBtn) {
+            skipBtn.addEventListener('click', function() {
+                // 1. Clear the text input
+                document.getElementById('rejected_note').value = '';
+                
+                // 2. Submit the form
+                document.getElementById('rejectionForm').submit();
+            });
+        }
+        // ... existing DataTables code ...
+
+        // --- Handle View Note Modal ---
+        const viewNoteModal = document.getElementById('viewNoteModal');
+        if (viewNoteModal) {
+            viewNoteModal.addEventListener('show.bs.modal', function(event) {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+                // Extract info from data-note attribute
+                const note = button.getAttribute('data-note');
+                // Update the modal's content
+                const noteContent = viewNoteModal.querySelector('#noteContent');
+                
+                // Handle case where note might be empty string logically (though Jinja handles null)
+                noteContent.textContent = note ? note : "No detail provided.";
+            });
         }
     });
 </script>
