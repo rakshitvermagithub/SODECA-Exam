@@ -1303,10 +1303,10 @@ db.execute("""
     """)
 
 # Hardcoded drive folder directory levels
-dfolder_lvl_1 = ["CSE", "CSE(AI)"]
+dfolder_lvl_1 = ["CSE"]
 # Level 2 is operated using a dict so that the folder names in it can be related with the actual values stored in student details table
-dfolder_lvl_2 = {"3": "III Semester", "4": "IV Semester"}
-dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2", "C-G1"]
+dfolder_lvl_2 = {"3": "III Semester"}
+dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2"]
 # Last level is form_title list
 
 def get_or_create_folder(service, folder_name, parent_id):
@@ -2385,6 +2385,7 @@ def upload_to_drive():
     
     to_search_id = f"{branch}_{sem}_{section}_{group}_{form_name}"
     drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
+    
     if drive_folder:
         drive_folder_id = drive_folder[0]["drive_folder_id"]
         print(drive_folder_id)
@@ -2446,7 +2447,6 @@ def upload_to_drive():
 def reject_entry():
     entry_id = request.form.get("entry_id")
     form_name = request.form.get("form_name")
-    full_path = request.form.get("full_path")
     rejection_note = request.form.get("rejection_note", None)
     if rejection_note == '':
         rejection_note = None
@@ -2458,9 +2458,9 @@ def reject_entry():
 
     except Exception as e:
         flash(f"Database error: {e}")
-        return redirect(url_for('faculty_dashboard'))
-    local_delete(full_path)
-    return redirect(url_for('faculty_dashboard'))
+        return redirect(request.referrer)
+    
+    return redirect(request.referrer)
 
 @app.route("/super_admin", methods=["GET"])
 @login_required
@@ -2714,6 +2714,7 @@ def student_report():
     # Queries as per the number of forms selected
     base_queries = []
 
+    # If applied filter
     if request.method == "POST":
 
         # where_clause will have parameter inputs
@@ -2755,18 +2756,15 @@ def student_report():
         forms = request.form.getlist("forms[]")
         for form in forms:
             base_queries.append(
-                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group, '{form}' AS category, f.google_file_id, f.submitted_at, f.withdrawn_at 
+                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group,
+                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at, f.status, f.certificate
                 FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
                 )
 
         if base_queries:
-
             complete_query = " UNION ALL ".join(base_queries)
             
-            # Wrap the entire UNION in parentheses before ordering.
-            # Only wrap the query in parentheses if there is more than one SELECT statement (i.e., a UNION).
-            # If there's only one query, don't wrap it.
-            final_query = f"{complete_query}"
+            final_query = f"{complete_query} ORDER BY submitted_at DESC"
 
             try:
                 print(f"Executing query: {final_query}")  # Debug
@@ -2776,23 +2774,27 @@ def student_report():
                     flash("No records found with selected filters.", "info")
             
             except Exception as e:
+                flash(f"Database error: {e}", "danger")
                 print(f"Error: {e}")
                 print(f"Query: {final_query}")  # See the actual query
-                flash(f"Database error: {e}", "danger")
                 return redirect(url_for("student_report"))
         else:
             flash("Please select at least one form to filter.", "warning")
 
         return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
+    # Without filter
     for form in form_name_list:
         base_queries.append(
-            f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at 
+            f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group, 
+            '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate
             FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
             )
+        
     complete_query = " UNION ALL ".join(base_queries) 
-    print(complete_query)            
-    universal_report = db.execute(complete_query)
+    final_query = f"{complete_query} ORDER BY submitted_at DESC"
+    print(final_query)            
+    universal_report = db.execute(final_query)
     return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
     
