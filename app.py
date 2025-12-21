@@ -1303,10 +1303,10 @@ db.execute("""
     """)
 
 # Hardcoded drive folder directory levels
-dfolder_lvl_1 = ["CSE", "CSE(AI)"]
+dfolder_lvl_1 = ["CSE"]
 # Level 2 is operated using a dict so that the folder names in it can be related with the actual values stored in student details table
-dfolder_lvl_2 = {"3": "III Semester", "4": "IV Semester"}
-dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2", "C-G1"]
+dfolder_lvl_2 = {"3": "III Semester"}
+dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2"]
 # Last level is form_title list
 
 def get_or_create_folder(service, folder_name, parent_id):

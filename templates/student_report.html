@@ -187,22 +187,29 @@
                         
                                 <td>
                                     <div class="d-flex gap-2">
-                                        <form action="{{ url_for('upload_to_drive') }}" method="post">
-                                            <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
-                                            <input type="hidden" name="semester" value="{{ data['semester'] }}">
-                                            <input type="hidden" name="branch" value="{{ data['branch'] }}">
-                                            <input type="hidden" name="section" value="{{ data['section'] }}">
-                                            <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
-                                            <input type="hidden" name="form_name" value="{{ data['category'] }}">
-                                            <input type="hidden" name="filename" value="{{ data['certificate'] }}">
+                                        {% if session.get('drive_auth_token')%}
+                                            <form action="{{ url_for('upload_to_drive') }}" method="post">
+                                                <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
+                                                <input type="hidden" name="semester" value="{{ data['semester'] }}">
+                                                <input type="hidden" name="branch" value="{{ data['branch'] }}">
+                                                <input type="hidden" name="section" value="{{ data['section'] }}">
+                                                <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
+                                                <input type="hidden" name="form_name" value="{{ data['category'] }}">
+                                                <input type="hidden" name="filename" value="{{ data['certificate'] }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                                {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                            </form>
+                                        {% else %}
+                                            <!-- Button opens a modal with a button to authorize drive -->
                                             <button type="submit" class="btn btn-sm btn-outline-success"
-                                            {% if status == 'accepted'%}disabled{% endif %}>Accept</button>
-                                        </form>    
+                                            {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+
+                                        {% endif %}    
                                         <form action="" method="POST">
                                             <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" 
                                                 data-bs-target="#rejectionModal" data-entry-id = "{{ data['entry_id'] }}" 
                                                 data-form-name = "{{ data['category'] }}"
-                                                {% if status == 'rejected'%}disabled{% endif %}>
+                                                {% if status != 'pending'%}disabled{% endif %}>
                                                 Reject
                                             </button>
                                         </form>
@@ -355,11 +362,12 @@
   </div>
 </div>
 
+<!-- Modal to add a note when rejecting an entry -->
 <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-3 border-0 shadow">
             
-            <!-- Header: Aligned with design language (Primary Blue) -->
+            <!-- Header -->
             <div class="modal-header bg-primary text-white border-bottom-0">
                 <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
