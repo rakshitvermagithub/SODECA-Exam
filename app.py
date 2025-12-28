@@ -1293,7 +1293,6 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
-
 # Create a table to store and map drive folder ids
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
@@ -1301,6 +1300,20 @@ db.execute("""
     semester TEXT NOT NULL, section TEXT NOT NULL, 
     class_group TEXT NOT NULL, form_name TEXT NOT NULL) 
     """)
+# Create a table to store sodeca drive master folder link and subdirectory structure
+db.execute("""
+    CREATE TABLE IF NOT EXISTS drive_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        level_1 TEXT NOT NULL, level_2 TEXT NOT NULL,
+        level_3 TEXT NOT NULL, master_folder_link TEXT
+    ) 
+""")
+# Initialize drive settings with empty values 
+db.execute("""
+    INSERT OR IGNORE INTO drive_settings 
+    (id, level_1, level_2, level_3, master_folder_link) 
+    VALUES (1, '[]', '{}', '[]', '')
+""")
 
 # Hardcoded drive folder directory levels
 dfolder_lvl_1 = ["CSE"]
@@ -2290,73 +2303,6 @@ def view_submission(filename):
         flash("Error: The requested file could not be found on the server.", "danger")
         return redirect(url_for('faculty_dashboard'))
 
-@app.route('/create_drive_structure', methods=["POST"])
-@login_required 
-def create_drive_structure():
-
-    # 1. Check if we have the token from Step 1
-    token = session.get('drive_auth_token')
-    if not token:
-        flash("Please authorize Google Drive first.", "warning")
-        return redirect(url_for('super_admin'))
-    
-    try:
-        # 2. Build the Drive Service using the token
-        # We assume the token in session has what we need
-        creds = Credentials(
-            token=token.get('access_token'),
-            refresh_token=token.get('refresh_token'),
-            token_uri=app.config.get('GOOGLE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
-            client_id=app.config['DRIVE_CLIENT_ID'],
-            client_secret=app.config['DRIVE_CLIENT_SECRET'],
-            scopes=token.get('scope', [])
-        )
-        
-        service = build('drive', 'v3', credentials=creds)
-        
-        # LOOP 1: Departments (e.g., CSE, CSE(AI)) inside Master Folder
-        for branch in dfolder_lvl_1:
-            
-            # Check/Create the Dept Folder
-            branch_folder_id = get_or_create_folder(service, branch, MASTER_DRIVE_FOLDER_ID)
-            
-            if branch_folder_id:
-                # LOOP 2: Create semester folders
-                for sem, sem_folder in dfolder_lvl_2.items():
-                        
-                    # Check/Create the Category Folder
-                    sem_folder_id = get_or_create_folder(service, sem_folder, branch_folder_id)
-
-                    if sem_folder_id:
-                        # LOOP 3: Create section-group folders 
-                        for section_grp in dfolder_lvl_3:
-
-                            section_grp_folder_id = get_or_create_folder(service, section_grp, sem_folder_id)
-
-                            if section_grp_folder_id:
-                                section, group = section_grp.split('-')
-                                # LOOP 4: Create form categories folders using form_title list
-                                for form_name, form_title in form_dict.items():
-                                    print(f"{form_name}: {form_title}")
-                                    form_folder_id = get_or_create_folder(service, form_title, section_grp_folder_id)
-
-                                    if form_folder_id:
-                                        id = f"{branch}_{sem}_{section}_{group}_{form_name}"
-
-                                        db.execute("""
-                                            INSERT INTO drive_folder_map (id, drive_folder_id, branch, semester, section,
-                                            class_group, form_name) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET
-                                            drive_folder_id = excluded.drive_folder_id 
-                                        """, id, form_folder_id, branch, sem, section, group, form_name)
-
-        flash(f"Drive structure sync complete!", "success")
-
-    except Exception as e:
-        print(f"Structure creation failed: {e}")
-        flash(f"An error occurred: {e}", "danger")
-
-    return redirect(url_for('super_admin'))
-
 @app.route("/upload_to_drive", methods=["POST"])
 @login_required
 def upload_to_drive():
@@ -2797,7 +2743,131 @@ def student_report():
     universal_report = db.execute(final_query)
     return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
+@app.route("/batch_management", methods=["GET"])
+@login_required
+def batch_management():
+    user_role = role(session["user_id"])
+
+    if user_role != "admin" and user_role != "tester":
+        return "Access denied"
+
+    return render_template("batch_management.html")
+
+@app.route('/create_drive_structure', methods=["POST"])
+@login_required 
+def create_drive_structure():
+
+    # 1. Check if we have the token from Step 1
+    token = session.get('drive_auth_token')
+    if not token:
+        flash("Please authorize Google Drive first.", "warning")
+        return redirect(url_for('super_admin'))
     
+    # Get drive structure inputs
+    # --- LEVEL 1: Branches ---
+    # Input: " CSE , ECE, ME "
+    # Logic: Split by comma -> strip spaces -> Join back to "CSE,ECE,ME"
+    raw_branches = request.form.get("branches", "")
+    level_1_str = ",".join([b.strip() for b in raw_branches.split(",") if b.strip()])
+    level_1 = level_1_str.split(",")
+
+    # --- LEVEL 2: Semesters ---
+    # Input: ['1', '3', '5'] (List from checkboxes)
+    level_2 = request.form.getlist("semesters")
+    level_2_str = ",".join(level_2)
+
+    # --- LEVEL 3: Sections & Groups (Derived) ---
+    sections = request.form.getlist("section_names[]") # e.g., ['A', 'B']
+    group_lists = request.form.getlist("group_lists[]") # e.g., ['G1, G2', 'G1']
+
+    level_3 = [] # Level 3 or branch-section list
+
+    # 'zip' pairs them up: (A, "G1, G2"), (B, "G1")
+    for section, groups_raw in zip(sections, group_lists):
+        clean_section = section.strip()
+        
+        if clean_section:
+            # Split the group string "G1, G2" into a list ['G1', 'G2']
+            clean_groups = [g.strip() for g in groups_raw.split(",") if g.strip()]
+            
+            # Create combinations: "A-G1", "A-G2"
+            for group in clean_groups:
+                level_3.append(f"{clean_section}-{group}")
+
+    # Join the final list into one string: "A-G1,A-G2,B-G1"
+    level_3_str = ",".join(level_3)
+
+    # --- DATABASE UPDATE ---
+    # Storing pure TEXT strings. No JSON.
+    try:
+        db.execute("""
+            UPDATE drive_settings 
+            SET level_1 = ?, level_2 = ?, level_3 = ? 
+            WHERE id = 1
+        """, level_1_str, level_2_str, level_3_str)
+        
+        flash("Drive structure updated successfully!", "success")
+    except Exception as e:
+        flash(f"Error updating database: {e}", "danger")
+    
+    try:
+        # 2. Build the Drive Service using the token
+        # We assume the token in session has what we need
+        creds = Credentials(
+            token=token.get('access_token'),
+            refresh_token=token.get('refresh_token'),
+            token_uri=app.config.get('GOOGLE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
+            client_id=app.config['DRIVE_CLIENT_ID'],
+            client_secret=app.config['DRIVE_CLIENT_SECRET'],
+            scopes=token.get('scope', [])
+        )
+        
+        service = build('drive', 'v3', credentials=creds)
+        
+        # LOOP 1: Departments (e.g., CSE, CSE(AI)) inside Master Folder
+        for branch in level_1:
+            
+            # Check/Create the Dept Folder
+            branch_folder_id = get_or_create_folder(service, branch, MASTER_DRIVE_FOLDER_ID)
+            
+            if branch_folder_id:
+                # LOOP 2: Create semester folders
+                for sem, sem_folder in level_2.items():
+                        
+                    # Check/Create the Category Folder
+                    sem_folder_id = get_or_create_folder(service, sem_folder, branch_folder_id)
+
+                    if sem_folder_id:
+                        # LOOP 3: Create section-group folders 
+                        for section_grp in level_3:
+
+                            section_grp_folder_id = get_or_create_folder(service, section_grp, sem_folder_id)
+
+                            if section_grp_folder_id:
+                                section, group = section_grp.split('-')
+                                # LOOP 4: Create form categories folders using form_title list
+                                for form_name, form_title in form_dict.items():
+                                    print(f"{form_name}: {form_title}")
+                                    form_folder_id = get_or_create_folder(service, form_title, section_grp_folder_id)
+
+                                    if form_folder_id:
+                                        id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+
+                                        db.execute("""
+                                            INSERT INTO drive_folder_map (id, drive_folder_id, branch, semester, section,
+                                            class_group, form_name) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET
+                                            drive_folder_id = excluded.drive_folder_id 
+                                        """, id, form_folder_id, branch, sem, section, group, form_name)
+
+        flash(f"Drive structure sync complete!", "success")
+
+    except Exception as e:
+        print(f"Structure creation failed: {e}")
+        flash(f"An error occurred: {e}", "danger")
+
+    return redirect(url_for('super_admin'))
+
+
 if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):

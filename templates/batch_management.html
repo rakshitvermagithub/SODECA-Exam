@@ -1,0 +1,279 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Batch Management
+{% endblock %}
+
+{% block css %}
+<style>
+    :root {
+        --bs-admin-purple: #4f46e5;
+        --bs-admin-purple-rgb: 79, 70, 229;
+    }
+
+    .page-wrapper {
+        min-height: calc(100vh - 140px);
+        background-color: #f0f2f5;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    .form-title-admin {
+        position: relative;
+        padding-bottom: 0.75rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .form-title-admin::after {
+        content: '';
+        position: absolute;
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: var(--bs-admin-purple);
+        border-radius: 2px;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Admin Card Styles */
+    .card-admin {
+        border: none;
+        border-top: 4px solid var(--bs-admin-purple);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 0.75rem;
+        background: white;
+        margin-bottom: 2rem;
+    }
+
+    .card-header-admin {
+        background-color: #f9fafb;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-admin {
+        background-color: var(--bs-admin-purple);
+        color: white;
+        font-weight: 500;
+    }
+    .btn-admin:hover {
+        background-color: #4338ca;
+        color: white;
+        box-shadow: 0 4px 12px rgba(var(--bs-admin-purple-rgb), 0.2);
+    }
+
+    /* Dynamic Section Row Styling */
+    .section-row {
+        padding: 3px;
+        margin-bottom: 1rem;
+        position: relative;
+        transition: border-color 0.2s;
+    }
+    .section-row:hover {
+        border-color: #d1d5db;
+    }
+    .remove-row-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 1.2rem;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    .remove-row-btn:hover {
+        opacity: 1;
+    }
+
+    /* Modal Styling */
+    .modal-header-admin {
+        background-color: var(--bs-admin-purple);
+        color: white;
+    }
+    .modal-header-admin .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+
+<div class="page-wrapper">
+    <div class="container" style="max-width: 900px;">
+        <h2 class="text-center mb-5 form-title-admin">System & Batch Configuration</h2>
+
+        <!-- CARD 2: Drive Structure Configuration -->
+        <div class="card card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-diagram-3-fill me-2 text-info"></i> Drive Structure Hierarchy
+            </div>
+            <div class="card-body p-3">
+
+                <form action="/create_drive_structure" method="post" id="structureForm">
+                    
+                    <!-- Level 1: Branches -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-primary">Level 1: Academic Branches</label>
+                        <input type="text" class="form-control" name="branches" placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>
+                        <div class="form-text">Enter branches separated by commas.</div>
+                    </div>
+
+                    <!-- Level 2: Semesters (Updated to Checkboxes) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-primary">Level 2: Semesters</label>
+                        <div class="d-flex flex-wrap gap-3 p-2 border rounded">
+                            {% for i in range(1, 9) %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="semesters" value="{{ i }}" id="sem_{{ i }}">
+                                <label class="form-check-label" for="sem_{{ i }}">
+                                    {{ i }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">Select all applicable semesters for the folder structure.</div>
+                    </div>
+
+                    <!-- Level 3: Sections & Groups (Dynamic) -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold text-primary mb-0">Level 3: Sections & Groups</label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="addSectionBtn">
+                                <i class="bi bi-plus-lg"></i> Add Section
+                            </button>
+                        </div>
+                        
+                        <div id="sectionsContainer">
+                            <!-- Default Row -->
+                            <div class="section-row">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Section Name</label>
+                                        <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Groups (Comma separated)</label>
+                                        <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="text-end text-center">
+                        <button type="submit" class="btn btn-admin px-2 py-2 fw-bold">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i> Update Drive Structure
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CARD 1: Master Folder Configuration -->
+        <div class="card card-admin">
+            <div class="card-header-admin">
+                <i class="bi bi-folder-fill me-2 text-warning"></i> Master Drive Folder
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <label class="form-label text-muted small fw-bold text-uppercase">Current Master Folder</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light" value="{{ current_master_link | default('Not Configured') }}" readonly>
+                        <a href="{{ current_master_link }}" target="_blank" class="btn btn-outline-secondary {% if not current_master_link %}disabled{% endif %}">
+                            <i class="bi bi-box-arrow-up-right"></i> Open
+                        </a>
+                    </div>
+                </div>
+                
+                <form id="masterFolderForm" action="/update_master_folder" method="post">
+                    <div class="mb-3">
+                        <label for="new_master_link" class="form-label fw-bold">Update Master Folder Destination</label>
+                        <input type="url" class="form-control" id="new_master_link" name="new_master_link" placeholder="https://drive.google.com/drive/folders/..." required>
+                        <div class="form-text">Paste the full shareable link of the new Google Drive folder.</div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-admin" data-bs-toggle="modal" data-bs-target="#confirmMasterModal">
+                            Update Folder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: Confirm Master Folder Update -->
+<div class="modal fade" id="confirmMasterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header modal-header-admin">
+                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Update</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="fw-medium">Are you sure you want to change the Master Folder destination?</p>
+                <p class="text-muted small">Changing this will redirect all future uploads to the new folder. Ensure you have copied any necessary data from the old location.</p>
+                <div class="alert alert-warning small mb-0">
+                    <strong>Note:</strong> This is a critical system setting.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-admin" onclick="document.getElementById('masterFolderForm').submit()">Yes, Update It</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('sectionsContainer');
+    const addBtn = document.getElementById('addSectionBtn');
+
+    // Function to add a new section row
+    addBtn.addEventListener('click', function() {
+        const div = document.createElement('div');
+        div.className = 'section-row fade-in';
+        div.innerHTML = `
+            <i class="bi bi-x-circle-fill remove-row-btn" title="Remove Section"></i>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="section_names[]" placeholder="e.g. B" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+
+    // Event delegation to handle removing rows
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-row-btn')) {
+            // Prevent removing the last remaining row
+            if (container.querySelectorAll('.section-row').length > 1) {
+                e.target.closest('.section-row').remove();
+            } else {
+                alert("You must have at least one section configuration.");
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
