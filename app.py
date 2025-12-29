@@ -1,5 +1,6 @@
 from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
+from collections import defaultdict
 from config import Config
 from datetime import datetime, date
 from email.message import EmailMessage
@@ -15,6 +16,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 import random
+import re
 import smtplib
 import sys
 import pandas as pd
@@ -82,6 +84,19 @@ def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+def get_folder_id(link):
+    # Pattern: looks for "/folders/" followed by the ID chars
+    match = re.search(r'/folders/([a-zA-Z0-9-_]+)', link)
+    
+    if match:
+        return match.group(1)  # Returns the ID part
+    
+    # Fallback: Check if the user just pasted the ID directly (no http/https)
+    if "http" not in link and len(link) > 20:
+        return link.strip()
+        
+    return None # Invalid link
 
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
@@ -1304,23 +1319,16 @@ db.execute("""
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        level_1 TEXT NOT NULL, level_2 TEXT NOT NULL,
-        level_3 TEXT NOT NULL, master_folder_link TEXT
+        level_1 TEXT, level_2 TEXT,
+        level_3 TEXT, master_folder_link TEXT, master_folder_id TEXT
+        updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
-# Initialize drive settings with empty values 
-db.execute("""
-    INSERT OR IGNORE INTO drive_settings 
-    (id, level_1, level_2, level_3, master_folder_link) 
-    VALUES (1, '[]', '{}', '[]', '')
-""")
 
-# Hardcoded drive folder directory levels
-dfolder_lvl_1 = ["CSE"]
-# Level 2 is operated using a dict so that the folder names in it can be related with the actual values stored in student details table
-dfolder_lvl_2 = {"3": "III Semester"}
-dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2"]
-# Last level is form_title list
+# Dictionary containing folder names of different semesters
+semester_dict = {"1": "I Semester", "2": "II Semester", "3": "III Semester",
+             "4": "IV Semester", "5": "V Semester", "6": "VI Semester",
+             "7": "VII Semester", "8": "VIII Semester"}
 
 def get_or_create_folder(service, folder_name, parent_id):
     """
@@ -2750,8 +2758,36 @@ def batch_management():
 
     if user_role != "admin" and user_role != "tester":
         return "Access denied"
+    
+    # get the current drive settings stored in db
+    row = db.execute("SELECT * FROM drive_settings WHERE id=1")
+    drive_settings = row[0] if row else {}
 
-    return render_template("batch_management.html")
+    level_3_ui_data = []
+    
+    if drive_settings.get("level_3"):
+        # Helper dictionary to group items: {'A': ['G1', 'G2'], 'B': ['G1']}
+        temp_grouping = defaultdict(list)
+        
+        # Split "A-G1,A-G2" -> ['A-G1', 'A-G2']
+        folders = drive_settings["level_3"].split(",")
+        
+        for folder in folders:
+            folder = folder.strip()
+            if "-" in folder:
+                # Split only on the FIRST hyphen to separate Section from Group
+                # "A-G1" -> section="A", group="G1"
+                section, group = folder.split("-", 1)
+                temp_grouping[section].append(group)
+        
+        # Convert dictionary to List for Jinja
+        for section, groups_list in temp_grouping.items():
+            level_3_ui_data.append({
+                "section": section,
+                "groups": ", ".join(groups_list) # Joins ['G1','G2'] -> "G1, G2"
+            })
+
+    return render_template("batch_management.html", drive_settings=drive_settings, level_3_rows=level_3_ui_data)
 
 @app.route('/create_drive_structure', methods=["POST"])
 @login_required 
@@ -2811,6 +2847,8 @@ def create_drive_structure():
         flash(f"Error updating database: {e}", "danger")
     
     try:
+        master_folder_id = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
+
         # 2. Build the Drive Service using the token
         # We assume the token in session has what we need
         creds = Credentials(
@@ -2828,14 +2866,14 @@ def create_drive_structure():
         for branch in level_1:
             
             # Check/Create the Dept Folder
-            branch_folder_id = get_or_create_folder(service, branch, MASTER_DRIVE_FOLDER_ID)
+            branch_folder_id = get_or_create_folder(service, branch, master_folder_id[0]["master_folder_id"])
             
             if branch_folder_id:
                 # LOOP 2: Create semester folders
-                for sem, sem_folder in level_2.items():
+                for sem in level_2:
                         
                     # Check/Create the Category Folder
-                    sem_folder_id = get_or_create_folder(service, sem_folder, branch_folder_id)
+                    sem_folder_id = get_or_create_folder(service, semester_dict[sem], branch_folder_id)
 
                     if sem_folder_id:
                         # LOOP 3: Create section-group folders 
@@ -2867,6 +2905,27 @@ def create_drive_structure():
 
     return redirect(url_for('super_admin'))
 
+@app.route("/update_master_folder", methods=["POST"])
+@login_required
+def update_master_folder():
+    user_role = role(session["user_id"])
+
+    if user_role != "admin" and user_role != "tester":
+        return "Access denied"
+
+    folder_link = request.form.get("drive_folder_link")
+    folder_id = get_folder_id(folder_link)
+
+    db.execute("""
+        INSERT INTO drive_settings (id, master_folder_link, master_folder_id)
+        VALUES (1, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET 
+        master_folder_link = excluded.master_folder_link,
+        master_folder_id = excluded.master_folder_id
+    """, folder_link, folder_id)
+
+    flash("Master folder link updated!", "success")
+    return redirect(url_for("batch_management"))    
 
 if __name__ == '__main__':
 

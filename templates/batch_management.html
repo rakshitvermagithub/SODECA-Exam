@@ -123,17 +123,28 @@
                     <!-- Level 1: Branches -->
                     <div class="mb-4">
                         <label class="form-label fw-bold text-primary">Level 1: Academic Branches</label>
-                        <input type="text" class="form-control" name="branches" placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>
+                        <input type="text" class="form-control" name="branches" {% if drive_settings.get('level_1') %}value="{{ drive_settings.get('level_1') }}"{% endif %} 
+                        placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>
                         <div class="form-text">Enter branches separated by commas.</div>
                     </div>
 
-                    <!-- Level 2: Semesters (Updated to Checkboxes) -->
+                    <!-- 2. Create a list variable at the start of your loop logic -->
+                    <!-- This splits "1,3,5" into ['1', '3', '5']. If empty, it makes an empty list. -->
+                    {% set active_sems = drive_settings['level_2'].split(',') if drive_settings['level_2'] else [] %}
+
                     <div class="mb-4">
                         <label class="form-label fw-bold text-primary">Level 2: Semesters</label>
                         <div class="d-flex flex-wrap gap-3 p-2 border rounded">
                             {% for i in range(1, 9) %}
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="semesters" value="{{ i }}" id="sem_{{ i }}">
+                                <!-- 2. The Check Logic: Check if 'i' (as a string) is in our list -->
+                                <input class="form-check-input" 
+                                    type="checkbox" 
+                                    name="semesters" 
+                                    value="{{ i }}" 
+                                    id="sem_{{ i }}"
+                                    {% if i|string in active_sems %}checked{% endif %}>
+                                    
                                 <label class="form-check-label" for="sem_{{ i }}">
                                     {{ i }}
                                 </label>
@@ -153,19 +164,50 @@
                         </div>
                         
                         <div id="sectionsContainer">
-                            <!-- Default Row -->
-                            <div class="section-row">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Section Name</label>
-                                        <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
+                            <!-- CASE 1: Database has data. Loop through it. -->
+                            <!-- level_3_rows is calculated in app.py, /batch_management route -->
+                            {% if level_3_rows %}
+                                {% for row in level_3_rows %}
+                                <div class="section-row">
+                                    <!-- Include the remove button so existing rows can be deleted too -->
+                                    <i class="bi bi-x-circle-fill remove-row-btn text-danger position-absolute end-0 top-0 m-2" 
+                                        style="cursor: pointer;" title="Remove Section"></i>
+                                    
+                                    <div class="row g-3 position-relative">
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Section Name</label>
+                                            <input type="text" class="form-control" 
+                                                    name="section_names[]" 
+                                                    value="{{ row.section }}" 
+                                                    required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Groups (Comma separated)</label>
+                                            <input type="text" class="form-control" 
+                                                    name="group_lists[]" 
+                                                    value="{{ row.groups }}" 
+                                                    required>
+                                        </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Groups (Comma separated)</label>
-                                        <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
+                                    <hr class="d-md-none my-2"> <!-- Mobile separator if needed -->
+                                </div>
+                                {% endfor %}
+
+                            <!-- CASE 2: Database is empty. Show one blank default row. -->
+                            {% else %}
+                                <div class="section-row">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Section Name</label>
+                                            <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Groups (Comma separated)</label>
+                                            <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -180,6 +222,7 @@
             </div>
         </div>
 
+        {% set current_master_link = drive_settings['master_folder_link'] %}
         <!-- CARD 1: Master Folder Configuration -->
         <div class="card card-admin">
             <div class="card-header-admin">
@@ -199,7 +242,7 @@
                 <form id="masterFolderForm" action="/update_master_folder" method="post">
                     <div class="mb-3">
                         <label for="new_master_link" class="form-label fw-bold">Update Master Folder Destination</label>
-                        <input type="url" class="form-control" id="new_master_link" name="new_master_link" placeholder="https://drive.google.com/drive/folders/..." required>
+                        <input type="url" class="form-control" id="new_master_link" name="drive_folder_link" placeholder="https://drive.google.com/drive/folders/..." required>
                         <div class="form-text">Paste the full shareable link of the new Google Drive folder.</div>
                     </div>
                     <div class="text-end">
