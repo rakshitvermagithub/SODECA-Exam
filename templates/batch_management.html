@@ -14,7 +14,7 @@
     .page-wrapper {
         min-height: calc(100vh - 140px);
         background-color: #f0f2f5;
-        padding-top: 3rem;
+        padding-top: 2rem;
         padding-bottom: 3rem;
     }
 
@@ -45,7 +45,7 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         border-radius: 0.75rem;
         background: white;
-        margin-bottom: 2rem;
+        height: 100%; /* Ensure cards fill column height */
     }
 
     .card-header-admin {
@@ -71,7 +71,10 @@
 
     /* Dynamic Section Row Styling */
     .section-row {
-        padding: 3px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 10px;
         margin-bottom: 1rem;
         position: relative;
         transition: border-color 0.2s;
@@ -86,7 +89,7 @@
         color: #dc3545;
         cursor: pointer;
         font-size: 1.2rem;
-        opacity: 0.7;
+        opacity: 0.8;
         transition: opacity 0.2s;
     }
     .remove-row-btn:hover {
@@ -108,152 +111,156 @@
 {% include "message.html" %}
 
 <div class="page-wrapper">
-    <div class="container" style="max-width: 900px;">
-        <h2 class="text-center mb-5 form-title-admin">System & Batch Configuration</h2>
+    <div class="container">
+        <h3 class="text-center mb-5 form-title-admin">Manage Batch and Google Drive Structure</h3>
 
-        <!-- CARD 2: Drive Structure Configuration -->
-        <div class="card card-admin">
-            <div class="card-header-admin">
-                <i class="bi bi-diagram-3-fill me-2 text-info"></i> Drive Structure Hierarchy
-            </div>
-            <div class="card-body p-3">
-
-                <form action="/create_drive_structure" method="post" id="structureForm">
-                    
-                    <!-- Level 1: Branches -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-primary">Level 1: Academic Branches<span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="branches" {% if drive_settings.get('level_1') %}value="{{ drive_settings.get('level_1') }}"{% endif %} 
-                        placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>
-                        <div class="form-text">Enter branches separated by commas.</div>
+        <!-- MAIN CONTENT GRID -->
+        <div class="row g-4">
+            
+            <!-- LEFT COLUMN: Structure Config (Larger) -->
+            <div class="col-12 col-lg-8">
+                <div class="card card-admin">
+                    <div class="card-header-admin fw-bold">
+                        <i class="bi bi-diagram-3-fill me-2 text-info"></i> ACADEMIC BATCH STRUCTURE
                     </div>
+                    <div class="card-body p-4">
+                        <form action="/create_drive_structure" method="post" id="structureForm">
+                            
+                            <div class="row g-4">
+                                <!-- Level 1: Branches -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold" style="color: var(--bs-admin-purple);">Level 1: Academic Branches<span class="text-danger">*</span></label>
+                                    <textarea type="text" class="form-control" name="branches" 
+                                    placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>{% if drive_settings.get('level_1') %}{{ drive_settings.get('level_1') }}{% endif %}</textarea>
+                                    <div class="form-text">Enter branches separated by commas.</div>
+                                </div>
 
-                    <!-- 2. Create a list variable at the start of your loop logic -->
-                    <!-- This splits "1,3,5" into ['1', '3', '5']. If empty, it makes an empty list. -->
-                    {% set active_sems = drive_settings['level_2'].split(',') if drive_settings['level_2'] else [] %}
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-primary">Level 2: Semesters<span class="text-danger">*</span></label>
-                        <div class="d-flex flex-wrap gap-3 p-2 border rounded">
-                            {% for i in range(1, 9) %}
-                            <div class="form-check">
-                                <!-- 2. The Check Logic: Check if 'i' (as a string) is in our list -->
-                                <input class="form-check-input" 
-                                    type="checkbox" 
-                                    name="semesters" 
-                                    value="{{ i }}" 
-                                    id="sem_{{ i }}"
-                                    {% if i|string in active_sems %}checked{% endif %}>
-                                    
-                                <label class="form-check-label" for="sem_{{ i }}">
-                                    {{ i }}
-                                </label>
+                                <!-- Level 2: Semesters -->
+                                {% set active_sems = drive_settings['level_2'].split(',') if drive_settings['level_2'] else [] %}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold" style="color: var(--bs-admin-purple);">Level 2: Semesters<span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        {% for i in range(1, 9) %}
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="checkbox" name="semesters" value="{{ i }}" id="sem_{{ i }}" {% if i|string in active_sems %}checked{% endif %}>
+                                            <label class="form-check-label" for="sem_{{ i }}">{{ i }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="form-text">Select atleast one applicable semester for the folder structure.</div>
+                                </div>
                             </div>
-                            {% endfor %}
-                        </div>
-                        <div class="form-text">Select atleast one applicable semester for the folder structure.</div>
-                    </div>
 
-                    <!-- Level 3: Sections & Groups (Dynamic) -->
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-bold text-primary mb-0">Level 3: Sections & Groups<span class="text-danger">*</span></label>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="addSectionBtn">
-                                <i class="bi bi-plus-lg"></i> Add Section
-                            </button>
-                        </div>
-                        
-                        <div id="sectionsContainer">
-                            <!-- CASE 1: Database has data. Loop through it. -->
-                            <!-- level_3_rows is calculated in app.py, /batch_management route -->
-                            {% if level_3_rows %}
-                                {% for row in level_3_rows %}
-                                <div class="section-row">
-                                    <!-- Include the remove button so existing rows can be deleted too -->
-                                    <i class="bi bi-x-circle-fill remove-row-btn text-danger position-absolute end-0 top-0 m-2" 
-                                        style="cursor: pointer;" title="Remove Section"></i>
-                                    
-                                    <div class="row g-3 position-relative">
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Section Name<span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" 
-                                                    name="section_names[]" 
-                                                    value="{{ row.section }}" 
-                                                    required>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Groups (Comma separated)<span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" 
-                                                    name="group_lists[]" 
-                                                    value="{{ row.groups }}" 
-                                                    required>
-                                        </div>
-                                    </div>
-                                    <hr class="d-md-none my-2"> <!-- Mobile separator if needed -->
+                            <hr class="my-4 text-muted opacity-25">
+
+                            <!-- Level 3: Sections & Groups -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold" style="color: var(--bs-admin-purple);">Level 3: Sections & Groups<span class="text-danger">*</span></label>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addSectionBtn">
+                                        <i class="bi bi-plus-lg"></i> Add Section
+                                    </button>
                                 </div>
-                                {% endfor %}
-
-                            <!-- CASE 2: Database is empty. Show one blank default row. -->
-                            {% else %}
-                                <div class="section-row">
-                                    <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Section Name<span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
+                                
+                                <div id="sectionsContainer" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                                    {% if level_3_rows %}
+                                        {% for row in level_3_rows %}
+                                        <div class="section-row">
+                                            <!-- Include the remove button so existing rows can be deleted too -->
+                                            <i class="bi bi-x-circle-fill remove-row-btn text-danger position-absolute end-0 top-0 m-2" 
+                                                style="cursor: pointer;" title="Remove Section"></i>
+                                            
+                                            <div class="row g-3 position-relative">
+                                                <div class="col-md-4">
+                                                    <label class="form-label small fw-bold">Section Name<span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" 
+                                                            name="section_names[]" 
+                                                            value="{{ row.section }}" 
+                                                            required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label small fw-bold">Groups (Comma separated)<span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" 
+                                                            name="group_lists[]" 
+                                                            value="{{ row.groups }}" 
+                                                            required>
+                                                </div>
+                                            </div>
+                                            <hr class="d-md-none my-2"> <!-- Mobile separator if needed -->
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Groups (Comma separated)<span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
+                                        {% endfor %}
+                                    {% else %}
+                                        <!-- Default Row -->
+                                        <div class="section-row">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label small fw-bold">Section Name</label>
+                                                    <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label small fw-bold">Groups (Comma separated)</label>
+                                                    <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                        </div>
-                    </div>
+                            </div>
 
-                    <hr class="my-3">
-
-                    <div class="text-end text-center">
-                        <button type="submit" class="btn btn-admin px-2 py-2 fw-bold">
-                            <i class="bi bi-cloud-arrow-up-fill me-2"></i> Update Drive Structure
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        {% set current_master_link = drive_settings['master_folder_link'] %}
-        <!-- CARD 1: Master Folder Configuration -->
-        <div class="card card-admin">
-            <div class="card-header-admin">
-                <i class="bi bi-folder-fill me-2 text-warning"></i> Master Drive Folder
-            </div>
-            <div class="card-body p-4">
-                <div class="mb-4">
-                    <label class="form-label text-muted small fw-bold text-uppercase">Current Master Folder</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control bg-light" value="{{ current_master_link | default('Not Configured') }}" readonly>
-                        <a href="{{ current_master_link }}" target="_blank" class="btn btn-outline-secondary {% if not current_master_link %}disabled{% endif %}">
-                            <i class="bi bi-box-arrow-up-right"></i> Open
-                        </a>
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-admin px-4">
+                                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Update Batch Structure and Sync Drive
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                
-                <form id="masterFolderForm" action="/update_master_folder" method="post">
-                    <div class="mb-3">
-                        <label for="new_master_link" class="form-label fw-bold">Update Master Folder Destination</label>
-                        <input type="url" class="form-control" id="new_master_link" name="drive_folder_link" placeholder="https://drive.google.com/drive/folders/..." required>
-                        <div class="form-text">Paste the full shareable link of the new Google Drive folder.</div>
-                    </div>
-                    <div class="text-end">
-                        <button type="button" class="btn btn-admin" data-bs-toggle="modal" data-bs-target="#confirmMasterModal">
-                            Update Folder
-                        </button>
-                    </div>
-                </form>
             </div>
-        </div>
 
+            <!-- RIGHT COLUMN: Update Link (Smaller) -->
+            <div class="col-12 col-lg-4">
+                <div class="card card-admin">
+                    <div class="card-header-admin fw-bold">
+                        <i class="bi bi-folder-fill me-2 text-warning"></i> DRIVE MANAGEMENT
+                    </div>
+                    <div class="card-body p-4">
+                        
+                        {% set current_master_link = drive_settings.get("master_folder_link")%}
+                        <!-- Open Drive Button Area -->
+                        <div class="mb-4">
+                             <div class="d-grid gap-2">
+                                <a href="{{ current_master_link }}" target="_blank" class="btn btn-outline-secondary fw-semibold {% if not current_master_link %}disabled{% endif %}">
+                                    <img class="image" data-alt-override="false" alt="Google Drive" srcset="
+                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw 1x,
+                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s96-fcrop64=1,00000000ffffffff-rw 2x
+                        " width="25" height="25" loading="lazy" fetchpriority="" src="https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw"> Current Master Folder
+                                </a>
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light text-muted" value="{{ current_master_link | default('Not Configured') }}" readonly disabled>
+                                </div>
+                             </div>
+                        </div>
+
+                        <hr class="my-4 text-muted opacity-25">
+
+                        <!-- Update Form -->
+                        <form id="masterFolderForm" action="/update_master_folder" method="post">
+                            <div class="mb-3">
+                                <label for="new_master_link" class="form-label fw-medium">Update Master Folder Destination</label>
+                                <input type="url" class="form-control" id="new_master_link" name="new_master_link" placeholder="https://drive.google.com/drive/folders/..." required>
+                                <div class="form-text">Paste the full shareable link of the new Google Drive folder.</div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-admin" data-bs-toggle="modal" data-bs-target="#confirmMasterModal">
+                                    Update Folder
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
 
@@ -265,14 +272,13 @@
                 <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Update</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <p class="fw-medium">Are you sure you want to change the Master Folder destination?</p>
-                <p class="text-muted small">Changing this will redirect all future uploads to the new folder. Ensure you have copied any necessary data from the old location.</p>
-                <div class="alert alert-warning small mb-0">
-                    <strong>Note:</strong> This is a critical system setting.
+            <div class="modal-body p-4 text-center">
+                <p class="mb-2 fw-medium">Are you sure you want to change the Master Folder destination?</p>
+                <div class="alert alert-warning small d-inline-block text-start">
+                    Changing this will redirect all future uploads to the new folder. Ensure you have copied any necessary data from the old location.
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0">
+            <div class="modal-footer border-0 pt-0 justify-content-center">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-admin" onclick="document.getElementById('masterFolderForm').submit()">Yes, Update It</button>
             </div>
@@ -288,7 +294,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('sectionsContainer');
     const addBtn = document.getElementById('addSectionBtn');
 
-    // Function to add a new section row
     addBtn.addEventListener('click', function() {
         const div = document.createElement('div');
         div.className = 'section-row fade-in';
@@ -296,9 +301,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="bi bi-x-circle-fill remove-row-btn" title="Remove Section"></i>
             <div class="row g-3">
                 <div class="col-md-4">
+                    <label class="form-label small fw-bold">Section Name</label>
                     <input type="text" class="form-control" name="section_names[]" placeholder="e.g. B" required>
                 </div>
                 <div class="col-md-4">
+                    <label class="form-label small fw-bold">Groups (Comma separated)</label>
                     <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
                 </div>
             </div>
@@ -306,10 +313,8 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(div);
     });
 
-    // Event delegation to handle removing rows
     container.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove-row-btn')) {
-            // Prevent removing the last remaining row
             if (container.querySelectorAll('.section-row').length > 1) {
                 e.target.closest('.section-row').remove();
             } else {
