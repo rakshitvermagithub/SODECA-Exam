@@ -122,7 +122,7 @@
                     
                     <!-- Level 1: Branches -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-primary">Level 1: Academic Branches</label>
+                        <label class="form-label fw-bold text-primary">Level 1: Academic Branches<span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="branches" {% if drive_settings.get('level_1') %}value="{{ drive_settings.get('level_1') }}"{% endif %} 
                         placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>
                         <div class="form-text">Enter branches separated by commas.</div>
@@ -133,7 +133,7 @@
                     {% set active_sems = drive_settings['level_2'].split(',') if drive_settings['level_2'] else [] %}
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-primary">Level 2: Semesters</label>
+                        <label class="form-label fw-bold text-primary">Level 2: Semesters<span class="text-danger">*</span></label>
                         <div class="d-flex flex-wrap gap-3 p-2 border rounded">
                             {% for i in range(1, 9) %}
                             <div class="form-check">
@@ -151,13 +151,13 @@
                             </div>
                             {% endfor %}
                         </div>
-                        <div class="form-text">Select all applicable semesters for the folder structure.</div>
+                        <div class="form-text">Select atleast one applicable semester for the folder structure.</div>
                     </div>
 
                     <!-- Level 3: Sections & Groups (Dynamic) -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-bold text-primary mb-0">Level 3: Sections & Groups</label>
+                            <label class="form-label fw-bold text-primary mb-0">Level 3: Sections & Groups<span class="text-danger">*</span></label>
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="addSectionBtn">
                                 <i class="bi bi-plus-lg"></i> Add Section
                             </button>
@@ -175,14 +175,14 @@
                                     
                                     <div class="row g-3 position-relative">
                                         <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Section Name</label>
+                                            <label class="form-label small fw-bold">Section Name<span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" 
                                                     name="section_names[]" 
                                                     value="{{ row.section }}" 
                                                     required>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Groups (Comma separated)</label>
+                                            <label class="form-label small fw-bold">Groups (Comma separated)<span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" 
                                                     name="group_lists[]" 
                                                     value="{{ row.groups }}" 
@@ -198,11 +198,11 @@
                                 <div class="section-row">
                                     <div class="row g-3">
                                         <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Section Name</label>
+                                            <label class="form-label small fw-bold">Section Name<span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label small fw-bold">Groups (Comma separated)</label>
+                                            <label class="form-label small fw-bold">Groups (Comma separated)<span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
                                         </div>
                                     </div>

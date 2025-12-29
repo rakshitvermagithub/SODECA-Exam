@@ -79,6 +79,24 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Decorator to ensure drive is authorized
+def drive_auth_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = session.get('drive_auth_token')
+        
+        # If not authorized
+        if not token:
+            # We send a special category "drive_auth_popup" in message.html
+            # which triggers a modal box with drive authorization button
+            flash("Google Drive authorization is missing.", "drive_auth_popup")
+            
+            # Redirect back to the page the user was on
+            return redirect(request.referrer or '/')
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 def is_safe_url(target):
     """Check if the URL is safe for redirects"""
     ref_url = urlparse(request.host_url)
@@ -2313,6 +2331,7 @@ def view_submission(filename):
 
 @app.route("/upload_to_drive", methods=["POST"])
 @login_required
+@drive_auth_required
 def upload_to_drive():
     """Uploads a file using the authorized Drive client."""
     token = session.get('drive_auth_token')
@@ -2790,7 +2809,8 @@ def batch_management():
     return render_template("batch_management.html", drive_settings=drive_settings, level_3_rows=level_3_ui_data)
 
 @app.route('/create_drive_structure', methods=["POST"])
-@login_required 
+@login_required
+@drive_auth_required 
 def create_drive_structure():
 
     # 1. Check if we have the token from Step 1
@@ -2803,18 +2823,29 @@ def create_drive_structure():
     # --- LEVEL 1: Branches ---
     # Input: " CSE , ECE, ME "
     # Logic: Split by comma -> strip spaces -> Join back to "CSE,ECE,ME"
-    raw_branches = request.form.get("branches", "")
+    raw_branches = request.form.get("branches")
+    if not raw_branches:
+        flash("Kindly fill the required branches", "warning")
+        return redirect(url_for("batch_management"))
     level_1_str = ",".join([b.strip() for b in raw_branches.split(",") if b.strip()])
     level_1 = level_1_str.split(",")
 
     # --- LEVEL 2: Semesters ---
     # Input: ['1', '3', '5'] (List from checkboxes)
     level_2 = request.form.getlist("semesters")
+    if not level_2:
+        flash("Kindly select atleast one of the semester", "warning")
+        return redirect(url_for("batch_management"))
+
     level_2_str = ",".join(level_2)
 
     # --- LEVEL 3: Sections & Groups (Derived) ---
     sections = request.form.getlist("section_names[]") # e.g., ['A', 'B']
+    if not sections:
+        flash("Kindly add atleast one section", "warning")
     group_lists = request.form.getlist("group_lists[]") # e.g., ['G1, G2', 'G1']
+    if not group_lists:
+        flash("Kindly add atleast one class group for each section", "warning")
 
     level_3 = [] # Level 3 or branch-section list
 
@@ -2832,22 +2863,13 @@ def create_drive_structure():
 
     # Join the final list into one string: "A-G1,A-G2,B-G1"
     level_3_str = ",".join(level_3)
-
-    # --- DATABASE UPDATE ---
-    # Storing pure TEXT strings. No JSON.
-    try:
-        db.execute("""
-            UPDATE drive_settings 
-            SET level_1 = ?, level_2 = ?, level_3 = ? 
-            WHERE id = 1
-        """, level_1_str, level_2_str, level_3_str)
-        
-        flash("Drive structure updated successfully!", "success")
-    except Exception as e:
-        flash(f"Error updating database: {e}", "danger")
     
     try:
-        master_folder_id = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
+        drive_settings = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
+        master_folder_id = drive_settings[0]["master_folder_id"]
+        if not master_folder_id:
+            flash("Kindly submit the master folder drive link before updating the structure", "error")
+            return redirect(url_for("batch_management")) 
 
         # 2. Build the Drive Service using the token
         # We assume the token in session has what we need
@@ -2866,7 +2888,7 @@ def create_drive_structure():
         for branch in level_1:
             
             # Check/Create the Dept Folder
-            branch_folder_id = get_or_create_folder(service, branch, master_folder_id[0]["master_folder_id"])
+            branch_folder_id = get_or_create_folder(service, branch, master_folder_id)
             
             if branch_folder_id:
                 # LOOP 2: Create semester folders
@@ -2902,6 +2924,19 @@ def create_drive_structure():
     except Exception as e:
         print(f"Structure creation failed: {e}")
         flash(f"An error occurred: {e}", "danger")
+
+    # --- DATABASE UPDATE ---
+    # Storing pure TEXT strings. No JSON.
+    try:
+        db.execute("""
+            UPDATE drive_settings 
+            SET level_1 = ?, level_2 = ?, level_3 = ? 
+            WHERE id = 1
+        """, level_1_str, level_2_str, level_3_str)
+        
+        flash("Drive structure updated successfully!", "success")
+    except Exception as e:
+        flash(f"Error updating database: {e}", "danger")
 
     return redirect(url_for('super_admin'))
 
