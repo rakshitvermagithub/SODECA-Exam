@@ -1,10 +1,15 @@
+import io
+import secrets
+import string
+
 from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
 from collections import defaultdict
 from config import Config
 from datetime import datetime, date
 from email.message import EmailMessage
-from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory
+from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
+    make_response
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -1280,7 +1285,7 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL,
     university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL,
     semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL,
-    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id))
+    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
 """)
 # Initialise table to store faculty details
 db.execute("""
@@ -1470,6 +1475,60 @@ def send_otp(to_mail):
     server.quit()
     print(f"OTP sent to {to_mail}: {otp}") # For debugging
 
+@app.route("/download/<pk>")
+def download(pk):
+    result_instance = db.execute(
+        "SELECT student_details.*,users.email FROM student_details INNER JOIN users ON student_details.student_user_id = users.user_id"
+    )
+    emails = db.execute(
+        "SELECT email FROM users WHERE role = 'student'"
+    )
+    if len(result_instance) > 1:
+        # Add Email column also
+        data = [
+            {
+                'Name': result["student_name"],
+                'Roll No': result["university_roll_no"],
+                'Email': result["email"],
+                'Branch': result["branch"],
+                'Semester': result["semester"],
+                'Section': result["section"],
+                'Batch Counselor': result["batch_counselor"]
+            }
+            for result in result_instance
+        ]
+    else:
+        data = [
+            {
+                'Email': email["email"]
+            }
+            for email in emails
+        ]
+
+    df = pd.DataFrame(data)
+    if pk == "excel_stu_dir":
+        output = io.BytesIO()
+        writer = pd.ExcelWriter(output, engine='openpyxl')
+        df.to_excel(writer, index=False, sheet_name="student_directory")
+        writer.close()
+        excel_data = output.getvalue()
+        response = make_response(excel_data)
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = 'attachment; filename="student_directory.xlsx"'
+        return response
+
+    elif pk == "csv_stu_dir":
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        csv_string = output.getvalue()
+
+        return make_response(
+            csv_string,
+            {
+                "Content-Type": "text/csv",
+                "Content-Disposition": "attachment; filename=student_directory.csv"
+            }
+        )
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
@@ -1927,6 +1986,76 @@ def student_details():
             return render_template(
                 "student_details.html", details=None, faculty_list=faculty_list
                 )
+
+def generate_strong_password(length=16):
+    characters = string.ascii_letters + string.punctuation + string.digits
+
+    password = ''.join(secrets.choice(characters) for _ in range(length))
+
+    return password
+
+@app.route("/student_management_page", methods=["GET", "POST"])
+def student_management_page():
+    if request.method == 'POST':
+        new_data = request.files.get('excel_file')
+        if not new_data or new_data.filename == '':
+            flash('No file is selected or invalid file',"info")
+            return "No file selected or invalid file", 400
+
+        df = pd.read_excel(new_data, engine="openpyxl")
+
+        df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+        invalid_emails_df = df[~df['email'].str.strip().str.endswith('@skit.ac.in')]
+        if not invalid_emails_df.empty:
+            bad_email_list = invalid_emails_df['email'].tolist()
+            flash(
+                f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
+                "danger")
+            return redirect(url_for("student_management_page"))
+        rows_to_insert = df.to_dict(orient="records")
+        for data in rows_to_insert:
+            email = data.get("email")
+            password = generate_strong_password(8)
+            hash_password = generate_password_hash(password)
+            db.execute("""
+                INSERT INTO users (
+                    email, hash_password
+                ) VALUES (?, ?)
+            """, email, hash_password)
+
+        flash('We are glad to share that your excel file is uploaded successfully!',"success")
+        return redirect(url_for('student_management_page'))
+    else:
+        student_email_list = db.execute(
+            "SELECT email FROM users WHERE role = 'student'"
+        )
+        student_list = []
+        for dic in student_email_list:
+            student_list.append({'email': dic["email"],'val':db.execute(
+                "SELECT * FROM student_details WHERE student_details.student_user_id = (SELECT user_id FROM users WHERE email = ?)",dic["email"]
+            )})
+        return render_template('student_management_page.html', student_list=student_list)
+@app.route("/add_email", methods=["POST"])
+def addEmail():
+    email = request.form.get("new_email")
+    existing_email = db.execute(
+        "SELECT email FROM users"
+    )
+    for emails in existing_email:
+        if emails["email"] == email:
+            flash("Email already exists!","danger")
+            return redirect(url_for('student_management_page'))
+
+    password = generate_strong_password(8)
+    hash_password = generate_password_hash(password)
+    db.execute("""
+        INSERT INTO users (
+            email, hash_password
+        ) VALUES (?, ?)
+    """, email, hash_password)
+
+    flash("User added succesfully!","success")
+    return redirect(url_for('student_management_page'))
 
 @app.route("/sodeca_forms", methods=["GET", "POST"])
 def sodeca_forms():
@@ -2515,24 +2644,39 @@ def faculty_list():
         faculty_data = db.execute("SELECT * FROM faculty_details")
         return render_template("faculty_list.html", faculty_data=faculty_data)
 
-@app.route("/delete_faculty", methods=["POST"])
-def delete_faculty():
-    email_to_delete = request.form.get("college_email")
-    
-    if not email_to_delete:
-        flash("Error: No faculty email was provided for deletion.", "danger")
-        return redirect(url_for("faculty_list"))
-    
-    try:
-        # Execute the DELETE query using the primary key(college email)
-        db.execute("DELETE FROM faculty_details WHERE college_email = ?", email_to_delete)
-        flash(f"Successfully deleted faculty member: {email_to_delete}", "success")
-    except Exception as e:
-        # Log the error and show a generic message
-        print(f"Database error while deleting faculty: {e}", file=sys.stderr)
-        flash("An error occurred while trying to delete the faculty member.", "danger")
+@app.route("/delete_user/<pk>", methods=["POST"])
+def delete_user(pk):
+    key_to_delete = request.form.get("college_email")
+    if pk == 'faculty':
+        if not key_to_delete:
+            flash("Error: No faculty email was provided for deletion.", "danger")
+            return redirect(url_for("faculty_list"))
 
-    return redirect(url_for("faculty_list"))
+        try:
+            # Execute the DELETE query using the primary key(college email)
+            db.execute("DELETE FROM faculty_details WHERE college_email = ?", key_to_delete)
+            flash(f"Successfully deleted faculty member: {key_to_delete}", "success")
+        except Exception as e:
+            # Log the error and show a generic message
+            print(f"Database error while deleting faculty: {e}", file=sys.stderr)
+            flash("An error occurred while trying to delete the faculty member.", "danger")
+
+        return redirect(url_for("faculty_list"))
+    elif pk == 'student':
+        if not key_to_delete:
+            flash("Error: No Student email was provided for deletion.", "danger")
+            return redirect(url_for("student_management_page"))
+
+        try:
+            # Execute the DELETE query using the primary key(college email)
+            db.execute("DELETE FROM users WHERE email = ?", key_to_delete)
+            flash(f"Successfully deleted faculty member: {key_to_delete}", "success")
+        except Exception as e:
+            # Log the error and show a generic message
+            print(f"Database error while deleting faculty: {e}", file=sys.stderr)
+            flash("An error occurred while trying to delete the faculty member.", "danger")
+
+        return redirect(url_for("student_management_page"))
 
 @app.route("/uploadExcel", methods=["POST"])
 def uploadExcel():
