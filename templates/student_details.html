@@ -71,11 +71,10 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
                             <select class="form-select" id="branch" name="branch_option" required>
-                                <option value="" disabled {% if not details.branch %}selected{% endif %}>Choose...</option>
-                                <option value="CSE" {% if details and details.branch == 'CSE' %}selected{% endif %}>CSE</option>
-                                <option value="CSE(AI)" {% if details and details.branch == 'CSE(AI)' %}selected{% endif %}>CSE (AI)</option>
-                                <option value="CSE(DS)" {% if details and details.branch == 'CSE(DS)' %}selected{% endif %}>CSE (DS)</option>
-                                <option value="CSE(IOT)" {% if details and details.branch == 'CSE(IOT)' %}selected{% endif %}>CSE (IOT)</option>
+                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                {% for branch in branches %}
+                                <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{branch}}</option>
+                                {% endfor %}
                             </select>
                             <label for="branch">Branch</label>
                             <div class="invalid-feedback"></div>

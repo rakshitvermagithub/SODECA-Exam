@@ -1339,6 +1339,7 @@ db.execute("""
     class_group TEXT NOT NULL, form_name TEXT NOT NULL) 
     """)
 # Create a table to store sodeca drive master folder link and subdirectory structure
+# level1 -> branch, level2 -> semester, level3 -> section-group
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -1480,10 +1481,11 @@ def download(pk):
     result_instance = db.execute(
         "SELECT student_details.*,users.email FROM student_details INNER JOIN users ON student_details.student_user_id = users.user_id"
     )
+    print(result_instance)
     emails = db.execute(
         "SELECT email FROM users WHERE role = 'student'"
     )
-    if len(result_instance) > 1:
+    if len(result_instance) > 0:
         # Add Email column also
         data = [
             {
@@ -1967,12 +1969,18 @@ def student_details():
     else:
         # Get student details if already present
         # Variable stores a list of dictionaries
+        print()
         student_details_row = db.execute(
             "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
         )
         faculty_list = db.execute(
             "SELECT full_name, designation, department FROM faculty_details"
         )
+        branches = db.execute('SELECT level_1 FROM drive_settings')
+        if len(branches):
+            branch_list = branches[0]['level_1'].split(',')
+        else:
+            branch_list = [None]
 
         # If details are already available
         if student_details_row:
@@ -1980,11 +1988,11 @@ def student_details():
 
             # Show the page with filled details
             return render_template(
-                "student_details.html", details=filled_details, faculty_list=faculty_list
+                "student_details.html",branches=branch_list, details=filled_details, faculty_list=faculty_list
                 )
         else:
             return render_template(
-                "student_details.html", details=None, faculty_list=faculty_list
+                "student_details.html",branches=branch_list, details=None, faculty_list=faculty_list
                 )
 
 def generate_strong_password(length=16):
@@ -2812,7 +2820,12 @@ def assign_batch():
         else:
             show_modal = False
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
-        return render_template("assign_batch.html", faculty_data=faculty_data, show_modal=show_modal)
+        branches = db.execute('SELECT level_1 FROM drive_settings')
+        if len(branches) > 0:
+            branch_list = branches[0]['level_1'].split(',')
+        else:
+            branch_list = [None]
+        return render_template("assign_batch.html",branches=branch_list, faculty_data=faculty_data, show_modal=show_modal)
     
 @app.route("/discharge_faculty", methods=["POST"])
 def discharge_faculty():
@@ -2907,12 +2920,11 @@ def student_report():
             '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate
             FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
             )
-        
     complete_query = " UNION ALL ".join(base_queries) 
     final_query = f"{complete_query} ORDER BY submitted_at DESC"
     print(final_query)            
     universal_report = db.execute(final_query)
-    return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
+    return render_template("student_report.html", branches= branches , filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 @app.route("/batch_management", methods=["GET"])
 @login_required

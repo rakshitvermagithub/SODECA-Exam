@@ -175,11 +175,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="branch_option" required>
-                                    <option value="" selected disabled>Choose...</option>
-                                    <option value="CSE">CSE</option>
-                                    <option value="CSE(AI)">CSE (AI)</option>
-                                    <option value="CSE(DS)">CSE (DS)</option>
-                                    <option value="CSE(IOT)">CSE (IOT)</option>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for branch in branches %}
+                                    <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{branch}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Branch</label>
                             </div>
