@@ -1976,11 +1976,19 @@ def student_details():
         faculty_list = db.execute(
             "SELECT full_name, designation, department FROM faculty_details"
         )
-        branches = db.execute('SELECT level_1 FROM drive_settings')
-        if len(branches):
-            branch_list = branches[0]['level_1'].split(',')
+        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
+        if len(data_to_load):
+            branch_list = data_to_load[0]['level_1'].split(',')
+            semester = data_to_load[0]['level_2'].split(',')
+            batch_group_str = data_to_load[0]['level_3']
+            items = [item.split('-') for item in batch_group_str.split(',')]
+            batch_set = sorted({b for b, g in items})
+            group_set = sorted({g for b, g in items})
         else:
             branch_list = [None]
+            semester = [None]
+            batch_set = [None]
+            group_set = [None]
 
         # If details are already available
         if student_details_row:
@@ -1988,11 +1996,11 @@ def student_details():
 
             # Show the page with filled details
             return render_template(
-                "student_details.html",branches=branch_list, details=filled_details, faculty_list=faculty_list
+                "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=filled_details, faculty_list=faculty_list
                 )
         else:
             return render_template(
-                "student_details.html",branches=branch_list, details=None, faculty_list=faculty_list
+                "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=None, faculty_list=faculty_list
                 )
 
 def generate_strong_password(length=16):
@@ -2820,12 +2828,21 @@ def assign_batch():
         else:
             show_modal = False
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
-        branches = db.execute('SELECT level_1 FROM drive_settings')
-        if len(branches) > 0:
-            branch_list = branches[0]['level_1'].split(',')
+        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
+        if len(data_to_load):
+            branch_list = data_to_load[0]['level_1'].split(',')
+            semester = data_to_load[0]['level_2'].split(',')
+            batch_group_str = data_to_load[0]['level_3']
+            items = [item.split('-') for item in batch_group_str.split(',')]
+            batch_set = sorted({b for b, g in items})
+            group_set = sorted({g for b, g in items})
         else:
             branch_list = [None]
-        return render_template("assign_batch.html",branches=branch_list, faculty_data=faculty_data, show_modal=show_modal)
+            semester = [None]
+            batch_set = [None]
+            group_set = [None]
+
+        return render_template("assign_batch.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, faculty_data=faculty_data, show_modal=show_modal)
     
 @app.route("/discharge_faculty", methods=["POST"])
 def discharge_faculty():

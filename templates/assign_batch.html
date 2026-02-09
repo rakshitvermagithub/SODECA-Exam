@@ -186,13 +186,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="semester_option" required>
-                                     <option value="" selected disabled>Choose...</option>
-                                     <option value="3">3</option>
-                                     <option value="4">4</option>
-                                     <option value="5">5</option>
-                                     <option value="6">6</option>
-                                     <option value="7">7</option>
-                                     <option value="8">8</option>
+                                     <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for sem in semester %}
+                                    <option value="{{sem}}" {% if details and details.semester == sem %}selected{% endif %}>{{sem}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Semester</label>
                             </div>
@@ -203,13 +200,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="section_option" required>
-                                    <option value="" selected disabled>Choose...</option>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                    <option value="D">D</option>
-                                    <option value="E">E</option>
-                                    <option value="F">F</option>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for batch in batch_list %}
+                                    <option value="{{batch}}" {% if details and details.batch == batch %}selected{% endif %}>{{batch}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Section</label>
                             </div>
@@ -217,9 +211,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="group_option" required>
-                                    <option value="" selected disabled>Choose...</option>
-                                    <option value="G1">G1</option>
-                                    <option value="G2">G2</option>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for group in group_list %}
+                                    <option value="{{group}}" {% if details and details.group == group %}selected{% endif %}>{{group}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Group</label>
                             </div>
