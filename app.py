@@ -38,6 +38,9 @@ GOOGLE_CLIENT_SECRET = app.config["GOOGLE_CLIENT_SECRET"]
 DRIVE_CLIENT_ID = app.config["DRIVE_CLIENT_ID"]
 DRIVE_CLIENT_SECRET = app.config["DRIVE_CLIENT_SECRET"]
 
+SENDER_EMAIL = app.config["SENDER_EMAIL"]
+SENDER_PASSWORD = app.config["SENDER_PASSWORD"]
+
 # --- UNIFIED OAUTH 2.0 SETUP (USING AUTHLIB ONLY) ---
 oauth = OAuth(app)
 
@@ -1448,8 +1451,8 @@ faculty_dict = db.execute("SELECT college_email FROM faculty_details")
 for faculty in faculty_dict:
     faculty_emails.append(faculty["college_email"])
 
+# Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
-    print("Log from the system: Method invoked!")
     if not to_mail:
         return "Error!, Email not found in the session.", 400
 
@@ -1462,19 +1465,16 @@ def send_otp(to_mail):
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-
-    from_mail = "d68930637@gmail.com"
-    server.login(from_mail, 'uahpdvgzxercjtrd')
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
 
     msg = EmailMessage()
     msg['Subject'] = "OTP Verification"
-    msg['From'] = from_mail
+    msg['From'] = SENDER_EMAIL
     msg['To'] = to_mail
     msg.set_content("OTP to register your account is: " + otp)
 
     server.send_message(msg)
     server.quit()
-    print(f"OTP sent to {to_mail}: {otp}") # For debugging
 
 @app.route("/download/<pk>")
 def download(pk):
@@ -2002,76 +2002,6 @@ def student_details():
             return render_template(
                 "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=None, faculty_list=faculty_list
                 )
-
-def generate_strong_password(length=16):
-    characters = string.ascii_letters + string.punctuation + string.digits
-
-    password = ''.join(secrets.choice(characters) for _ in range(length))
-
-    return password
-
-@app.route("/student_management_page", methods=["GET", "POST"])
-def student_management_page():
-    if request.method == 'POST':
-        new_data = request.files.get('excel_file')
-        if not new_data or new_data.filename == '':
-            flash('No file is selected or invalid file',"info")
-            return "No file selected or invalid file", 400
-
-        df = pd.read_excel(new_data, engine="openpyxl")
-
-        df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-        invalid_emails_df = df[~df['email'].str.strip().str.endswith('@skit.ac.in')]
-        if not invalid_emails_df.empty:
-            bad_email_list = invalid_emails_df['email'].tolist()
-            flash(
-                f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
-                "danger")
-            return redirect(url_for("student_management_page"))
-        rows_to_insert = df.to_dict(orient="records")
-        for data in rows_to_insert:
-            email = data.get("email")
-            password = generate_strong_password(8)
-            hash_password = generate_password_hash(password)
-            db.execute("""
-                INSERT INTO users (
-                    email, hash_password
-                ) VALUES (?, ?)
-            """, email, hash_password)
-
-        flash('We are glad to share that your excel file is uploaded successfully!',"success")
-        return redirect(url_for('student_management_page'))
-    else:
-        student_email_list = db.execute(
-            "SELECT email FROM users WHERE role = 'student'"
-        )
-        student_list = []
-        for dic in student_email_list:
-            student_list.append({'email': dic["email"],'val':db.execute(
-                "SELECT * FROM student_details WHERE student_details.student_user_id = (SELECT user_id FROM users WHERE email = ?)",dic["email"]
-            )})
-        return render_template('student_management_page.html', student_list=student_list)
-@app.route("/add_email", methods=["POST"])
-def addEmail():
-    email = request.form.get("new_email")
-    existing_email = db.execute(
-        "SELECT email FROM users"
-    )
-    for emails in existing_email:
-        if emails["email"] == email:
-            flash("Email already exists!","danger")
-            return redirect(url_for('student_management_page'))
-
-    password = generate_strong_password(8)
-    hash_password = generate_password_hash(password)
-    db.execute("""
-        INSERT INTO users (
-            email, hash_password
-        ) VALUES (?, ?)
-    """, email, hash_password)
-
-    flash("User added succesfully!","success")
-    return redirect(url_for('student_management_page'))
 
 @app.route("/sodeca_forms", methods=["GET", "POST"])
 def sodeca_forms():
@@ -2686,11 +2616,11 @@ def delete_user(pk):
         try:
             # Execute the DELETE query using the primary key(college email)
             db.execute("DELETE FROM users WHERE email = ?", key_to_delete)
-            flash(f"Successfully deleted faculty member: {key_to_delete}", "success")
+            flash(f"Successfully deleted student: {key_to_delete}", "success")
         except Exception as e:
             # Log the error and show a generic message
-            print(f"Database error while deleting faculty: {e}", file=sys.stderr)
-            flash("An error occurred while trying to delete the faculty member.", "danger")
+            print(f"Database error while deleting student: {e}", file=sys.stderr)
+            flash("An error occurred while trying to delete the student.", "danger")
 
         return redirect(url_for("student_management_page"))
 
@@ -2980,6 +2910,83 @@ def batch_management():
             })
 
     return render_template("batch_management.html", drive_settings=drive_settings, level_3_rows=level_3_ui_data)
+
+@app.route("/student_management_page", methods=["GET", "POST"])
+def student_management_page():
+    if request.method == 'POST':
+        new_data = request.files.get('excel_file')
+        if not new_data or new_data.filename == '':
+            flash('No file is selected or invalid file',"info")
+            return "No file selected or invalid file", 400
+
+        df = pd.read_excel(new_data, engine="openpyxl")
+
+        df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+        invalid_emails_df = df[~df['email'].str.strip().str.endswith('@skit.ac.in')]
+        if not invalid_emails_df.empty:
+            bad_email_list = invalid_emails_df['email'].tolist()
+            flash(
+                f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
+                "danger")
+            return redirect(url_for("student_management_page"))
+        rows_to_insert = df.to_dict(orient="records")
+        for data in rows_to_insert:
+            email = data.get("email")
+            password = generate_strong_password(8)
+            hash_password = generate_password_hash(password)
+            db.execute("""
+                INSERT INTO users (
+                    email, hash_password
+                ) VALUES (?, ?)
+            """, email, hash_password)
+
+        flash('We are glad to share that your excel file is uploaded successfully!',"success")
+        return redirect(url_for('student_management_page'))
+    else:
+        student_email_list = db.execute(
+            "SELECT email FROM users WHERE role = 'student'"
+        )
+        student_list = []
+        for row in student_email_list:
+            student_list.append({'email': row["email"],'val': db.execute(
+                """SELECT * FROM student_details 
+                WHERE student_details.student_user_id = (
+                SELECT user_id FROM users WHERE email = ?
+                )""",
+                row["email"]
+            )})
+        return render_template('student_management_page.html', student_list=student_list)
+    
+@app.route("/add_email", methods=["POST"])
+def addEmail():
+    email = request.form.get("new_email")
+    existing_email = db.execute(
+        "SELECT email FROM users"
+    )
+    for emails in existing_email:
+        if emails["email"] == email:
+            flash("Email already exists!","danger")
+            return redirect(url_for('student_management_page'))
+
+    password = generate_strong_password(8)
+    hash_password = generate_password_hash(password)
+    db.execute("""
+        INSERT INTO users (
+            email, hash_password
+        ) VALUES (?, ?)
+    """, email, hash_password)
+
+    # Send the email with the PLAIN TEXT password
+    email_sent = send_password_email(email, password)
+    
+    # Provide appropriate feedback to the user
+    if email_sent:
+        flash(f"User added successfully! Login details sent to {email}.", "success")
+    else:
+        # If the DB insert worked but internet dropped or Gmail blocked the login
+        flash("User added, but we encountered an error sending the automated email.", "warning")
+
+    return redirect(url_for('student_management_page'))
 
 @app.route('/create_drive_structure', methods=["POST"])
 @login_required
