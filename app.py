@@ -113,6 +113,7 @@ def is_safe_url(target):
 
 def get_folder_id(link):
     # Pattern: looks for "/folders/" followed by the ID chars
+    print(f"Link received: {link}")
     match = re.search(r'/folders/([a-zA-Z0-9-_]+)', link)
     
     if match:
@@ -1531,6 +1532,7 @@ def download(pk):
                 "Content-Disposition": "attachment; filename=student_directory.csv"
             }
         )
+    
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
@@ -1572,9 +1574,11 @@ def register():
             # Flash error message
             return redirect("/register")
 
-        # Check if email already exists
-        existing_user = db.execute("SELECT * FROM users WHERE email = ?", email)
-        if existing_user:
+        # Check if email, password already exists
+        existing_user = db.execute("SELECT hash_password FROM users WHERE email = ?", email)
+
+        # Ff user exists and thier password also, it concludes user manually registered atleast once
+        if existing_user and existing_user[0]["hash_password"]:
             flash("Email already registered", "danger")
             return render_template("register.html")
 
@@ -1598,24 +1602,6 @@ def register():
             print(f"An error occurred while sending OTP: {e}")
             flash("An error occurred while sending the verification email. Please try again.", "danger")
             return redirect(url_for("register"))
-
-        # # Check if user is a faculty or student
-        # if role == 'faculty':
-        #     # Store Faculty's login details in the table
-        #     user_id = db.execute(
-        #         "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)", email, hash_password, 'faculty'
-        #         )     
-        #     # Add user_id in faculty_details
-        #     db.execute(
-        #         "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, email
-        #         ) 
-        #     return redirect(url_for("faculty_dashboard"))
-        # else:
-        #     # Store Student's login details in the table
-        #     db.execute(
-        #         "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password,
-        #         )
-        #     return redirect("/student_details")
     else:
         return render_template("register.html")
     
@@ -1652,10 +1638,16 @@ def otp_verify():
                     "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, user_data["email"]
                     ) 
             else:
-                # Store Student's login details in the table
-                user_id = db.execute(
-                    "INSERT INTO users (email, hash_password) VALUES (?, ?)", user_data["email"], user_data["hash_password"],
-                    )
+                # Insert the student data OR update their password if the email already exists
+                db.execute("""
+                    INSERT INTO users (email, hash_password) 
+                    VALUES (?, ?)
+                    ON CONFLICT(email) DO UPDATE SET 
+                    hash_password = excluded.hash_password
+                """, user_data["email"], user_data["hash_password"])
+                # Safely grab the ID whether it was just created or just updated
+                user = db.execute("SELECT user_id FROM users WHERE email = ?", user_data["email"])
+                user_id = user[0]["user_id"]
                 
             # Clean session
             session.pop('unverified_user', None)
@@ -1801,35 +1793,43 @@ def login():
             return redirect("/login")
 
         rows = db.execute(
-            "SELECT * FROM users WHERE email=? AND auth_provider = 'local'", email
+            "SELECT user_id, email, hash_password, auth_provider FROM users WHERE email = ?", email
             )
 
-        if len(rows) != 1 or not check_password_hash(
+        # If user never registered
+        if len(rows) != 1 :
+            flash("Email does not exist, please go to register.", "danger")
+            return redirect("/login")
+        # User only registered
+        elif not rows[0]["hash_password"] :
+            flash("Please register your Email with a password.", "danger")
+            return redirect("/register")
+        elif not check_password_hash(
             rows[0]["hash_password"], password
             ):
-            flash("Invalid email or password", "danger")
-            return redirect("/register")
+            flash("Invalid password or email", "danger")
+            return redirect("/login")
 
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
 
         session["user_role"] = role(session.get("user_id"))
 
-        # if admin
+        # If Admin
         if session.get("user_role") == 'admin':
             return redirect(url_for("super_admin"))
         
-        # if faculty
+        # If Faculty
         elif email in faculty_emails:
             session["user_role"] = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
-        # if student
+        # If Student
         elif session.get("user_role") =='student':    
-            details_filled = db.execute("SELECT * FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
-            # if student has not filled details
+            details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
+            # If student has not filled details
             if not details_filled:
-                # fill details first
+                # Fill details first
                 flash("Login succesfull! You may fill the neccessary student details", "success")
                 return redirect(url_for("student_details"))
             
@@ -2968,23 +2968,13 @@ def addEmail():
             flash("Email already exists!","danger")
             return redirect(url_for('student_management_page'))
 
-    password = generate_strong_password(8)
-    hash_password = generate_password_hash(password)
     db.execute("""
         INSERT INTO users (
-            email, hash_password
+            email, auth_provider
         ) VALUES (?, ?)
-    """, email, hash_password)
-
-    # Send the email with the PLAIN TEXT password
-    email_sent = send_password_email(email, password)
+    """, email, 'admin')    
     
-    # Provide appropriate feedback to the user
-    if email_sent:
-        flash(f"User added successfully! Login details sent to {email}.", "success")
-    else:
-        # If the DB insert worked but internet dropped or Gmail blocked the login
-        flash("User added, but we encountered an error sending the automated email.", "warning")
+    flash(f"User added successfully!", "success")
 
     return redirect(url_for('student_management_page'))
 
@@ -3128,7 +3118,11 @@ def update_master_folder():
     if user_role != "admin" and user_role != "tester":
         return "Access denied"
 
-    folder_link = request.form.get("drive_folder_link")
+    folder_link = request.form.get("new_master_link")
+    if not folder_link:
+        flash("Please paste the drive folder link.")
+        return redirect("/batch_management")
+    
     folder_id = get_folder_id(folder_link)
 
     db.execute("""

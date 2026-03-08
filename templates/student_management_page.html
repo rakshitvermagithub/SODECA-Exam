@@ -51,7 +51,13 @@
                 <td>{% if value["val"] %}{{ val["semester"] }}{% else %}To be updated{% endif %}</td>
                 <td>{% if value["val"] %}{{ val["section"] }}{% else %}To be updated{% endif %}</td>
                 <td>{% if value["val"] %}{{ val["batch_counselor"] }}{% else %}To be updated{% endif %}</td>
-                <td><a href = "#" data-bs-toggle="modal" data-bs-target="#deleteUser" data-roll-id = "{{val['university_roll_no']}}" data-stu-name = "{{val['student_name']}}" data-stu-email = "{{value['email']}}" style = "text-decoration: none; color: black;"><i class="fa-solid fa-trash-can"></i></a></td>
+                <td><a href = "#" data-bs-toggle="modal" data-bs-target="#deleteUser" 
+                    data-roll-id = "{{val['university_roll_no']}}" 
+                    data-stu-name = "{{val['student_name']}}" 
+                    data-stu-email = "{{value['email']}}" 
+                    style = "text-decoration: none; color: black;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </a></td>
                 {% endfor %}
             </tr>
             {% endfor %}
