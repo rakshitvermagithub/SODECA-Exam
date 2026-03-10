@@ -1458,6 +1458,12 @@ faculty_dict = db.execute("SELECT college_email FROM faculty_details")
 for faculty in faculty_dict:
     faculty_emails.append(faculty["college_email"])
 
+# Get list of developer emails
+dev_emails = []
+dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
+for dev in dev_dict:
+    dev_emails.append(dev["email"])
+
 # Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
     if not to_mail:
@@ -1560,7 +1566,7 @@ def register():
 
         # email id
         email = request.form.get("email")
-        if not email.endswith('@skit.ac.in'):
+        if not email.endswith('@skit.ac.in') and email not in dev_emails:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("register"))
 
@@ -1709,7 +1715,7 @@ def login_callback():
                 return redirect(url_for("login"))
                 
             # Check if the email belongs to the SKIT domain
-            if not email.endswith('@skit.ac.in'):
+            if not email.endswith('@skit.ac.in') and email not in dev_emails:
                 flash("Access Denied. You must log in with a your SKIT email address.", "danger")
                 return redirect(url_for("login"))
 
@@ -1797,7 +1803,7 @@ def login():
         if not email:
             flash("Valid SKIT Email is required", "danger")
             return redirect(url_for("login"))
-        if not email.endswith('@skit.ac.in'):
+        if not email.endswith('@skit.ac.in') and email not in dev_emails:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("login"))
 
