@@ -2951,13 +2951,11 @@ def student_management_page():
         rows_to_insert = df.to_dict(orient="records")
         for data in rows_to_insert:
             email = data.get("email")
-            password = generate_strong_password(8)
-            hash_password = generate_password_hash(password)
             db.execute("""
                 INSERT INTO users (
-                    email, hash_password
-                ) VALUES (?, ?)
-            """, email, hash_password)
+                    email
+                ) VALUES (?)
+            """, email)
 
         flash('We are glad to share that your excel file is uploaded successfully!',"success")
         return redirect(url_for('student_management_page'))
