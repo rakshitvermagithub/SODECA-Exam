@@ -1748,11 +1748,10 @@ def login_callback():
                 # Or new user
                 else:
                     # Assign role if user is faculty or student
-                    role = "faculty" if email in faculty_emails else "student"
+                    user_role = "faculty" if email in faculty_emails else "student"
+                    session["user_role"] = user_role
 
-                    session["user_role"] = role
-
-                    if role == "faculty":
+                    if user_role == "faculty":
                         # New faculty, create a new account in the database with role 'faculty'
                         user_id = db.execute("""
                             INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name, role)
@@ -1768,14 +1767,14 @@ def login_callback():
                         flash("Welcome Faculty! Account created with Google.", "success")
                         return redirect(url_for("faculty_dashboard"))
                     
-                    elif role == 'student':
+                    elif user_role == "student":
                         # New student and not present in users table,
                         # Should be first added by admin to get the portal access.
                         flash(f"Your Email ID: {email} is not provided access to this portal, please contact Admin.", "warning")
                         print(f"Unauthorized user with Email ID: {email} tried to access the portal at {get_current_ist_time()}")
                         return redirect(url_for("sodeca_home"))
 
-            if session.get("user_role") == 'faculty':
+            if session.get("user_role") == "faculty":
                 return redirect(url_for("faculty_dashboard"))
             else:
                 return redirect(url_for("sodeca_forms"))
