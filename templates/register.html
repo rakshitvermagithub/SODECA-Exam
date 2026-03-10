@@ -116,7 +116,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (emailValue === '') {
             showValidation(email, false, 'Email is required.');
             return false;
-        } else if (!emailValue.endsWith('@skit.ac.in')) {
+        } 
+        else if (!emailValue.endsWith('@skit.ac.in')) {
             showValidation(email, false, 'Email must be from the @skit.ac.in domain.');
             return false;} 
         else {

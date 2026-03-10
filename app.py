@@ -6,7 +6,7 @@ from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
 from collections import defaultdict
 from config import Config
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
     make_response
@@ -1446,6 +1446,12 @@ def local_delete(full_path):
         flash("An unexpected error occurred. Please try again.", "danger")
         return redirect(url_for('faculty_dashboard'))
 
+# Returns the current time in Jaipur/India (IST) formatted as a string.
+def get_current_ist_time():
+    # IST is UTC + 5:30
+    ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
+    return ist_now.strftime("%Y-%m-%d %I:%M:%S %p")
+
 # Get list of faculty emails
 faculty_emails = []
 faculty_dict = db.execute("SELECT college_email FROM faculty_details")
@@ -1536,6 +1542,7 @@ def download(pk):
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
+    # If admin
     if session.get("user_role") == 'admin':
         return redirect(url_for("super_admin"))
     # If faculty
@@ -1573,19 +1580,29 @@ def register():
         if password != confirm_password:
             # Flash error message
             return redirect("/register")
+        
+        # Assign role if user is faculty or student
+        role = "faculty" if email in faculty_emails else "student"
 
-        # Check if email, password already exists
-        existing_user = db.execute("SELECT hash_password FROM users WHERE email = ?", email)
+        # Check if student/faculty is present in users table
+        user_present = db.execute("SELECT email, hash_password FROM users WHERE email = ?", email)
 
-        # Ff user exists and thier password also, it concludes user manually registered atleast once
-        if existing_user and existing_user[0]["hash_password"]:
-            flash("Email already registered", "danger")
+        # If user is not present in users (not allowed by admin)
+        # And is a student, then don't allow access
+        if not user_present and role == "student":
+            flash(f"Your Email ID: {email} is not provided access to this portal, please contact Admin.", "warning")
+            print(f"Unauthorized user with Email ID: {email} tried to access the portal at {get_current_ist_time()}")
+            return redirect("/")
+
+        # If user is present with thier password also,
+        # concludes user have manually registered atleast once.
+        if user_present and user_present[0]["hash_password"]:
+            flash("Email already registered.", "danger")
             return render_template("register.html")
 
         # If form was filled successfully
         # Convert plain password into a complex string
         hash_password = generate_password_hash(password)
-        role = 'faculty' if email in faculty_emails else 'student'
 
         session['unverified_user'] = {
             'email': email,
@@ -1730,10 +1747,12 @@ def login_callback():
 
                 # Or new user
                 else:
-                    session["user_role"] = "student"
-                    user_role = session["user_role"] 
+                    # Assign role if user is faculty or student
+                    role = "faculty" if email in faculty_emails else "student"
 
-                    if user_role == "faculty":
+                    session["user_role"] = role
+
+                    if role == "faculty":
                         # New faculty, create a new account in the database with role 'faculty'
                         user_id = db.execute("""
                             INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name, role)
@@ -1749,17 +1768,13 @@ def login_callback():
                         flash("Welcome Faculty! Account created with Google.", "success")
                         return redirect(url_for("faculty_dashboard"))
                     
-                    elif user_role == 'student':
-                        # New student, create a new account in the database with default role 'student'
-                        user_id = db.execute("""
-                            INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name)
-                            VALUES (?, ?, 'google', ?, ?, ?)
-                        """, email, google_id, profile_picture, first_name, last_name)
+                    elif role == 'student':
+                        # New student and not present in users table,
+                        # Should be first added by admin to get the portal access.
+                        flash(f"Your Email ID: {email} is not provided access to this portal, please contact Admin.", "warning")
+                        print(f"Unauthorized user with Email ID: {email} tried to access the portal at {get_current_ist_time()}")
+                        return redirect(url_for("sodeca_home"))
 
-                        session["user_id"] = user_id
-                        flash("Welcome Student! Account created with Google.", "success")
-                        return redirect(url_for("student_details"))
-              
             if session.get("user_role") == 'faculty':
                 return redirect(url_for("faculty_dashboard"))
             else:
@@ -1800,10 +1815,13 @@ def login():
         if len(rows) != 1 :
             flash("Email does not exist, please go to register.", "danger")
             return redirect("/login")
-        # User only registered
+        
+        # User only used sign-in with Google,
+        # Means user never registered a password
         elif not rows[0]["hash_password"] :
             flash("Please register your Email with a password.", "danger")
             return redirect("/register")
+        
         elif not check_password_hash(
             rows[0]["hash_password"], password
             ):
