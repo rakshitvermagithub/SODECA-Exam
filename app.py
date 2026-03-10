@@ -1282,7 +1282,7 @@ db.execute("""
     auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT,
     first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, role TEXT NOT NULL DEFAULT 'student'
-    CHECK (role IN ('student', 'faculty', 'admin', 'tester')))
+    CHECK (role IN ('student', 'faculty', 'admin', 'tester', 'dev')))
 """)
 # Initialise table to store student details
 db.execute("""
@@ -2888,7 +2888,7 @@ def student_report():
     final_query = f"{complete_query} ORDER BY submitted_at DESC"
     print(final_query)            
     universal_report = db.execute(final_query)
-    return render_template("student_report.html", branches= branches , filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
+    return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 @app.route("/batch_management", methods=["GET"])
 @login_required
@@ -3152,6 +3152,35 @@ def update_master_folder():
 
     flash("Master folder link updated!", "success")
     return redirect(url_for("batch_management"))    
+
+@app.route("/dev_management", methods=["GET","POST"])
+@login_required
+def dev_management():
+    # Add an email
+    if request.method == "POST":
+        dev_email = request.form.get("dev_email")
+        if not dev_email:
+            flash("Email is required.", "danger")
+            return redirect(url_for("dev_management"))
+        
+        row = db.execute("SELECT email FROM users WHERE email=?", dev_email)
+        if len(row) == 1:
+            flash("Email already exists as a developer.", "info")
+            return redirect(url_for("dev_management"))
+        
+        try:
+            # Add email in users table and assign role = "dev"
+            db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
+            flash(f"Successfully added {dev_email} as a developer", "success")
+
+        except Exception as e:
+            flash(f"An unexpected database error occured: {e}", "danger")
+            print("DB Error:", {e})
+            return redirect(url_for("dev_management"))
+        
+        return redirect(url_for("dev_management"))
+    else:
+        return render_template("dev_management.html")
 
 if __name__ == '__main__':
 
