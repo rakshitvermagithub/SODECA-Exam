@@ -132,7 +132,7 @@
                                         <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                                     </ul>
                                 </li>
-                            {% elif session.get("user_role") != 'faculty'  %}
+                            {% elif session.get("user_role") == 'student'  %}
                                 <li class="nav-item">
                                     <a href="{{ url_for('your_submissions' )}}" class="btn border-primary">Your Submissions</a>
                                 </li>
