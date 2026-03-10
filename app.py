@@ -2929,6 +2929,7 @@ def batch_management():
 
     return render_template("batch_management.html", drive_settings=drive_settings, level_3_rows=level_3_ui_data)
 
+# Handles student_management_page loading and excel file uploads
 @app.route("/student_management_page", methods=["GET", "POST"])
 def student_management_page():
     if request.method == 'POST':
@@ -2975,6 +2976,7 @@ def student_management_page():
             )})
         return render_template('student_management_page.html', student_list=student_list)
     
+# Handles add email feature in student_management_page
 @app.route("/add_email", methods=["POST"])
 def addEmail():
     email = request.form.get("new_email")
