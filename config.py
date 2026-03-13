@@ -29,5 +29,9 @@ class Config:
     DRIVE_CLIENT_ID = os.getenv('DRIVE_CLIENT_ID')
     DRIVE_CLIENT_SECRET = os.getenv('DRIVE_CLIENT_SECRET')
 
+    # SODECA gmail credentials
+    SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+    SENDER_PASSWORD = os.getenv('SENDER_PASSWORD')
+
     # Master Drive Folder ID
     MASTER_DRIVE_FOLDER = os.getenv('MASTER_DRIVE_FOLDER')

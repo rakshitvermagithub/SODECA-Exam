@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- CSS -->
-    <link rel="stylesheet" href="../static/style.css"> 
+    <link rel="stylesheet" href="../static/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     
     {% block css %}
     <style>
@@ -131,7 +132,7 @@
                                         <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                                     </ul>
                                 </li>
-                            {% elif session.get("user_role") != 'faculty'  %}
+                            {% elif session.get("user_role") == 'student' or session.get("user_role") == 'dev'   %}
                                 <li class="nav-item">
                                     <a href="{{ url_for('your_submissions' )}}" class="btn border-primary">Your Submissions</a>
                                 </li>

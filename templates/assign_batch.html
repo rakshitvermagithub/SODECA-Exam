@@ -91,14 +91,14 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="m-0 fw-bold">Assigned Batch Counsellors</h5>
                     <div>
-                        <button class="btn btn-admin" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">
-                        <i class="bi bi-person-fill-add me-2"></i> Add/Update Batch
-                        </button>
                         <a href="{{ url_for('faculty_list') }}">
                             <button class="btn btn-admin" type="button">
-                                <i class="bi bi-person-fill-add me-2"></i> Faculty List
+                                <i class="bi bi-person-fill-add me-2"></i> Manage Faculty List
                             </button>
                         </a>
+                        <button class="btn btn-admin" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+                        <i class="bi bi-person-fill-add me-2"></i> Add or Update Batch
+                        </button>
                     </div>
                 </div>
 
@@ -175,11 +175,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="branch_option" required>
-                                    <option value="" selected disabled>Choose...</option>
-                                    <option value="CSE">CSE</option>
-                                    <option value="CSE(AI)">CSE (AI)</option>
-                                    <option value="CSE(DS)">CSE (DS)</option>
-                                    <option value="CSE(IOT)">CSE (IOT)</option>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for branch in branches %}
+                                    <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{branch}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Branch</label>
                             </div>
@@ -187,13 +186,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="semester_option" required>
-                                     <option value="" selected disabled>Choose...</option>
-                                     <option value="3">3</option>
-                                     <option value="4">4</option>
-                                     <option value="5">5</option>
-                                     <option value="6">6</option>
-                                     <option value="7">7</option>
-                                     <option value="8">8</option>
+                                     <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for sem in semester %}
+                                    <option value="{{sem}}" {% if details and details.semester == sem %}selected{% endif %}>{{sem}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Semester</label>
                             </div>
@@ -204,13 +200,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="section_option" required>
-                                    <option value="" selected disabled>Choose...</option>
-                                    <option value="A">A</option>
-                                    <option value="B">B</option>
-                                    <option value="C">C</option>
-                                    <option value="D">D</option>
-                                    <option value="E">E</option>
-                                    <option value="F">F</option>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for batch in batch_list %}
+                                    <option value="{{batch}}" {% if details and details.batch == batch %}selected{% endif %}>{{batch}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Section</label>
                             </div>
@@ -218,9 +211,10 @@
                         <div class="col-md-6 mb-3">
                              <div class="form-floating">
                                 <select class="form-select" name="group_option" required>
-                                    <option value="" selected disabled>Choose...</option>
-                                    <option value="G1">G1</option>
-                                    <option value="G2">G2</option>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for group in group_list %}
+                                    <option value="{{group}}" {% if details and details.group == group %}selected{% endif %}>{{group}}</option>
+                                    {% endfor %}
                                 </select>
                                 <label>Group</label>
                             </div>

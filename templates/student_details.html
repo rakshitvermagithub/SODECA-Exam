@@ -71,11 +71,10 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
                             <select class="form-select" id="branch" name="branch_option" required>
-                                <option value="" disabled {% if not details.branch %}selected{% endif %}>Choose...</option>
-                                <option value="CSE" {% if details and details.branch == 'CSE' %}selected{% endif %}>CSE</option>
-                                <option value="CSE(AI)" {% if details and details.branch == 'CSE(AI)' %}selected{% endif %}>CSE (AI)</option>
-                                <option value="CSE(DS)" {% if details and details.branch == 'CSE(DS)' %}selected{% endif %}>CSE (DS)</option>
-                                <option value="CSE(IOT)" {% if details and details.branch == 'CSE(IOT)' %}selected{% endif %}>CSE (IOT)</option>
+                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                {% for branch in branches %}
+                                <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{branch}}</option>
+                                {% endfor %}
                             </select>
                             <label for="branch">Branch</label>
                             <div class="invalid-feedback"></div>
@@ -84,13 +83,10 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
                             <select class="form-select" id="semester" name="semester_option" required>
-                                <option value="" disabled {% if not details.semester %}selected{% endif %}>Choose...</option>
-                                <option value="3" {% if details and details.semester == 3 %}selected{% endif %}>3</option>
-                                <option value="4" {% if details and details.semester == 4 %}selected{% endif %}>4</option>
-                                <option value="5" {% if details and details.semester == 5 %}selected{% endif %}>5</option>
-                                <option value="6" {% if details and details.semester == 6 %}selected{% endif %}>6</option>
-                                <option value="7" {% if details and details.semester == 7 %}selected{% endif %}>7</option>
-                                <option value="8" {% if details and details.semester == 8 %}selected{% endif %}>8</option>
+                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                {% for sem in semester %}
+                                <option value="{{sem}}" {% if details and details.semester == sem %}selected{% endif %}>{{sem}}</option>
+                                {% endfor %}
                             </select>
                             <label for="semester">Semester</label>
                             <div class="invalid-feedback"></div>
@@ -103,13 +99,10 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
                             <select class="form-select" id="section" name="section_option" required>
-                                <option value="" disabled {% if not details.section %}selected{% endif %}>Choose...</option>
-                                <option value="A" {% if details and details.section == 'A' %}selected{% endif %}>A</option>
-                                <option value="B" {% if details and details.section == 'B' %}selected{% endif %}>B</option>
-                                <option value="C" {% if details and details.section == 'C' %}selected{% endif %}>C</option>
-                                <option value="D" {% if details and details.section == 'D' %}selected{% endif %}>D</option>
-                                <option value="E" {% if details and details.section == 'E' %}selected{% endif %}>E</option>
-                                <option value="F" {% if details and details.section == 'F' %}selected{% endif %}>F</option>
+                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                {% for batch in batch_list %}
+                                <option value="{{batch}}" {% if details and details.batch == batch %}selected{% endif %}>{{batch}}</option>
+                                {% endfor %}
                             </select>
                             <label for="section">Section</label>
                             <div class="invalid-feedback"></div>
@@ -118,9 +111,10 @@
                      <div class="col-md-6 mb-3">
                         <div class="form-floating">
                             <select class="form-select" id="group" name="group_option" required>
-                                <option value="" disabled {% if not details.class_group %}selected{% endif %}>Choose...</option>
-                                <option value="G1" {% if details and details.class_group == 'G1' %}selected{% endif %}>G1</option>
-                                <option value="G2" {% if details and details.class_group == 'G2' %}selected{% endif %}>G2</option>
+                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                {% for group in group_list %}
+                                <option value="{{group}}" {% if details and details.group == group %}selected{% endif %}>{{group}}</option>
+                                {% endfor %}
                             </select>
                             <label for="group">Group</label>
                             <div class="invalid-feedback"></div>

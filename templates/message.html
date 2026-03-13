@@ -1,11 +1,33 @@
-<!-- 1. The container for all flash messages -->
-<div id="flash-message-container"></div>
-
-<!-- 2. CSS with the new slide-out animation -->
 <style>
+    /* Google Auth Button Styling */
+    .btn-google {
+        background-color: #ffffff;
+        color: #1f1f1f;
+        border: 1px solid #c3c5c6;
+        border-radius: 4px; /* Slightly rounded edges as requested */
+        padding: 10px 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        font-size: 14px;
+        letter-spacing: 0.2px;
+    }
+
+    .btn-google:hover {
+        background-color: #f8f9fa; /* Very light gray on hover */
+        box-shadow: 0 1px 3px rgba(60,64,67,0.3);
+        color: #1f1f1f;
+        border-color: #dadce0;
+    }
+
+    .btn-google:active {
+        background-color: #eeeeee;
+    }
+
     #flash-message-container {
         position: fixed;
-        top: 80px; /* Adjust based on your navbar height */
+        top: 80px; /* Adjust based on navbar height */
         right: 20px;
         z-index: 1056;
         display: flex;
@@ -45,17 +67,52 @@
         margin-right: 0.75rem;
     }
 
-    .flash-alert.danger { color: #dc3545; }
-    .flash-alert.success { color: #198754; }
-    .flash-alert.warning { color: #664d03; }
-    .flash-alert.info { color: #0dcaf0; }
+    .flash-alert.danger { color: #ea1a2e; }
+    .flash-alert.success { color: #03aa5c; }
+    .flash-alert.warning { color: #ffcc00; }
+    .flash-alert.info { color: #0380e5; }
+
+    .google-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 12px;
+    }
 </style>
 
-<!-- 3. The JavaScript logic (CORRECTED) -->
+<!-- The container for standard slide-in messages -->
+<div id="flash-message-container"></div>
+
+<!-- Drive Authorization Modal -->
+<div class="modal fade" id="driveAuthModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-3 p-1">
+            
+            <!-- Minimal Header -->
+            <div class="modal-header mb-3">
+                <h5 class="modal-title fw-bold fs-5">Permission Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Simple Body -->
+            <div class="modal-body text-center pb-3 pt-2">
+                <!-- Custom Google Button -->
+                <a href="/authorize_drive" class="btn btn-google mb-3">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                    <span class="fw-medium">Authorize google drive</span>
+                </a>
+    
+                <p class="text-muted fw-medium fs-6">
+                    To perform this action, you need to authorize access to Google Drive.
+                </p>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- The JavaScript logic -->
 <script>
-    // --- FUNCTION IS NOW GLOBAL ---
-    // Moved the function definition outside of the DOMContentLoaded listener.
-    // Now other scripts (like on sodeca_forms.html) can find and call it.
+    // --- Global Function for Standard Toasts ---
     function showFlashMessage(message, category = 'info', duration = 4000) {
         const container = document.getElementById('flash-message-container');
         if (!container) return;
@@ -68,7 +125,8 @@
         };
 
         const alertDiv = document.createElement('div');
-        alertDiv.className = `flash-alert ${category}`;
+        // If category is weird, default to info
+        alertDiv.className = `flash-alert ${icons[category] ? category : 'info'}`;
         const iconClass = icons[category] || icons.info;
 
         alertDiv.innerHTML = `
@@ -81,22 +139,32 @@
         const animationDuration = 400; 
         setTimeout(() => {
             alertDiv.classList.add('closing');
-            
             setTimeout(() => {
                 alertDiv.remove();
             }, animationDuration);
-
         }, duration);
     }
 
-    // This part *waits* for the page to load, then calls the global function
-    // for any messages flashed from the Flask backend.
+    // --- Page Load Logic ---
     document.addEventListener('DOMContentLoaded', function() {
         try {
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        showFlashMessage({{ message|tojson }}, {{ category|tojson }});
+                        
+                        // Check for specific 'drive_auth_popup' category
+                        {% if category == 'drive_auth_popup' %}
+                            // 1. Trigger the Modal
+                            const modalEl = document.getElementById('driveAuthModal');
+                            if (modalEl) {
+                                const authModal = new bootstrap.Modal(modalEl);
+                                authModal.show();
+                            }
+                        {% else %}
+                            // 2. Otherwise, show standard Toast
+                            showFlashMessage({{ message|tojson }}, {{ category|tojson }});
+                        {% endif %}
+
                     {% endfor %}
                 {% endif %}
             {% endwith %}

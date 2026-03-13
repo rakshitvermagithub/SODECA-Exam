@@ -1,9 +1,15 @@
+import io
+import secrets
+import string
+
 from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
+from collections import defaultdict
 from config import Config
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from email.message import EmailMessage
-from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory
+from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
+    make_response
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -15,6 +21,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import os
 import random
+import re
 import smtplib
 import sys
 import pandas as pd
@@ -30,6 +37,9 @@ GOOGLE_CLIENT_SECRET = app.config["GOOGLE_CLIENT_SECRET"]
 
 DRIVE_CLIENT_ID = app.config["DRIVE_CLIENT_ID"]
 DRIVE_CLIENT_SECRET = app.config["DRIVE_CLIENT_SECRET"]
+
+SENDER_EMAIL = app.config["SENDER_EMAIL"]
+SENDER_PASSWORD = app.config["SENDER_PASSWORD"]
 
 # --- UNIFIED OAUTH 2.0 SETUP (USING AUTHLIB ONLY) ---
 oauth = OAuth(app)
@@ -77,11 +87,43 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Decorator to ensure drive is authorized
+def drive_auth_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = session.get('drive_auth_token')
+        
+        # If not authorized
+        if not token:
+            # We send a special category "drive_auth_popup" in message.html
+            # which triggers a modal box with drive authorization button
+            flash("Google Drive authorization is missing.", "drive_auth_popup")
+            
+            # Redirect back to the page the user was on
+            return redirect(request.referrer or '/')
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 def is_safe_url(target):
     """Check if the URL is safe for redirects"""
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+def get_folder_id(link):
+    # Pattern: looks for "/folders/" followed by the ID chars
+    print(f"Link received: {link}")
+    match = re.search(r'/folders/([a-zA-Z0-9-_]+)', link)
+    
+    if match:
+        return match.group(1)  # Returns the ID part
+    
+    # Fallback: Check if the user just pasted the ID directly (no http/https)
+    if "http" not in link and len(link) > 20:
+        return link.strip()
+        
+    return None # Invalid link
 
 # Allowed extensions for the certificate upload
 ALLOWED_EXTENSIONS = app.config["ALLOWED_EXTENSIONS"]
@@ -1240,14 +1282,14 @@ db.execute("""
     auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT,
     first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, role TEXT NOT NULL DEFAULT 'student'
-    CHECK (role IN ('student', 'faculty', 'admin', 'tester')))
+    CHECK (role IN ('student', 'faculty', 'admin', 'tester', 'dev')))
 """)
 # Initialise table to store student details
 db.execute("""
     CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL,
     university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL,
     semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL,
-    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id))
+    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
 """)
 # Initialise table to store faculty details
 db.execute("""
@@ -1293,7 +1335,6 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
-
 # Create a table to store and map drive folder ids
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
@@ -1301,13 +1342,21 @@ db.execute("""
     semester TEXT NOT NULL, section TEXT NOT NULL, 
     class_group TEXT NOT NULL, form_name TEXT NOT NULL) 
     """)
+# Create a table to store sodeca drive master folder link and subdirectory structure
+# level1 -> branch, level2 -> semester, level3 -> section-group
+db.execute("""
+    CREATE TABLE IF NOT EXISTS drive_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        level_1 TEXT, level_2 TEXT,
+        level_3 TEXT, master_folder_link TEXT, master_folder_id TEXT
+        updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
+    ) 
+""")
 
-# Hardcoded drive folder directory levels
-dfolder_lvl_1 = ["CSE"]
-# Level 2 is operated using a dict so that the folder names in it can be related with the actual values stored in student details table
-dfolder_lvl_2 = {"3": "III Semester"}
-dfolder_lvl_3 = ["A-G1", "A-G2", "B-G1", "B-G2"]
-# Last level is form_title list
+# Dictionary containing folder names of different semesters
+semester_dict = {"1": "I Semester", "2": "II Semester", "3": "III Semester",
+             "4": "IV Semester", "5": "V Semester", "6": "VI Semester",
+             "7": "VII Semester", "8": "VIII Semester"}
 
 def get_or_create_folder(service, folder_name, parent_id):
     """
@@ -1397,14 +1446,26 @@ def local_delete(full_path):
         flash("An unexpected error occurred. Please try again.", "danger")
         return redirect(url_for('faculty_dashboard'))
 
+# Returns the current time in Jaipur/India (IST) formatted as a string.
+def get_current_ist_time():
+    # IST is UTC + 5:30
+    ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
+    return ist_now.strftime("%Y-%m-%d %I:%M:%S %p")
+
 # Get list of faculty emails
 faculty_emails = []
 faculty_dict = db.execute("SELECT college_email FROM faculty_details")
 for faculty in faculty_dict:
     faculty_emails.append(faculty["college_email"])
 
+# Get list of developer emails
+dev_emails = []
+dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
+for dev in dev_dict:
+    dev_emails.append(dev["email"])
+
+# Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
-    print("Log from the system: Method invoked!")
     if not to_mail:
         return "Error!, Email not found in the session.", 400
 
@@ -1417,23 +1478,77 @@ def send_otp(to_mail):
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-
-    from_mail = "d68930637@gmail.com"
-    server.login(from_mail, 'uahpdvgzxercjtrd')
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
 
     msg = EmailMessage()
     msg['Subject'] = "OTP Verification"
-    msg['From'] = from_mail
+    msg['From'] = SENDER_EMAIL
     msg['To'] = to_mail
     msg.set_content("OTP to register your account is: " + otp)
 
     server.send_message(msg)
     server.quit()
-    print(f"OTP sent to {to_mail}: {otp}") # For debugging
 
+@app.route("/download/<pk>")
+def download(pk):
+    result_instance = db.execute(
+        "SELECT student_details.*,users.email FROM student_details INNER JOIN users ON student_details.student_user_id = users.user_id"
+    )
+    print(result_instance)
+    emails = db.execute(
+        "SELECT email FROM users WHERE role = 'student'"
+    )
+    if len(result_instance) > 0:
+        # Add Email column also
+        data = [
+            {
+                'Name': result["student_name"],
+                'Roll No': result["university_roll_no"],
+                'Email': result["email"],
+                'Branch': result["branch"],
+                'Semester': result["semester"],
+                'Section': result["section"],
+                'Batch Counselor': result["batch_counselor"]
+            }
+            for result in result_instance
+        ]
+    else:
+        data = [
+            {
+                'Email': email["email"]
+            }
+            for email in emails
+        ]
+
+    df = pd.DataFrame(data)
+    if pk == "excel_stu_dir":
+        output = io.BytesIO()
+        writer = pd.ExcelWriter(output, engine='openpyxl')
+        df.to_excel(writer, index=False, sheet_name="student_directory")
+        writer.close()
+        excel_data = output.getvalue()
+        response = make_response(excel_data)
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = 'attachment; filename="student_directory.xlsx"'
+        return response
+
+    elif pk == "csv_stu_dir":
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        csv_string = output.getvalue()
+
+        return make_response(
+            csv_string,
+            {
+                "Content-Type": "text/csv",
+                "Content-Disposition": "attachment; filename=student_directory.csv"
+            }
+        )
+    
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
+    # If admin
     if session.get("user_role") == 'admin':
         return redirect(url_for("super_admin"))
     # If faculty
@@ -1451,7 +1566,7 @@ def register():
 
         # email id
         email = request.form.get("email")
-        if not email.endswith('@skit.ac.in'):
+        if not email.endswith('@skit.ac.in') and email not in dev_emails:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("register"))
 
@@ -1471,17 +1586,29 @@ def register():
         if password != confirm_password:
             # Flash error message
             return redirect("/register")
+        
+        # Assign role if user is faculty or student
+        role = "faculty" if email in faculty_emails else "student"
 
-        # Check if email already exists
-        existing_user = db.execute("SELECT * FROM users WHERE email = ?", email)
-        if existing_user:
-            flash("Email already registered", "danger")
+        # Check if student/faculty is present in users table
+        user_present = db.execute("SELECT email, hash_password FROM users WHERE email = ?", email)
+
+        # If user is not present in users (not allowed by admin)
+        # And is a student, then don't allow access
+        if not user_present and role == "student":
+            flash(f"Your Email ID: {email} is not provided access to this portal, please contact Admin.", "warning")
+            print(f"Unauthorized user with Email ID: {email} tried to access the portal at {get_current_ist_time()}")
+            return redirect("/")
+
+        # If user is present with thier password also,
+        # concludes user have manually registered atleast once.
+        if user_present and user_present[0]["hash_password"]:
+            flash("Email already registered.", "danger")
             return render_template("register.html")
 
         # If form was filled successfully
         # Convert plain password into a complex string
         hash_password = generate_password_hash(password)
-        role = 'faculty' if email in faculty_emails else 'student'
 
         session['unverified_user'] = {
             'email': email,
@@ -1498,24 +1625,6 @@ def register():
             print(f"An error occurred while sending OTP: {e}")
             flash("An error occurred while sending the verification email. Please try again.", "danger")
             return redirect(url_for("register"))
-
-        # # Check if user is a faculty or student
-        # if role == 'faculty':
-        #     # Store Faculty's login details in the table
-        #     user_id = db.execute(
-        #         "INSERT INTO users (email, hash_password, role) VALUES (?, ?, ?)", email, hash_password, 'faculty'
-        #         )     
-        #     # Add user_id in faculty_details
-        #     db.execute(
-        #         "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, email
-        #         ) 
-        #     return redirect(url_for("faculty_dashboard"))
-        # else:
-        #     # Store Student's login details in the table
-        #     db.execute(
-        #         "INSERT INTO users (email, hash_password) VALUES (?, ?)", email, hash_password,
-        #         )
-        #     return redirect("/student_details")
     else:
         return render_template("register.html")
     
@@ -1552,10 +1661,16 @@ def otp_verify():
                     "UPDATE faculty_details SET faculty_user_id = ? WHERE college_email = ?", user_id, user_data["email"]
                     ) 
             else:
-                # Store Student's login details in the table
-                user_id = db.execute(
-                    "INSERT INTO users (email, hash_password) VALUES (?, ?)", user_data["email"], user_data["hash_password"],
-                    )
+                # Insert the student data OR update their password if the email already exists
+                db.execute("""
+                    INSERT INTO users (email, hash_password) 
+                    VALUES (?, ?)
+                    ON CONFLICT(email) DO UPDATE SET 
+                    hash_password = excluded.hash_password
+                """, user_data["email"], user_data["hash_password"])
+                # Safely grab the ID whether it was just created or just updated
+                user = db.execute("SELECT user_id FROM users WHERE email = ?", user_data["email"])
+                user_id = user[0]["user_id"]
                 
             # Clean session
             session.pop('unverified_user', None)
@@ -1600,7 +1715,7 @@ def login_callback():
                 return redirect(url_for("login"))
                 
             # Check if the email belongs to the SKIT domain
-            if not email.endswith('@skit.ac.in'):
+            if not email.endswith('@skit.ac.in') and email not in dev_emails:
                 flash("Access Denied. You must log in with a your SKIT email address.", "danger")
                 return redirect(url_for("login"))
 
@@ -1638,8 +1753,9 @@ def login_callback():
 
                 # Or new user
                 else:
-                    session["user_role"] = "student"
-                    user_role = session["user_role"] 
+                    # Assign role if user is faculty or student
+                    user_role = "faculty" if email in faculty_emails else "student"
+                    session["user_role"] = user_role
 
                     if user_role == "faculty":
                         # New faculty, create a new account in the database with role 'faculty'
@@ -1657,18 +1773,14 @@ def login_callback():
                         flash("Welcome Faculty! Account created with Google.", "success")
                         return redirect(url_for("faculty_dashboard"))
                     
-                    elif user_role == 'student':
-                        # New student, create a new account in the database with default role 'student'
-                        user_id = db.execute("""
-                            INSERT INTO users (email, google_id, auth_provider, profile_picture, first_name, last_name)
-                            VALUES (?, ?, 'google', ?, ?, ?)
-                        """, email, google_id, profile_picture, first_name, last_name)
+                    elif user_role == "student":
+                        # New student and not present in users table,
+                        # Should be first added by admin to get the portal access.
+                        flash(f"Your Email ID: {email} is not provided access to this portal, please contact Admin.", "warning")
+                        print(f"Unauthorized user with Email ID: {email} tried to access the portal at {get_current_ist_time()}")
+                        return redirect(url_for("sodeca_home"))
 
-                        session["user_id"] = user_id
-                        flash("Welcome Student! Account created with Google.", "success")
-                        return redirect(url_for("student_details"))
-              
-            if session.get("user_role") == 'faculty':
+            if session.get("user_role") == "faculty":
                 return redirect(url_for("faculty_dashboard"))
             else:
                 return redirect(url_for("sodeca_forms"))
@@ -1691,7 +1803,7 @@ def login():
         if not email:
             flash("Valid SKIT Email is required", "danger")
             return redirect(url_for("login"))
-        if not email.endswith('@skit.ac.in'):
+        if not email.endswith('@skit.ac.in') and email not in dev_emails:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("login"))
 
@@ -1701,35 +1813,46 @@ def login():
             return redirect("/login")
 
         rows = db.execute(
-            "SELECT * FROM users WHERE email=? AND auth_provider = 'local'", email
+            "SELECT user_id, email, hash_password, auth_provider FROM users WHERE email = ?", email
             )
 
-        if len(rows) != 1 or not check_password_hash(
+        # If user never registered
+        if len(rows) != 1 :
+            flash("Email does not exist, please go to register.", "danger")
+            return redirect("/login")
+        
+        # User only used sign-in with Google,
+        # Means user never registered a password
+        elif not rows[0]["hash_password"] :
+            flash("Please register your Email with a password.", "danger")
+            return redirect("/register")
+        
+        elif not check_password_hash(
             rows[0]["hash_password"], password
             ):
-            flash("Invalid email or password", "danger")
-            return redirect("/register")
+            flash("Invalid password or email", "danger")
+            return redirect("/login")
 
         # Remember the user if login was successful
         session["user_id"] = rows[0]["user_id"]
 
         session["user_role"] = role(session.get("user_id"))
 
-        # if admin
+        # If Admin
         if session.get("user_role") == 'admin':
             return redirect(url_for("super_admin"))
         
-        # if faculty
+        # If Faculty
         elif email in faculty_emails:
             session["user_role"] = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
-        # if student
+        # If Student
         elif session.get("user_role") =='student':    
-            details_filled = db.execute("SELECT * FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
-            # if student has not filled details
+            details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
+            # If student has not filled details
             if not details_filled:
-                # fill details first
+                # Fill details first
                 flash("Login succesfull! You may fill the neccessary student details", "success")
                 return redirect(url_for("student_details"))
             
@@ -1869,12 +1992,26 @@ def student_details():
     else:
         # Get student details if already present
         # Variable stores a list of dictionaries
+        print()
         student_details_row = db.execute(
             "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
         )
         faculty_list = db.execute(
             "SELECT full_name, designation, department FROM faculty_details"
         )
+        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
+        if len(data_to_load):
+            branch_list = data_to_load[0]['level_1'].split(',')
+            semester = data_to_load[0]['level_2'].split(',')
+            batch_group_str = data_to_load[0]['level_3']
+            items = [item.split('-') for item in batch_group_str.split(',')]
+            batch_set = sorted({b for b, g in items})
+            group_set = sorted({g for b, g in items})
+        else:
+            branch_list = [None]
+            semester = [None]
+            batch_set = [None]
+            group_set = [None]
 
         # If details are already available
         if student_details_row:
@@ -1882,11 +2019,11 @@ def student_details():
 
             # Show the page with filled details
             return render_template(
-                "student_details.html", details=filled_details, faculty_list=faculty_list
+                "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=filled_details, faculty_list=faculty_list
                 )
         else:
             return render_template(
-                "student_details.html", details=None, faculty_list=faculty_list
+                "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=None, faculty_list=faculty_list
                 )
 
 @app.route("/sodeca_forms", methods=["GET", "POST"])
@@ -2290,75 +2427,9 @@ def view_submission(filename):
         flash("Error: The requested file could not be found on the server.", "danger")
         return redirect(url_for('faculty_dashboard'))
 
-@app.route('/create_drive_structure', methods=["POST"])
-@login_required 
-def create_drive_structure():
-
-    # 1. Check if we have the token from Step 1
-    token = session.get('drive_auth_token')
-    if not token:
-        flash("Please authorize Google Drive first.", "warning")
-        return redirect(url_for('super_admin'))
-    
-    try:
-        # 2. Build the Drive Service using the token
-        # We assume the token in session has what we need
-        creds = Credentials(
-            token=token.get('access_token'),
-            refresh_token=token.get('refresh_token'),
-            token_uri=app.config.get('GOOGLE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
-            client_id=app.config['DRIVE_CLIENT_ID'],
-            client_secret=app.config['DRIVE_CLIENT_SECRET'],
-            scopes=token.get('scope', [])
-        )
-        
-        service = build('drive', 'v3', credentials=creds)
-        
-        # LOOP 1: Departments (e.g., CSE, CSE(AI)) inside Master Folder
-        for branch in dfolder_lvl_1:
-            
-            # Check/Create the Dept Folder
-            branch_folder_id = get_or_create_folder(service, branch, MASTER_DRIVE_FOLDER_ID)
-            
-            if branch_folder_id:
-                # LOOP 2: Create semester folders
-                for sem, sem_folder in dfolder_lvl_2.items():
-                        
-                    # Check/Create the Category Folder
-                    sem_folder_id = get_or_create_folder(service, sem_folder, branch_folder_id)
-
-                    if sem_folder_id:
-                        # LOOP 3: Create section-group folders 
-                        for section_grp in dfolder_lvl_3:
-
-                            section_grp_folder_id = get_or_create_folder(service, section_grp, sem_folder_id)
-
-                            if section_grp_folder_id:
-                                section, group = section_grp.split('-')
-                                # LOOP 4: Create form categories folders using form_title list
-                                for form_name, form_title in form_dict.items():
-                                    print(f"{form_name}: {form_title}")
-                                    form_folder_id = get_or_create_folder(service, form_title, section_grp_folder_id)
-
-                                    if form_folder_id:
-                                        id = f"{branch}_{sem}_{section}_{group}_{form_name}"
-
-                                        db.execute("""
-                                            INSERT INTO drive_folder_map (id, drive_folder_id, branch, semester, section,
-                                            class_group, form_name) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET
-                                            drive_folder_id = excluded.drive_folder_id 
-                                        """, id, form_folder_id, branch, sem, section, group, form_name)
-
-        flash(f"Drive structure sync complete!", "success")
-
-    except Exception as e:
-        print(f"Structure creation failed: {e}")
-        flash(f"An error occurred: {e}", "danger")
-
-    return redirect(url_for('super_admin'))
-
 @app.route("/upload_to_drive", methods=["POST"])
 @login_required
+@drive_auth_required
 def upload_to_drive():
     """Uploads a file using the authorized Drive client."""
     token = session.get('drive_auth_token')
@@ -2542,24 +2613,39 @@ def faculty_list():
         faculty_data = db.execute("SELECT * FROM faculty_details")
         return render_template("faculty_list.html", faculty_data=faculty_data)
 
-@app.route("/delete_faculty", methods=["POST"])
-def delete_faculty():
-    email_to_delete = request.form.get("college_email")
-    
-    if not email_to_delete:
-        flash("Error: No faculty email was provided for deletion.", "danger")
-        return redirect(url_for("faculty_list"))
-    
-    try:
-        # Execute the DELETE query using the primary key(college email)
-        db.execute("DELETE FROM faculty_details WHERE college_email = ?", email_to_delete)
-        flash(f"Successfully deleted faculty member: {email_to_delete}", "success")
-    except Exception as e:
-        # Log the error and show a generic message
-        print(f"Database error while deleting faculty: {e}", file=sys.stderr)
-        flash("An error occurred while trying to delete the faculty member.", "danger")
+@app.route("/delete_user/<pk>", methods=["POST"])
+def delete_user(pk):
+    key_to_delete = request.form.get("college_email")
+    if pk == 'faculty':
+        if not key_to_delete:
+            flash("Error: No faculty email was provided for deletion.", "danger")
+            return redirect(url_for("faculty_list"))
 
-    return redirect(url_for("faculty_list"))
+        try:
+            # Execute the DELETE query using the primary key(college email)
+            db.execute("DELETE FROM faculty_details WHERE college_email = ?", key_to_delete)
+            flash(f"Successfully deleted faculty member: {key_to_delete}", "success")
+        except Exception as e:
+            # Log the error and show a generic message
+            print(f"Database error while deleting faculty: {e}", file=sys.stderr)
+            flash("An error occurred while trying to delete the faculty member.", "danger")
+
+        return redirect(url_for("faculty_list"))
+    elif pk == 'student':
+        if not key_to_delete:
+            flash("Error: No Student email was provided for deletion.", "danger")
+            return redirect(url_for("student_management_page"))
+
+        try:
+            # Execute the DELETE query using the primary key(college email)
+            db.execute("DELETE FROM users WHERE email = ?", key_to_delete)
+            flash(f"Successfully deleted student: {key_to_delete}", "success")
+        except Exception as e:
+            # Log the error and show a generic message
+            print(f"Database error while deleting student: {e}", file=sys.stderr)
+            flash("An error occurred while trying to delete the student.", "danger")
+
+        return redirect(url_for("student_management_page"))
 
 @app.route("/uploadExcel", methods=["POST"])
 def uploadExcel():
@@ -2695,7 +2781,21 @@ def assign_batch():
         else:
             show_modal = False
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
-        return render_template("assign_batch.html", faculty_data=faculty_data, show_modal=show_modal)
+        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
+        if len(data_to_load):
+            branch_list = data_to_load[0]['level_1'].split(',')
+            semester = data_to_load[0]['level_2'].split(',')
+            batch_group_str = data_to_load[0]['level_3']
+            items = [item.split('-') for item in batch_group_str.split(',')]
+            batch_set = sorted({b for b, g in items})
+            group_set = sorted({g for b, g in items})
+        else:
+            branch_list = [None]
+            semester = [None]
+            batch_set = [None]
+            group_set = [None]
+
+        return render_template("assign_batch.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, faculty_data=faculty_data, show_modal=show_modal)
     
 @app.route("/discharge_faculty", methods=["POST"])
 def discharge_faculty():
@@ -2790,14 +2890,304 @@ def student_report():
             '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate
             FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
             )
-        
     complete_query = " UNION ALL ".join(base_queries) 
     final_query = f"{complete_query} ORDER BY submitted_at DESC"
     print(final_query)            
     universal_report = db.execute(final_query)
     return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
+@app.route("/batch_management", methods=["GET"])
+@login_required
+def batch_management():
+    user_role = role(session["user_id"])
+
+    if user_role != "admin" and user_role != "tester":
+        return "Access denied"
     
+    # get the current drive settings stored in db
+    row = db.execute("SELECT * FROM drive_settings WHERE id=1")
+    drive_settings = row[0] if row else {}
+
+    level_3_ui_data = []
+    
+    if drive_settings.get("level_3"):
+        # Helper dictionary to group items: {'A': ['G1', 'G2'], 'B': ['G1']}
+        temp_grouping = defaultdict(list)
+        
+        # Split "A-G1,A-G2" -> ['A-G1', 'A-G2']
+        folders = drive_settings["level_3"].split(",")
+        
+        for folder in folders:
+            folder = folder.strip()
+            if "-" in folder:
+                # Split only on the FIRST hyphen to separate Section from Group
+                # "A-G1" -> section="A", group="G1"
+                section, group = folder.split("-", 1)
+                temp_grouping[section].append(group)
+        
+        # Convert dictionary to List for Jinja
+        for section, groups_list in temp_grouping.items():
+            level_3_ui_data.append({
+                "section": section,
+                "groups": ", ".join(groups_list) # Joins ['G1','G2'] -> "G1, G2"
+            })
+
+    return render_template("batch_management.html", drive_settings=drive_settings, level_3_rows=level_3_ui_data)
+
+# Handles student_management_page loading and excel file uploads
+@app.route("/student_management_page", methods=["GET", "POST"])
+def student_management_page():
+    if request.method == 'POST':
+        new_data = request.files.get('excel_file')
+        if not new_data or new_data.filename == '':
+            flash('No file is selected or invalid file',"info")
+            return "No file selected or invalid file", 400
+
+        df = pd.read_excel(new_data, engine="openpyxl")
+
+        df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+        invalid_emails_df = df[~df['email'].str.strip().str.endswith('@skit.ac.in')]
+        if not invalid_emails_df.empty:
+            bad_email_list = invalid_emails_df['email'].tolist()
+            flash(
+                f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
+                "danger")
+            return redirect(url_for("student_management_page"))
+        rows_to_insert = df.to_dict(orient="records")
+        for data in rows_to_insert:
+            email = data.get("email")
+            db.execute("""
+                INSERT INTO users (
+                    email
+                ) VALUES (?)
+            """, email)
+
+        flash('We are glad to share that your excel file is uploaded successfully!',"success")
+        return redirect(url_for('student_management_page'))
+    else:
+        student_email_list = db.execute(
+            "SELECT email FROM users WHERE role = 'student'"
+        )
+        student_list = []
+        for row in student_email_list:
+            student_list.append({'email': row["email"],'val': db.execute(
+                """SELECT * FROM student_details 
+                WHERE student_details.student_user_id = (
+                SELECT user_id FROM users WHERE email = ?
+                )""",
+                row["email"]
+            )})
+        return render_template('student_management_page.html', student_list=student_list)
+    
+# Handles add email feature in student_management_page
+@app.route("/add_email", methods=["POST"])
+def addEmail():
+    email = request.form.get("new_email")
+    existing_email = db.execute(
+        "SELECT email FROM users"
+    )
+    for emails in existing_email:
+        if emails["email"] == email:
+            flash("Email already exists!","danger")
+            return redirect(url_for('student_management_page'))
+
+    db.execute("""
+        INSERT INTO users (
+            email, auth_provider
+        ) VALUES (?, ?)
+    """, email, 'admin')    
+    
+    flash(f"User added successfully!", "success")
+
+    return redirect(url_for('student_management_page'))
+
+@app.route('/create_drive_structure', methods=["POST"])
+@login_required
+@drive_auth_required 
+def create_drive_structure():
+
+    # 1. Check if we have the token from Step 1
+    token = session.get('drive_auth_token')
+    if not token:
+        flash("Please authorize Google Drive first.", "warning")
+        return redirect(url_for('super_admin'))
+    
+    # Get drive structure inputs
+    # --- LEVEL 1: Branches ---
+    # Input: " CSE , ECE, ME "
+    # Logic: Split by comma -> strip spaces -> Join back to "CSE,ECE,ME"
+    raw_branches = request.form.get("branches")
+    if not raw_branches:
+        flash("Kindly fill the required branches", "warning")
+        return redirect(url_for("batch_management"))
+    level_1_str = ",".join([b.strip() for b in raw_branches.split(",") if b.strip()])
+    level_1 = level_1_str.split(",")
+
+    # --- LEVEL 2: Semesters ---
+    # Input: ['1', '3', '5'] (List from checkboxes)
+    level_2 = request.form.getlist("semesters")
+    if not level_2:
+        flash("Kindly select atleast one of the semester", "warning")
+        return redirect(url_for("batch_management"))
+
+    level_2_str = ",".join(level_2)
+
+    # --- LEVEL 3: Sections & Groups (Derived) ---
+    sections = request.form.getlist("section_names[]") # e.g., ['A', 'B']
+    if not sections:
+        flash("Kindly add atleast one section", "warning")
+    group_lists = request.form.getlist("group_lists[]") # e.g., ['G1, G2', 'G1']
+    if not group_lists:
+        flash("Kindly add atleast one class group for each section", "warning")
+
+    level_3 = [] # Level 3 or branch-section list
+
+    # 'zip' pairs them up: (A, "G1, G2"), (B, "G1")
+    for section, groups_raw in zip(sections, group_lists):
+        clean_section = section.strip()
+        
+        if clean_section:
+            # Split the group string "G1, G2" into a list ['G1', 'G2']
+            clean_groups = [g.strip() for g in groups_raw.split(",") if g.strip()]
+            
+            # Create combinations: "A-G1", "A-G2"
+            for group in clean_groups:
+                level_3.append(f"{clean_section}-{group}")
+
+    # Join the final list into one string: "A-G1,A-G2,B-G1"
+    level_3_str = ",".join(level_3)
+    
+    try:
+        drive_settings = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
+        master_folder_id = drive_settings[0]["master_folder_id"]
+        if not master_folder_id:
+            flash("Kindly submit the master folder drive link before updating the structure", "error")
+            return redirect(url_for("batch_management")) 
+
+        # 2. Build the Drive Service using the token
+        # We assume the token in session has what we need
+        creds = Credentials(
+            token=token.get('access_token'),
+            refresh_token=token.get('refresh_token'),
+            token_uri=app.config.get('GOOGLE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
+            client_id=app.config['DRIVE_CLIENT_ID'],
+            client_secret=app.config['DRIVE_CLIENT_SECRET'],
+            scopes=token.get('scope', [])
+        )
+        
+        service = build('drive', 'v3', credentials=creds)
+        
+        # LOOP 1: Departments (e.g., CSE, CSE(AI)) inside Master Folder
+        for branch in level_1:
+            
+            # Check/Create the Dept Folder
+            branch_folder_id = get_or_create_folder(service, branch, master_folder_id)
+            
+            if branch_folder_id:
+                # LOOP 2: Create semester folders
+                for sem in level_2:
+                        
+                    # Check/Create the Category Folder
+                    sem_folder_id = get_or_create_folder(service, semester_dict[sem], branch_folder_id)
+
+                    if sem_folder_id:
+                        # LOOP 3: Create section-group folders 
+                        for section_grp in level_3:
+
+                            section_grp_folder_id = get_or_create_folder(service, section_grp, sem_folder_id)
+
+                            if section_grp_folder_id:
+                                section, group = section_grp.split('-')
+                                # LOOP 4: Create form categories folders using form_title list
+                                for form_name, form_title in form_dict.items():
+                                    print(f"{form_name}: {form_title}")
+                                    form_folder_id = get_or_create_folder(service, form_title, section_grp_folder_id)
+
+                                    if form_folder_id:
+                                        id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+
+                                        db.execute("""
+                                            INSERT INTO drive_folder_map (id, drive_folder_id, branch, semester, section,
+                                            class_group, form_name) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET
+                                            drive_folder_id = excluded.drive_folder_id 
+                                        """, id, form_folder_id, branch, sem, section, group, form_name)
+
+        flash(f"Drive structure sync complete!", "success")
+
+    except Exception as e:
+        print(f"Structure creation failed: {e}")
+        flash(f"An error occurred: {e}", "danger")
+
+    # --- DATABASE UPDATE ---
+    # Storing pure TEXT strings. No JSON.
+    try:
+        db.execute("""
+            UPDATE drive_settings 
+            SET level_1 = ?, level_2 = ?, level_3 = ? 
+            WHERE id = 1
+        """, level_1_str, level_2_str, level_3_str)
+        
+        flash("Drive structure updated successfully!", "success")
+    except Exception as e:
+        flash(f"Error updating database: {e}", "danger")
+
+    return redirect(url_for('super_admin'))
+
+@app.route("/update_master_folder", methods=["POST"])
+@login_required
+def update_master_folder():
+    user_role = role(session["user_id"])
+
+    if user_role != "admin" and user_role != "tester":
+        return "Access denied"
+
+    folder_link = request.form.get("new_master_link")
+    if not folder_link:
+        flash("Please paste the drive folder link.")
+        return redirect("/batch_management")
+    
+    folder_id = get_folder_id(folder_link)
+
+    db.execute("""
+        INSERT INTO drive_settings (id, master_folder_link, master_folder_id)
+        VALUES (1, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET 
+        master_folder_link = excluded.master_folder_link,
+        master_folder_id = excluded.master_folder_id
+    """, folder_link, folder_id)
+
+    flash("Master folder link updated!", "success")
+    return redirect(url_for("batch_management"))    
+
+@app.route("/dev_management", methods=["GET","POST"])
+@login_required
+def dev_management():
+    # Add an email
+    if request.method == "POST":
+        dev_email = request.form.get("dev_email")
+        if not dev_email:
+            flash("Email is required.", "danger")
+            return redirect(url_for("dev_management"))
+        
+        row = db.execute("SELECT email FROM users WHERE email=?", dev_email)
+        if len(row) == 1:
+            flash("Email already exists as a developer.", "info")
+            return redirect(url_for("dev_management"))
+        
+        try:
+            # Add email in users table and assign role = "dev"
+            db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
+            flash(f"Successfully added {dev_email} as a developer", "success")
+
+        except Exception as e:
+            flash(f"An unexpected database error occured: {e}", "danger")
+            print("DB Error:", {e})
+            return redirect(url_for("dev_management"))
+        
+        return redirect(url_for("dev_management"))
+    else:
+        return render_template("dev_management.html")
+
 if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):
