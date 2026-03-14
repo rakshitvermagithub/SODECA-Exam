@@ -1,0 +1,196 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    System Initialization
+{% endblock %}
+
+{% block css %}
+<style>
+    :root {
+        --bs-setup-purple: #4f46e5;
+        --bs-setup-purple-rgb: 79, 70, 229;
+    }
+
+    body {
+        background-color: #f4f6f9; /* Soft background for the setup page */
+    }
+
+    .page-wrapper {
+        min-height: calc(100vh - 56px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+
+    .setup-card {
+        border: none;
+        border-top: 5px solid var(--bs-setup-purple);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border-radius: 1rem;
+        background: white;
+        width: 100%;
+        max-width: 550px;
+        overflow: hidden;
+    }
+
+    .setup-header {
+        background-color: #ffffff;
+        padding: 2rem 2rem 1rem 2rem;
+        text-align: center;
+    }
+
+    .setup-icon {
+        width: 70px;
+        height: 70px;
+        background-color: rgba(var(--bs-setup-purple-rgb), 0.1);
+        color: var(--bs-setup-purple);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 1.5rem auto;
+    }
+
+    .btn-setup {
+        background-color: var(--bs-setup-purple);
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem;
+        font-size: 1.1rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-setup:hover {
+        background-color: #4338ca;
+        color: white;
+        box-shadow: 0 5px 15px rgba(var(--bs-setup-purple-rgb), 0.3);
+        transform: translateY(-2px);
+    }
+
+    .form-floating > label {
+        color: #6c757d;
+    }
+
+    .form-control:focus {
+        border-color: var(--bs-setup-purple);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-setup-purple-rgb), 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+
+<div class="page-wrapper">
+    <div class="container px-3">
+        <div class="setup-card mx-auto">
+            
+            <div class="setup-header border-bottom">
+                <div class="setup-icon">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h3 class="fw-bold text-dark mb-1">System Initialization</h3>
+                <p class="text-muted">Create the Master Administrator Account</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                
+                <div class="alert alert-info border-0 bg-opacity-10 mb-4 d-flex align-items-start">
+                    <i class="bi bi-info-circle-fill fs-5 me-3 text-info"></i>
+                    <div class="small text-muted">
+                        <strong>Welcome!</strong> No administrator accounts were found in the database. Please register the first super admin to configure the SODECA portal.
+                    </div>
+                </div>
+
+                <form action="/setup" method="post" id="setupForm">
+                    
+                    <!-- Admin Name -->
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="admin_name" name="admin_name" placeholder="John Doe" required autofocus>
+                        <label for="admin_name"><i class="bi bi-person me-2"></i>Full Name</label>
+                    </div>
+
+                    <!-- Admin Email -->
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="admin_email" name="admin_email" placeholder="admin@skit.ac.in" required>
+                        <label for="admin_email"><i class="bi bi-envelope me-2"></i>Admin Email Address</label>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- Password -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="password" class="form-control" id="admin_password" name="admin_password" placeholder="Password" minlength="8" required>
+                                <label for="admin_password"><i class="bi bi-key me-2"></i>Password</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Confirm Password -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" minlength="8" required>
+                                <label for="confirm_password"><i class="bi bi-check2-all me-2"></i>Confirm Password</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Match Error Message (Hidden by default) -->
+                    <div id="passwordError" class="text-danger small fw-bold mb-3 d-none">
+                        <i class="bi bi-exclamation-circle me-1"></i> Passwords do not match.
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid mt-2">
+                        <button type="submit" class="btn btn-setup">
+                            <i class="bi bi-hdd-network me-2"></i> Initialize System
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+            
+            <div class="card-footer bg-light text-center py-3 border-top-0">
+                <small class="text-muted"><i class="bi bi-lock-fill me-1"></i> Secure Setup Environment</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const setupForm = document.getElementById('setupForm');
+    const password = document.getElementById('admin_password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const errorMsg = document.getElementById('passwordError');
+
+    // Real-time validation
+    function validatePasswords() {
+        if (confirmPassword.value && password.value !== confirmPassword.value) {
+            confirmPassword.classList.add('is-invalid');
+            errorMsg.classList.remove('d-none');
+            return false;
+        } else {
+            confirmPassword.classList.remove('is-invalid');
+            errorMsg.classList.add('d-none');
+            return true;
+        }
+    }
+
+    password.addEventListener('input', validatePasswords);
+    confirmPassword.addEventListener('input', validatePasswords);
+
+    // Prevent submission if passwords don't match
+    setupForm.addEventListener('submit', function(event) {
+        if (!validatePasswords()) {
+            event.preventDefault(); // Stop form submission
+            confirmPassword.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

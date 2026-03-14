@@ -1544,7 +1544,61 @@ def download(pk):
                 "Content-Disposition": "attachment; filename=student_directory.csv"
             }
         )
+
+# Admin setup route
+@app.route("/setup", methods=["GET", "POST"])
+def setup():
+    # Check if any admin already exists in the database. 
+    # If even one exists, this route should be disabled.
+    admin_check = db.execute("SELECT id FROM users WHERE role = 'admin' LIMIT 1")
     
+    if admin_check:
+        flash("System is already initialized. Please login.", "info")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        # Collect form data
+        name = request.form.get("admin_name")
+        email = request.form.get("admin_email")
+        password = request.form.get("admin_password")
+        confirm = request.form.get("confirm_password")
+
+        # Backend Validation (Security Best Practice)
+        if not name or not email or not password:
+            flash("All fields are required.", "danger")
+            return redirect(url_for("setup"))
+
+        if password != confirm:
+            flash("Passwords do not match.", "danger")
+            return redirect(url_for("setup"))
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long.", "danger")
+            return redirect(url_for("setup"))
+
+        # Hash the password
+        hash_password = generate_password_hash(password)
+
+        try:
+            # Store in database
+            # We explicitly set 'role' to 'admin'
+            db.execute("""
+                INSERT INTO users (name, email, hash_password, role) 
+                VALUES (?, ?, ?, 'admin')
+            """, name, email, hash_password)
+
+            flash("System initialized successfully! You can now log in as Admin.", "success")
+            return redirect(url_for("login"))
+
+        except Exception as e:
+            # Handle cases like the email already being in use
+            flash("An error occurred during setup. Perhaps this email is already registered?", "danger")
+            print(f"Setup Error: {e}")
+            return redirect(url_for("setup"))
+
+    # GET request: Show the initialization form
+    return render_template("setup.html")
+
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
