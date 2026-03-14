@@ -1550,7 +1550,7 @@ def download(pk):
 def setup():
     # Check if any admin already exists in the database. 
     # If even one exists, this route should be disabled.
-    admin_check = db.execute("SELECT id FROM users WHERE role = 'admin' LIMIT 1")
+    admin_check = db.execute("SELECT user_id FROM users WHERE role = 'admin' LIMIT 1")
     
     if admin_check:
         flash("System is already initialized. Please login.", "info")
@@ -1558,13 +1558,12 @@ def setup():
 
     if request.method == "POST":
         # Collect form data
-        name = request.form.get("admin_name")
         email = request.form.get("admin_email")
         password = request.form.get("admin_password")
         confirm = request.form.get("confirm_password")
 
         # Backend Validation (Security Best Practice)
-        if not name or not email or not password:
+        if not email or not password:
             flash("All fields are required.", "danger")
             return redirect(url_for("setup"))
 
@@ -1583,9 +1582,9 @@ def setup():
             # Store in database
             # We explicitly set 'role' to 'admin'
             db.execute("""
-                INSERT INTO users (name, email, hash_password, role) 
-                VALUES (?, ?, ?, 'admin')
-            """, name, email, hash_password)
+                INSERT INTO users (email, hash_password, role) 
+                VALUES (?, ?, 'admin')
+            """, email, hash_password)
 
             flash("System initialized successfully! You can now log in as Admin.", "success")
             return redirect(url_for("login"))
