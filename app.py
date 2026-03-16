@@ -2045,7 +2045,6 @@ def student_details():
     else:
         # Get student details if already present
         # Variable stores a list of dictionaries
-        print()
         student_details_row = db.execute(
             "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
         )
@@ -2053,6 +2052,7 @@ def student_details():
             "SELECT full_name, designation, department FROM faculty_details"
         )
         data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
+        
         if len(data_to_load):
             branch_list = data_to_load[0]['level_1'].split(',')
             semester = data_to_load[0]['level_2'].split(',')
@@ -2069,7 +2069,6 @@ def student_details():
         # If details are already available
         if student_details_row:
             filled_details = student_details_row[0]
-
             # Show the page with filled details
             return render_template(
                 "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=filled_details, faculty_list=faculty_list

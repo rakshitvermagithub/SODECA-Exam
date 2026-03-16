@@ -85,7 +85,7 @@
                             <select class="form-select" id="semester" name="semester_option" required>
                                 <option value="" {% if not details %}selected{% endif %}>Choose...</option>
                                 {% for sem in semester %}
-                                <option value="{{sem}}" {% if details and details.semester == sem %}selected{% endif %}>{{sem}}</option>
+                                <option value="{{sem}}" {% if details and details.semester|string == sem|string %}selected{% endif %}>{{sem}}</option>
                                 {% endfor %}
                             </select>
                             <label for="semester">Semester</label>
@@ -101,7 +101,7 @@
                             <select class="form-select" id="section" name="section_option" required>
                                 <option value="" {% if not details %}selected{% endif %}>Choose...</option>
                                 {% for batch in batch_list %}
-                                <option value="{{batch}}" {% if details and details.batch == batch %}selected{% endif %}>{{batch}}</option>
+                                <option value="{{batch}}" {% if details and details.section == batch %}selected{% endif %}>{{batch}}</option>
                                 {% endfor %}
                             </select>
                             <label for="section">Section</label>
@@ -113,7 +113,7 @@
                             <select class="form-select" id="group" name="group_option" required>
                                 <option value="" {% if not details %}selected{% endif %}>Choose...</option>
                                 {% for group in group_list %}
-                                <option value="{{group}}" {% if details and details.group == group %}selected{% endif %}>{{group}}</option>
+                                <option value="{{group}}" {% if details and details.class_group == group %}selected{% endif %}>{{group}}</option>
                                 {% endfor %}
                             </select>
                             <label for="group">Group</label>
