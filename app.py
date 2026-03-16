@@ -3239,7 +3239,19 @@ def dev_management():
         
         return redirect(url_for("dev_management"))
     else:
-        return render_template("dev_management.html")
+        dev_emails = db.execute("SELECT email FROM users WHERE role='dev'")
+        return render_template("dev_management.html", dev_emails=dev_emails)
+
+@app.route("/remove_dev", methods=["POST"])
+def remove_dev():
+    if request.method == "POST":
+        dev_email = request.form.get("dev_email")
+        try:
+            db.execute("DELETE FROM users WHERE email=?", dev_email)
+        except Exception as e:
+            flash(f"Removal failed, an unexpected error occured: {e}", "danger")
+            print(f"Developer Email removal error: {e}")
+        return redirect(url_for("dev_management"))
 
 if __name__ == '__main__':
 

@@ -147,8 +147,8 @@
                         </thead>
                         <tbody>
                             <!-- The 'developers' variable should be passed from your Flask route as a list of dicts -->
-                            {% if developers %}
-                                {% for dev in developers %}
+                            {% if dev_emails %}
+                                {% for dev in dev_emails %}
                                 <tr>
                                     <td style="padding-left: 1.5rem;">{{ loop.index }}</td>
                                     <td style="text-align: left;" class="fw-medium">{{ dev.email }}</td>
@@ -187,7 +187,7 @@
                 <h5 class="modal-title fw-bold fs-6"><i class="bi bi-exclamation-triangle-fill me-2"></i>Revoke Access</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/remove_developer" method="post">
+            <form action="/remove_dev" method="post">
                 <div class="modal-body p-4 text-center">
                     <p class="mb-3">Are you sure you want to revoke access for this developer?</p>
                     <div class="p-3 bg-light rounded border text-danger fw-bold fs-5 mb-1" id="devEmailDisplay">
@@ -195,7 +195,7 @@
                     </div>
                     <p class="text-muted small mt-2">They will no longer bypass the college domain restriction.</p>
                     
-                    <input type="hidden" name="developer_email" id="deleteDevEmail">
+                    <input type="hidden" name="dev_email" id="deleteDevEmail">
                 </div>
                 <div class="modal-footer border-0 pt-0 justify-content-center">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
