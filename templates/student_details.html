@@ -125,16 +125,12 @@
                 <!-- Row 4: Batch Counselor -->
                 <div class="mb-4">
                      <div class="form-floating">
-                        <select class="form-select" id="batchCounselor" name="batch_counselor" value="{{ details.batch_counselor | default('') }}" required>
-                                <option value="" disabled {% if not details.branch %}selected{% endif %}>Select Batch Counselor</option>
-                                {% for faculty in faculty_list %}
-                                <option value="{{ faculty.full_name }}" 
-                                    {% if details.batch_counselor == '{{ faculty.full_name }}' %}selected{% endif %}>
-                                    {{ faculty.full_name }}({{ faculty.designation }})({{ faculty.department }})
-                                </option>
-                                {% endfor %}
-                        </select>
+                        <input id="batchCounselor" class="form-control" type="text"
+                            {% if batch_counselor_name %} value="{{ batch_counselor_name }}"
+                            {% else %} value="To be assigned..."{% endif %}
+                        disabled>
                         <label for="batchCounselor">Batch Counselor</label>
+                        <div class="form-text mt-1"><span class="text-secondary bg-warning-subtle">*Updates respective to the saved batch details.</span></div>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
