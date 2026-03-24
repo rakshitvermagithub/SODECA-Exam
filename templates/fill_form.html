@@ -129,7 +129,10 @@
                                         
                                         {% else %}
                                             {# General input for text, date, file, number etc. #}
-                                            <input type="{{ field.field_type }}" class="form-control" id="{{ field.field_name }}" name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" {% if field.required %}required{% endif %}>
+                                            <input type="{{ field.field_type }}" class="form-control" id="{{ field.field_name }}" 
+                                            name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" 
+                                            {% if field.field_type == "file" %} accept="application/pdf" {% endif %}
+                                            {% if field.required %}required{% endif %}>
                                             <div class="invalid-feedback"></div> {# Standard feedback location #}
                                         {% endif %}
 
