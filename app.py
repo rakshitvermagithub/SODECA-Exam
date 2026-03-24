@@ -1289,7 +1289,7 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL,
     university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL,
     semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL,
-    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
+    batch_counselor TEXT, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
 """)
 # Initialise table to store faculty details
 db.execute("""
@@ -2174,7 +2174,6 @@ def fill_form():
         session.pop("current_form_index", None)
 
         flash("Kindly check your submissions and their approval status on your submissions page", "success")
-        print("I am here!")
         return redirect(url_for("sodeca_forms"))
 
     # current_form_index is the key in dict "selected_forms" defined in the start
