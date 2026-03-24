@@ -1289,7 +1289,7 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL,
     university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL,
     semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL,
-    batch_counselor TEXT NOT NULL, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
+    batch_counselor TEXT, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
 """)
 # Initialise table to store faculty details
 db.execute("""
@@ -1544,7 +1544,60 @@ def download(pk):
                 "Content-Disposition": "attachment; filename=student_directory.csv"
             }
         )
+
+# Admin setup route
+@app.route("/setup", methods=["GET", "POST"])
+def setup():
+    # Check if any admin already exists in the database. 
+    # If even one exists, this route should be disabled.
+    admin_check = db.execute("SELECT user_id FROM users WHERE role = 'admin' LIMIT 1")
     
+    if admin_check:
+        flash("System is already initialized. Please login.", "info")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        # Collect form data
+        email = request.form.get("admin_email")
+        password = request.form.get("admin_password")
+        confirm = request.form.get("confirm_password")
+
+        # Backend Validation (Security Best Practice)
+        if not email or not password:
+            flash("All fields are required.", "danger")
+            return redirect(url_for("setup"))
+
+        if password != confirm:
+            flash("Passwords do not match.", "danger")
+            return redirect(url_for("setup"))
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long.", "danger")
+            return redirect(url_for("setup"))
+
+        # Hash the password
+        hash_password = generate_password_hash(password)
+
+        try:
+            # Store in database
+            # We explicitly set 'role' to 'admin'
+            db.execute("""
+                INSERT INTO users (email, hash_password, role) 
+                VALUES (?, ?, 'admin')
+            """, email, hash_password)
+
+            flash("System initialized successfully! You can now log in as Admin.", "success")
+            return redirect(url_for("login"))
+
+        except Exception as e:
+            # Handle cases like the email already being in use
+            flash("An error occurred during setup. Perhaps this email is already registered?", "danger")
+            print(f"Setup Error: {e}")
+            return redirect(url_for("setup"))
+
+    # GET request: Show the initialization form
+    return render_template("setup.html")
+
 # Homepage route
 @app.route("/", methods=["GET"])
 def sodeca_home():
@@ -1946,9 +1999,14 @@ def student_details():
             return redirect("/student_details")
 
         # Get Batch Counselor name
-        batch_counselor = request.form.get("batch_counselor")
-        if not batch_counselor:
-            return redirect("/student_details")
+        batch_counselor = db.execute("""SELECT full_name FROM faculty_details WHERE semester=? AND
+                    branch=? AND section=? AND class_group=?""",
+                    selected_semester, selected_branch,
+                    selected_section, selected_group)
+        if batch_counselor:
+            batch_counselor_name = batch_counselor[0]["full_name"]
+        else:
+            batch_counselor_name = None
 
         try:
             # If all entries are filled successfuly
@@ -1971,7 +2029,7 @@ def student_details():
                     batch_counselor = excluded.batch_counselor
                 """,
                 session["user_id"], university_roll_no, student_name, selected_branch,
-                selected_semester, selected_section, selected_group, batch_counselor
+                selected_semester, selected_section, selected_group, batch_counselor_name
             )
         except Exception as e:
             flash(f"Database error: {e}")
@@ -1987,43 +2045,58 @@ def student_details():
         if next_url and is_safe_url(next_url):
             return redirect(next_url)
     
-        return redirect(url_for("sodeca_forms"))
+        return redirect(url_for("student_details"))
     
     else:
-        # Get student details if already present
+        # Already available student details
         # Variable stores a list of dictionaries
-        print()
+        # Student information
         student_details_row = db.execute(
             "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
         )
-        faculty_list = db.execute(
-            "SELECT full_name, designation, department FROM faculty_details"
-        )
-        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
+
+        # Branch, Semester, Batches and Class Group data
+        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings') 
         if len(data_to_load):
             branch_list = data_to_load[0]['level_1'].split(',')
             semester = data_to_load[0]['level_2'].split(',')
-            batch_group_str = data_to_load[0]['level_3']
-            items = [item.split('-') for item in batch_group_str.split(',')]
-            batch_set = sorted({b for b, g in items})
-            group_set = sorted({g for b, g in items})
+            section_grp_str = data_to_load[0]['level_3']
+            items = [item.split('-') for item in section_grp_str.split(',')]
+            section_set = sorted({b for b, g in items})
+            class_group_set = sorted({g for b, g in items})
         else:
             branch_list = [None]
             semester = [None]
-            batch_set = [None]
-            group_set = [None]
+            section_set = [None]
+            class_group_set = [None]
 
         # If details are already available
         if student_details_row:
             filled_details = student_details_row[0]
 
+            # Get faculty name assigned to the student's batch
+            batch_counselor = db.execute("""SELECT full_name FROM faculty_details WHERE semester=? AND
+                                branch=? AND section=? AND class_group=?""",
+                                filled_details["semester"], filled_details["branch"],
+                                filled_details["section"], filled_details["class_group"])
+            if batch_counselor:
+                batch_counselor_name = batch_counselor[0]["full_name"]
+            else:
+                batch_counselor_name = None
+            
             # Show the page with filled details
             return render_template(
-                "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=filled_details, faculty_list=faculty_list
+                "student_details.html", details=filled_details, 
+                branches=branch_list, semester=semester, 
+                batch_list=section_set, group_list=class_group_set, 
+                batch_counselor_name=batch_counselor_name
                 )
         else:
             return render_template(
-                "student_details.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, details=None, faculty_list=faculty_list
+                "student_details.html", branches=branch_list, 
+                semester=semester, batch_list=section_set, 
+                group_list=class_group_set, details=None, 
+                faculty_name=None
                 )
 
 @app.route("/sodeca_forms", methods=["GET", "POST"])
@@ -2101,7 +2174,6 @@ def fill_form():
         session.pop("current_form_index", None)
 
         flash("Kindly check your submissions and their approval status on your submissions page", "success")
-        print("I am here!")
         return redirect(url_for("sodeca_forms"))
 
     # current_form_index is the key in dict "selected_forms" defined in the start
@@ -3186,7 +3258,19 @@ def dev_management():
         
         return redirect(url_for("dev_management"))
     else:
-        return render_template("dev_management.html")
+        dev_emails = db.execute("SELECT email FROM users WHERE role='dev'")
+        return render_template("dev_management.html", dev_emails=dev_emails)
+
+@app.route("/remove_dev", methods=["POST"])
+def remove_dev():
+    if request.method == "POST":
+        dev_email = request.form.get("dev_email")
+        try:
+            db.execute("DELETE FROM users WHERE email=?", dev_email)
+        except Exception as e:
+            flash(f"Removal failed, an unexpected error occured: {e}", "danger")
+            print(f"Developer Email removal error: {e}")
+        return redirect(url_for("dev_management"))
 
 if __name__ == '__main__':
 
