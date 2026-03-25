@@ -1454,15 +1454,17 @@ def get_current_ist_time():
 
 # Get list of faculty emails
 faculty_emails = []
-faculty_dict = db.execute("SELECT college_email FROM faculty_details")
-for faculty in faculty_dict:
-    faculty_emails.append(faculty["college_email"])
+def update_faculty_emails():
+    faculty_dict = db.execute("SELECT college_email FROM faculty_details")
+    for faculty in faculty_dict:
+        faculty_emails.append(faculty["college_email"])
 
 # Get list of developer emails
 dev_emails = []
-dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
-for dev in dev_dict:
-    dev_emails.append(dev["email"])
+def update_dev_emails():
+    dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
+    for dev in dev_dict:
+        dev_emails.append(dev["email"])
 
 # Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
@@ -2665,7 +2667,7 @@ def faculty_list():
             
             # Update faculty_emails list if needed
             if college_email not in faculty_emails:
-                faculty_emails.append(college_email)
+                update_faculty_emails()
 
             if existing_user:
                 # Ensure they're marked as faculty
@@ -2678,6 +2680,7 @@ def faculty_list():
 
         except Exception as e:
             flash(f"Error updating: {e}", "danger")
+            print(f"Error updating faculty list: {e}")
 
         return redirect(url_for('faculty_list'))
     
@@ -2697,12 +2700,15 @@ def delete_user(pk):
             # Execute the DELETE query using the primary key(college email)
             db.execute("DELETE FROM faculty_details WHERE college_email = ?", key_to_delete)
             flash(f"Successfully deleted faculty member: {key_to_delete}", "success")
+            update_faculty_emails()
+                
         except Exception as e:
             # Log the error and show a generic message
             print(f"Database error while deleting faculty: {e}", file=sys.stderr)
             flash("An error occurred while trying to delete the faculty member.", "danger")
 
         return redirect(url_for("faculty_list"))
+    
     elif pk == 'student':
         if not key_to_delete:
             flash("Error: No Student email was provided for deletion.", "danger")
@@ -2788,10 +2794,6 @@ def uploadExcel():
         # Convert data frame to list of dictionaries
         rows_to_insert = df.to_dict(orient='records')
 
-        print("Converted data to dictionaries")
-
-        print("Good until here")
-
         for row in rows_to_insert:
 
             contact_val = row.get("contact")
@@ -2820,6 +2822,8 @@ def uploadExcel():
     except Exception as e:
         flash(f"Data import failed. Check if table name/columns match. Error: {e}")
         print(f"Insertion Error: {e}")
+
+    update_faculty_emails()
 
     return redirect(url_for('faculty_list'))
 
@@ -2872,11 +2876,18 @@ def assign_batch():
 @app.route("/discharge_faculty", methods=["POST"])
 def discharge_faculty():
     faculty_email = request.form.get("college_email")
-    db.execute(
-        "UPDATE faculty_details SET semester=NULL, branch=NULL, section=NULL, class_group=NULL WHERE college_email=?",
-        faculty_email
-        )
-    flash(f"Faculty with email {faculty_email} was discharged.", "success")
+    try:
+        db.execute(
+            "UPDATE faculty_details SET semester=NULL, branch=NULL, section=NULL, class_group=NULL WHERE college_email=?",
+            faculty_email
+            )
+        flash(f"Faculty with email {faculty_email} was discharged.", "success")
+        update_faculty_emails()
+
+    except Exception as e:
+        flash(f"An unexpected database error occured. Please contact Admin.", "danger")
+        print(f"Error at updating faculty emails: {e}")
+
     return redirect(url_for("assign_batch"))
 
 @app.route("/student_report", methods=["GET", "POST"])
@@ -3250,11 +3261,11 @@ def dev_management():
             # Add email in users table and assign role = "dev"
             db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
             flash(f"Successfully added {dev_email} as a developer", "success")
+            update_dev_emails()
 
         except Exception as e:
-            flash(f"An unexpected database error occured: {e}", "danger")
-            print("DB Error:", {e})
-            return redirect(url_for("dev_management"))
+            flash(f"An unexpected database error occured.", "danger")
+            print(f"Error at updating dev emails: {e}")
         
         return redirect(url_for("dev_management"))
     else:
@@ -3265,11 +3276,15 @@ def dev_management():
 def remove_dev():
     if request.method == "POST":
         dev_email = request.form.get("dev_email")
+
         try:
             db.execute("DELETE FROM users WHERE email=?", dev_email)
+            update_dev_emails()
+
         except Exception as e:
-            flash(f"Removal failed, an unexpected error occured: {e}", "danger")
-            print(f"Developer Email removal error: {e}")
+            flash(f"Removal failed, an unexpected error occured.", "danger")
+            print(f"Error at updating dev emails: {e}")
+
         return redirect(url_for("dev_management"))
 
 if __name__ == '__main__':
