@@ -1460,11 +1460,24 @@ def update_faculty_emails():
         faculty_emails.append(faculty["college_email"])
 
 # Get list of developer emails
-dev_emails = []
-def update_dev_emails():
-    dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
-    for dev in dev_dict:
-        dev_emails.append(dev["email"])
+# dev_emails = []
+# def update_dev_emails():
+#     dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
+#     for dev in dev_dict:
+#         dev_emails.append(dev["email"])
+
+def check_dev_email(email):
+    
+    devs = db.execute("SELECT email FROM users WHERE role='dev'")
+
+    for dev in devs:
+        print(f"Comparing {dev["email"]}, {email}")
+        if dev["email"] == email:
+            print(f"Comparing {dev["email"]}, {email}")
+            return True
+        
+    return False
+
 
 # Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
@@ -1617,11 +1630,15 @@ def sodeca_home():
 def register():
 
     # If POST request
-    if request.method == "POST":
+    if request.method == "POST":        
 
         # email id
         email = request.form.get("email")
-        if not email.endswith('@skit.ac.in') and email not in dev_emails:
+
+        # Check if email id is of a developer
+        is_dev = check_dev_email(email)
+
+        if not email.endswith('@skit.ac.in') and not is_dev:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("register"))
 
@@ -1768,9 +1785,13 @@ def login_callback():
             if not email:
                 flash("Could not retrieve email from Google. Please try again.", "danger")
                 return redirect(url_for("login"))
-                
+            
+            # Check if email id is of a developer
+            is_dev = check_dev_email(email)
+            print(is_dev)
+
             # Check if the email belongs to the SKIT domain
-            if not email.endswith('@skit.ac.in') and email not in dev_emails:
+            if not email.endswith('@skit.ac.in') and not is_dev:
                 flash("Access Denied. You must log in with a your SKIT email address.", "danger")
                 return redirect(url_for("login"))
 
@@ -1858,7 +1879,11 @@ def login():
         if not email:
             flash("Valid SKIT Email is required", "danger")
             return redirect(url_for("login"))
-        if not email.endswith('@skit.ac.in') and email not in dev_emails:
+                
+        # Check if email id is of a developer
+        is_dev = check_dev_email(email)
+
+        if not email.endswith('@skit.ac.in') and not is_dev:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("login"))
 
