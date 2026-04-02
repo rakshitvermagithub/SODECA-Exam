@@ -2140,7 +2140,6 @@ def sodeca_forms():
         # redirect to fill form
         return redirect("/verify_student_details")
     else:
-        print("then I got here")
         return render_template("sodeca_forms.html", FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 @app.route("/verify_student_details", methods=["GET", "POST"])
@@ -2191,6 +2190,7 @@ def fill_form():
     total_count = len(selected_forms)
 
     print(f"{current_form_index} and {total_count}")
+
     # If all forms are completed
     if current_form_index >= len(selected_forms):
 
