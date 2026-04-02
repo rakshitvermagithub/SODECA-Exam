@@ -1467,7 +1467,7 @@ def update_faculty_emails():
 #         dev_emails.append(dev["email"])
 
 def check_dev_email(email):
-    
+
     devs = db.execute("SELECT email FROM users WHERE role='dev'")
 
     for dev in devs:
@@ -1477,7 +1477,6 @@ def check_dev_email(email):
             return True
         
     return False
-
 
 # Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
@@ -2183,8 +2182,7 @@ def fill_form():
     
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
-        # flash("Please select atleast one form to submit", "danger")
-        flash("Kindly check your submissions and their approval status on the hompeage", "success")
+        flash("Please select atleast one form to submit", "danger")
         return redirect(url_for("sodeca_forms"))
 
     user_id = session["user_id"]
@@ -2436,12 +2434,15 @@ def view_details():
 def withdraw_entry():
     entry_id = request.form.get("entry_id")
     form = request.form.get("form_name")
+    print(f"Withdrawing entry from table: {form}")
+
     try:
         db.execute(f"UPDATE {form} SET withdrawn_at = datetime('now', '+5 hours', '+30 minutes') WHERE entry_id = ?", entry_id)
+        flash("Entry withdrawn", "success")
+
     except Exception as e:
         print(f"Database error: {e}")
-        flash(f"Could not withdraw, error: {e}")
-    flash("Entry withdrawn", "success")
+        flash(f"An unexpected error occured, please contact Admin", "danger")
     return redirect(url_for("your_submissions"))
 
 # Page for the faculty, to check submissions
@@ -3286,7 +3287,6 @@ def dev_management():
             # Add email in users table and assign role = "dev"
             db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
             flash(f"Successfully added {dev_email} as a developer", "success")
-            update_dev_emails()
 
         except Exception as e:
             flash(f"An unexpected database error occured.", "danger")
@@ -3304,7 +3304,6 @@ def remove_dev():
 
         try:
             db.execute("DELETE FROM users WHERE email=?", dev_email)
-            update_dev_emails()
 
         except Exception as e:
             flash(f"Removal failed, an unexpected error occured.", "danger")

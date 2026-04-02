@@ -115,26 +115,31 @@
                                         {% endif %}
                                     </td>
                                     {% set status = entry['status'] %}
+                                    
                                     <td>
-                                        {% if status == 'pending' %}
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        {% elif status == 'accepted' %}
-                                             <span class="badge bg-success">Approved</span>
-                                        {% elif status == 'rejected' %}
-                                             <div class="d-flex flex-column align-items-center">
-                                                <span class="badge bg-danger mb-1">Rejected</span>
-                                                {% if entry['rejection_note'] %}
-                                                    <a tabindex="0" 
-                                                       class="text-danger text-decoration-none small" 
-                                                       role="button" 
-                                                       data-bs-toggle="popover" 
-                                                       data-bs-trigger="focus" 
-                                                       data-bs-title="Rejection Reason" 
-                                                       data-bs-content="{{ entry.rejection_note }}">
-                                                        <i class="bi bi-info-circle me-1"></i>View Reason
-                                                    </a>
-                                                {% endif %}
-                                             </div>
+                                        {% if entry['withdrawn_at'] %}
+                                            <span class="badge bg-secondary">Withdrawn</span>
+                                        {% else %}
+                                            {% if status == 'pending' %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            {% elif status == 'accepted' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif status == 'rejected' %}
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <span class="badge bg-danger mb-1">Rejected</span>
+                                                    {% if entry['rejection_note'] %}
+                                                        <a tabindex="0" 
+                                                        class="text-danger text-decoration-none small" 
+                                                        role="button" 
+                                                        data-bs-toggle="popover" 
+                                                        data-bs-trigger="focus" 
+                                                        data-bs-title="Rejection Reason" 
+                                                        data-bs-content="{{ entry.rejection_note }}">
+                                                            <i class="bi bi-info-circle me-1"></i>View Reason
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
                                         {% endif %}
                                     </td>
                                     <td>
@@ -157,14 +162,16 @@
                                                 {% if status == 'pending' %}
                                                     <form action="/withdraw_entry" method="post" onsubmit="return confirm('Are you sure you want to withdraw this submission?');">
                                                         <input type="hidden" name="entry_id" value="{{ entry.entry_id }}">
-                                                        <input type="hidden" name="form_title" value="{{ entry['form_title'] }}">
+                                                        <input type="hidden" name="form_name" value="{{ entry['form_name'] }}">
                                                         <button class="btn btn-sm btn-outline-danger" type="submit">
                                                             <i class="bi bi-x-circle me-1"></i>Withdraw
                                                         </button>
                                                     </form>
                                                 {% endif %}
                                             {% else %}
-                                                <span class="badge bg-secondary">Withdrawn</span>
+                                                <span class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-x-circle me-1"></i>Withdrawn
+                                                </span>
                                             {% endif %}
                                         </div>
                                     </td>
