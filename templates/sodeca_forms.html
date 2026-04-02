@@ -188,8 +188,9 @@
     <div class="card card-minimalist p-3" style="max-width: 1200px; width: 85%;">
         <div class="card-body">
             <p class="text-secondary-emphasis fs-4 mb-4">
-                Select the forms for SODECA <span class="fs-5 text-black text-opacity-75">(Ensure you have valid Proof / Certificate for your selections<span class="text-danger">*</span>)</span>
+                SODECA Form Categories <span class="fs-5 text-black text-opacity-75">(Ensure you have valid Proof/Certificate for your selections<span class="text-danger">*</span>)</span>
             </p>
+            <span>You may select multiple forms as required. Maximum 5 forms can be submitted at once.</span>
 
             <form action="{{ url_for('sodeca_forms') }}" method="post" id="college-form">
                 
@@ -302,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const noSelectionText = '<span class="text-muted" id="no-selection-text">No forms selected yet.</span>';
     const selections = {};
 
-    // --- UPDATED: Popover Initialization ---
+    // --- Popover Initialization ---
     const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
         
@@ -318,40 +319,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // --- NEW: Logic to keep popover open on hover ---
+        // --- Logic to keep popover open on hover ---
         let leaveTimeout;
 
         // When mouse enters the trigger, show the popover
         popoverTriggerEl.addEventListener('mouseenter', function () {
-            // Clear any pending hide timeouts
             clearTimeout(leaveTimeout);
-            // Show this popover
             popover.show();
         });
 
         // When mouse leaves the trigger, set a delay before hiding
         popoverTriggerEl.addEventListener('mouseleave', function () {
             leaveTimeout = setTimeout(() => {
-                // Before hiding, check if the mouse is *now* over the popover itself
                 const popoverBody = document.querySelector('.popover:hover');
                 if (!popoverBody) {
                     popover.hide();
                 }
-            }, 100); // 100ms delay to allow mouse to travel
+            }, 100); 
         });
         
-        // We also need to listen for mouse events on the popover itself
-        // We must do this *after* it's shown
         popoverTriggerEl.addEventListener('shown.bs.popover', function () {
             const popoverBody = document.getElementById(popoverTriggerEl.getAttribute('aria-describedby'));
             if (!popoverBody) return;
 
-            // When mouse enters the popover, cancel any hide timeouts
             popoverBody.addEventListener('mouseenter', function () {
                 clearTimeout(leaveTimeout);
             });
 
-            // When mouse leaves the popover, hide it
             popoverBody.addEventListener('mouseleave', function () {
                 popover.hide();
             });
@@ -386,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formId = button.dataset.formId;
         
+        // Initialize selection object if it doesn't exist
         if (!selections[formId]) {
             const incButton = document.querySelector(`.btn-inc[data-form-id="${formId}"]`);
             selections[formId] = {
@@ -394,10 +389,25 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
 
+        // --- Increment Logic with Max 5 Constraint ---
         if (button.classList.contains('btn-inc')) {
-            selections[formId].count++;
+            // Calculate current total selected across all categories
+            let currentTotal = 0;
+            for (const key in selections) {
+                currentTotal += selections[key].count || 0;
+            }
+
+            // Check constraints
+            if (currentTotal >= 5) {
+                alert('You can only submit a maximum of 5 forms at once.');
+            } else if (selections[formId].count >= 5) {
+                alert('You can only select a maximum of 5 forms per category.');
+            } else {
+                selections[formId].count++;
+            }
         }
         
+        // --- Decrement Logic ---
         if (button.classList.contains('btn-dec')) {
             if (selections[formId].count > 0) {
                 selections[formId].count--;
@@ -433,8 +443,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Final safety check before submission
         if (totalCount === 0) {
             alert('Please select at least one form to proceed.');
+        } else if (totalCount > 5) {
+            alert('You have exceeded the maximum limit of 5 forms.');
         } else {
             collegeForm.submit();
         }
