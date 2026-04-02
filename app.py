@@ -1861,11 +1861,9 @@ def login_callback():
             else:
                 filled_student_details = db.execute("SELECT * FROM student_details WHERE student_user_id=?", session["user_id"])
                 if not filled_student_details:
-                    flash("Login successful.", "success")
                     flash("Please fill student details to access form submission.", "info")
                     return redirect(url_for("student_details"))
                 
-                flash("Login successful.", "success")
                 return redirect(url_for("sodeca_forms"))
         else:
             flash("Could not fetch user info from Google.", "danger")

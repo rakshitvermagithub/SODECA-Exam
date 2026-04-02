@@ -4,7 +4,7 @@
         background-color: #ffffff;
         color: #1f1f1f;
         border: 1px solid #c3c5c6;
-        border-radius: 4px; /* Slightly rounded edges as requested */
+        border-radius: 4px; 
         padding: 10px 24px;
         display: inline-flex;
         align-items: center;
@@ -15,7 +15,7 @@
     }
 
     .btn-google:hover {
-        background-color: #f8f9fa; /* Very light gray on hover */
+        background-color: #f8f9fa; 
         box-shadow: 0 1px 3px rgba(60,64,67,0.3);
         color: #1f1f1f;
         border-color: #dadce0;
@@ -25,26 +25,35 @@
         background-color: #eeeeee;
     }
 
+    .google-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 12px;
+    }
+
+    /* --- ENHANCED FLASH MESSAGE UI --- */
     #flash-message-container {
         position: fixed;
-        top: 80px; /* Adjust based on navbar height */
+        top: 80px; 
         right: 20px;
         z-index: 1056;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
     }
 
     .flash-alert {
-        width: 350px;
+        width: 360px;
         max-width: 90vw;
-        background-color: white;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-        border-radius: 6px;
-        padding: 1rem;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
         display: flex;
-        align-items: center;
-        border: 1px solid;
+        align-items: flex-start;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        background-color: #ffffff; /* White background */
+        color: #212529; /* Dark text */
+        position: relative;
+        overflow: hidden;
         animation: slideInFromRight 0.35s ease-out forwards;
     }
 
@@ -62,40 +71,73 @@
         to { transform: translateX(110%); opacity: 0; }
     }
 
+    /* CSS Variables for Dynamic Themes */
+    .flash-alert.danger { --toast-theme: #ea1a2e; }
+    .flash-alert.success { --toast-theme: #03aa5c; }
+    .flash-alert.info { --toast-theme: #0380e5; }
+    .flash-alert.warning { --toast-theme: #ffcc00; }
+
     .flash-alert .flash-icon {
         font-size: 1.25rem;
-        margin-right: 0.75rem;
+        margin-right: 0.85rem;
+        margin-top: 1px;
+        color: var(--toast-theme); /* Colored Icon */
     }
 
-    .flash-alert.danger { color: #ea1a2e; }
-    .flash-alert.success { color: #03aa5c; }
-    .flash-alert.warning { color: #ffcc00; }
-    .flash-alert.info { color: #0380e5; }
+    .flash-content {
+        flex-grow: 1;
+        font-size: 0.95rem;
+        font-weight: 500;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
 
-    .google-icon {
-        width: 18px;
-        height: 18px;
-        margin-right: 12px;
+    /* Manual Dismiss Button */
+    .flash-close-btn {
+        background: none;
+        border: none;
+        color: #adb5bd; /* Subtle close button */
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 10px;
+        transition: opacity 0.2s, color 0.2s;
+        line-height: 1;
+    }
+    
+    .flash-close-btn:hover {
+        color: #495057;
+        opacity: 1;
+    }
+
+    /* Visual Timer Progress Bar */
+    .flash-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background-color: var(--toast-theme); /* Colored Progress Bar */
+        animation: shrinkProgress 3s linear forwards; 
+    }
+
+    @keyframes shrinkProgress {
+        from { width: 100%; }
+        to { width: 0%; }
     }
 </style>
 
-<!-- The container for standard slide-in messages -->
 <div id="flash-message-container"></div>
 
-<!-- Drive Authorization Modal -->
 <div class="modal fade" id="driveAuthModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-3 p-1">
             
-            <!-- Minimal Header -->
             <div class="modal-header mb-3">
                 <h5 class="modal-title fw-bold fs-5">Permission Required</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <!-- Simple Body -->
             <div class="modal-body text-center pb-3 pt-2">
-                <!-- Custom Google Button -->
                 <a href="/authorize_drive" class="btn btn-google mb-3">
                     <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
                     <span class="fw-medium">Authorize google drive</span>
@@ -110,17 +152,16 @@
     </div>
 </div>
 
-<!-- The JavaScript logic -->
 <script>
     // --- Global Function for Standard Toasts ---
-    function showFlashMessage(message, category = 'info', duration = 4000) {
+    function showFlashMessage(message, category = 'info', duration = 3000) {
         const container = document.getElementById('flash-message-container');
         if (!container) return;
 
         const icons = {
             success: 'bi-check-circle-fill',
-            danger: 'bi-exclamation-circle-fill',
-            warning: 'bi-exclamation-circle-fill',
+            danger: 'bi-exclamation-triangle-fill',
+            warning: 'bi-exclamation-triangle-fill',
             info: 'bi-info-circle-fill'
         };
 
@@ -131,18 +172,27 @@
 
         alertDiv.innerHTML = `
             <i class="bi ${iconClass} flash-icon"></i>
-            <span>${message}</span>
+            <div class="flash-content">${message}</div>
+            <button class="flash-close-btn" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            <div class="flash-progress"></div>
         `;
         
         container.appendChild(alertDiv);
 
-        const animationDuration = 400; 
-        setTimeout(() => {
+        // Function to smoothly dismiss the alert 
+        const dismissAlert = () => {
             alertDiv.classList.add('closing');
             setTimeout(() => {
                 alertDiv.remove();
-            }, animationDuration);
-        }, duration);
+            }, 280); // Wait for the slideOutToRight animation to complete
+        };
+
+        // Attach event listener to the close button
+        const closeBtn = alertDiv.querySelector('.flash-close-btn');
+        closeBtn.addEventListener('click', dismissAlert);
+
+        // Auto dismiss after duration
+        setTimeout(dismissAlert, duration);
     }
 
     // --- Page Load Logic ---
