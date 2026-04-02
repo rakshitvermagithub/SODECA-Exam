@@ -1754,6 +1754,8 @@ def otp_verify():
             if session.get('user_role') == 'faculty':
                 return redirect(url_for("faculty_dashboard"))
             else:
+                flash("Registeration successfull.", "success")
+                flash("Please fill student details to access form submission.", "info")
                 return redirect(url_for("student_details"))
         except Exception as e:
             flash("A database error occurred. Please try registering again.", "danger")
@@ -1787,7 +1789,6 @@ def login_callback():
             
             # Check if email id is of a developer
             is_dev = check_dev_email(email)
-            print(is_dev)
 
             # Check if the email belongs to the SKIT domain
             if not email.endswith('@skit.ac.in') and not is_dev:
@@ -1858,6 +1859,13 @@ def login_callback():
             if session.get("user_role") == "faculty":
                 return redirect(url_for("faculty_dashboard"))
             else:
+                filled_student_details = db.execute("SELECT * FROM student_details WHERE student_user_id=?", session["user_id"])
+                if not filled_student_details:
+                    flash("Login successful.", "success")
+                    flash("Please fill student details to access form submission.", "info")
+                    return redirect(url_for("student_details"))
+                
+                flash("Login successful.", "success")
                 return redirect(url_for("sodeca_forms"))
         else:
             flash("Could not fetch user info from Google.", "danger")
@@ -1913,28 +1921,32 @@ def login():
             return redirect("/login")
 
         # Remember the user if login was successful
-        session["user_id"] = rows[0]["user_id"]
+        user_id = rows[0]["user_id"]
+        session["user_id"] = user_id
 
-        session["user_role"] = role(session.get("user_id"))
+        user_role = role(session.get("user_id"))
+        session["user_role"] = user_role
 
         # If Admin
-        if session.get("user_role") == 'admin':
+        if user_role == 'admin':
             return redirect(url_for("super_admin"))
         
         # If Faculty
         elif email in faculty_emails:
-            session["user_role"] = 'faculty' 
+            user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
-        # If Student
-        elif session.get("user_role") =='student':    
-            details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
+        # If Student or a developer
+        elif user_role == 'student' or user_role == 'dev':
+            details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", user_id)
             # If student has not filled details
             if not details_filled:
                 # Fill details first
-                flash("Login succesfull! You may fill the neccessary student details", "success")
+                flash("Login successful.", "success")
+                flash("Please fill student details to access form submission.", "info")
                 return redirect(url_for("student_details"))
             
+            flash("Login successful.", "success")
             return redirect(url_for("sodeca_forms"))
         
         elif session.get("user_role") == 'tester':
