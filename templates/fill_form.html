@@ -27,9 +27,15 @@
         background: var(--bs-primary); border-radius: 2px; bottom: 0;
         left: 50%; transform: translateX(-50%);
     }
+    
+    /* --- Progress Bar Styling --- */
     .progress-container {
-        position: relative; background-color: #e9ecef; border: 1px solid var(--bs-success);
-        border-radius: 0.375rem; padding: 3px; box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
+        position: relative; 
+        background-color: #e9ecef; 
+        border: 1px solid var(--bs-success);
+        border-radius: 0.375rem; 
+        padding: 2px; 
+        box-shadow: inset 0 1px 2px rgba(0,0,0,.075);
     }
     .progress-text {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -44,15 +50,14 @@
         border-color: var(--bs-danger);
     }
     .is-invalid ~ .invalid-feedback {
-        display: block; /* Show when input is invalid */
+        display: block;
     }
-    /* Style for invalid radio/checkbox groups */
     .border.is-invalid {
         border-color: var(--bs-danger) !important;
         box-shadow: 0 0 0 0.25rem rgba(var(--bs-danger-rgb), 0.25);
     }
     .invalid-feedback {
-        display: none; /* Hide by default */
+        display: none;
         width: 100%;
         margin-top: 0.25rem;
         font-size: .875em;
@@ -61,24 +66,23 @@
 </style>
 {% endblock %}
 
-
 {% block main %}
 {% include "message.html" %}
 <div class="page-wrapper">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-12 col-lg-10 col-xl-9"> {# Increased width #}
+            <div class="col-12 col-lg-10 col-xl-9"> 
 
                 {% if success %}
-                <div class="progress-container mb-4 w-75 mx-auto">
-                    
-                    <div class="progress-text">{{ count+1 }} / {{ total }}</div>
-                    <div class="progress">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="{{count}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
+                    <div class="d-flex align-items-center justify-content-center mb-4 mx-auto" style="max-width: 85%;">
+                        <div class="progress-container w-100" style="max-width: 500px;">
+                            <div class="progress-text">{{ count+1 }} / {{ total }}</div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="{{count+1}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
+                                </div>
+                            </div>
                         </div>
                     </div>
-                
-                </div>
 
                     <div class="card card-minimalist mb-3">
                         <div class="card-body p-4 text-center">
@@ -88,27 +92,40 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="progress-container mb-4 w-75 mx-auto">
-                        <div class="progress-text">{{ count }} / {{ total }}</div>
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="{{count}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
+                    
+                    <div class="d-flex align-items-center mb-4 mx-auto" style="max-width: 95%;">
+                        
+                        <div class="d-flex justify-content-start" style="flex: 1;">
+                            <button type="button" class="btn btn-outline-danger p-1 px-2" data-bs-toggle="modal" data-bs-target="#exitConfirmModal" title="Exit">
+                                <i class="bi bi-box-arrow-left me-1"></i> <span class="d-none d-sm-inline">Exit</span>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-container mx-2 mx-sm-4" style="flex: 6; max-width: 700px; min-width: 150px;">
+                            <div class="progress-text">{{ count }} / {{ total }}</div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="{{count}}" aria-valuemin="0" aria-valuemax="{{total}}" style="width:{{ progress_width }}%">
+                                </div>
                             </div>
                         </div>
+                        
+                        <div style="flex: 1;"></div>
+                        
                     </div>
-                    <div class="card card-minimalist position-relative">
+                    
+                    <div class="card card-minimalist position-relative border-top border-primary border-5">
                         <div class="card-body p-4 p-md-5">
                             <h4 class="text-center mb-5 form-title">{{ form_to_show["title"] }}</h4>
                             
                             <form id="fillForm" action="/fill_form" method="post" enctype="{{ form_to_show.enctype | default('application/x-www-form-urlencoded') }}" novalidate>
                                 
-                                <div class="row g-3"> {# Use g-3 for consistent grid gaps #}
+                                <div class="row g-3">
                                 {% for field in form_to_show["fields"] %}
-                                    <div class="col-md-6 mb-3 position-relative"> {# Use mb-3 for spacing #}
+                                    <div class="col-md-6 mb-3 position-relative">
                                         <label for="{{ field.field_name }}" class="form-label">{{ field.field_label }} {% if field.required %}<span class="text-danger">*</span>{% endif %}</label>
-                                                                                
-                                        {# Logic for different field types #}
+                                                                                                                        
                                         {% if field.field_type == 'radio' %}
-                                            <div class="pt-2 border rounded px-3 py-2 bg-white" style="min-height: 58px;"> {# Match input height #}
+                                            <div class="pt-2 border rounded px-3 py-2 bg-white" style="min-height: 58px;">
                                             {% for option in field.options %}
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input" type="radio" name="{{ field.field_name }}" id="{{ field.field_name }}-{{ option.value }}" value="{{ option.value }}" {% if field.required %}required{% endif %}>
@@ -125,15 +142,14 @@
                                                     <option value="{{ option.value }}">{{ option.label }}</option>
                                                 {% endfor %}
                                             </select>
-                                            <div class="invalid-feedback"></div> {# Feedback for select #}
+                                            <div class="invalid-feedback"></div>
                                         
                                         {% else %}
-                                            {# General input for text, date, file, number etc. #}
                                             <input type="{{ field.field_type }}" class="form-control" id="{{ field.field_name }}" 
                                             name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" 
                                             {% if field.field_type == "file" %} accept="application/pdf" {% endif %}
                                             {% if field.required %}required{% endif %}>
-                                            <div class="invalid-feedback"></div> {# Standard feedback location #}
+                                            <div class="invalid-feedback"></div>
                                         {% endif %}
 
                                         {% if field.help_text %}<div class="form-text mt-1 text-muted small">{{ field.help_text }}</div>{% endif %}
@@ -141,10 +157,16 @@
                                 {% endfor %}
                                 </div>
 
-                                <hr class="my-4">
-                                <div class="text-center">
-                                    <button class="btn btn-primary px-5 py-2" type="submit">Submit and Continue</button>
+                                <div class="d-flex justify-content-center align-items-center mt-4 pt-3 border-top">
+                                    <button type="submit" name="nav_action" value="save_next" class="btn btn-primary px-3 py-2">
+                                        {% if count == total %}
+                                            Submit <i class="bi bi-check2-circle-fill ms-1"></i>
+                                        {% else %}
+                                            Submit and Continue <i class="bi bi-arrow-right-circle-fill ms-1"></i>
+                                        {% endif %}
+                                    </button>
                                 </div>
+                                
                             </form>
                         </div>
                     </div>  
@@ -155,51 +177,65 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="exitConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Exit Form</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="mb-0 fs-5">Are you sure you want to exit?</p>
+                <p class="text-muted mt-2">You still have {{ total - count }} form(s) left to submit. 
+                    Any progress on the current form will be lost.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Resume</button>
+                <a href="{{ url_for('sodeca_forms') }}" class="btn btn-danger px-4">Yes, Exit Process</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block script %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('fillForm');
-    if (!form) return; // Exit if we are on the success page
+    if (!form) return;
 
     let formFieldsData = [];
     try {
-        // Get the validation rules from the Jinja template
         formFieldsData = {{ form_to_show.fields | tojson | safe if form_to_show and form_to_show.fields else '[]' }};
     } catch (e) {
         console.error("Error parsing form field data:", e);
-        return; // Stop if data is bad
+        return; 
     }
 
-    // Helper function to show/hide validation messages
     const showValidation = (input, isValid, message) => {
         const parentDiv = input.closest('.mb-3'); 
         if (!parentDiv) return;
 
         const feedbackElement = parentDiv.querySelector('.invalid-feedback');
-        
-        // Handle radio buttons special case (target the border-box)
         const isRadio = input.type === 'radio';
-        // Find the radio group container
         const targetElement = isRadio ? parentDiv.querySelector('div[class*="border"]') : input;
         
         if (isValid) {
             targetElement.classList.remove('is-invalid');
             if (feedbackElement) {
                 feedbackElement.textContent = '';
-                if (isRadio) feedbackElement.style.display = 'none'; // Hide radio feedback
+                if (isRadio) feedbackElement.style.display = 'none'; 
             }
         } else {
             targetElement.classList.add('is-invalid');
             if (feedbackElement) {
                 feedbackElement.textContent = message;
-                if (isRadio) feedbackElement.style.display = 'block'; // Show radio feedback
+                if (isRadio) feedbackElement.style.display = 'block'; 
             }
         }
     };
     
-    // Helper function to parse file size strings (e.g., '5MB') into bytes
     const parseFileSize = (sizeString) => {
         if (!sizeString || typeof sizeString !== 'string') return null;
         const units = { 'KB': 1024, 'MB': 1024 * 1024, 'GB': 1024 * 1024 * 1024 };
@@ -210,16 +246,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return size * (units[unit] || 1);
     };
 
-    // Main validation function for a single input
     const validateField = (input) => {
         let isValid = true;
         let message = '';
-        // Find the field's definition using its 'id' (for most) or 'name' (for radios)
         const fieldData = formFieldsData.find(f => f.field_name === input.id || f.field_name === input.name);
         
-        if (!fieldData) return true; // No rules for this field
+        if (!fieldData) return true; 
 
-        // 1. Check Required
+        // 1. Required
         if (fieldData.required) {
             if (input.type === 'radio') {
                  const checkedRadio = form.querySelector(`input[name="${input.name}"]:checked`);
@@ -238,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // 2. Check Text Length (only if field is valid so far and has value)
+        // 2. Length
         if (isValid && input.value && input.type === 'text' && fieldData.field_validation) {
             const min = fieldData.field_validation.min_length;
             const max = fieldData.field_validation.max_length;
@@ -253,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // 3. Check Number Constraints (e.g., Stipend)
+        // 3. Number
         if (isValid && input.value && input.type === 'number' && fieldData.field_validation) {
             const min = fieldData.field_validation.min;
             const max = fieldData.field_validation.max;
@@ -261,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (min !== undefined && valueAsNumber < min) {
                 isValid = false;
-                message = `Value must be ${min} or greater.`; // Catches negative stipend
+                message = `Value must be ${min} or greater.`; 
             }
             if (isValid && max !== undefined && valueAsNumber > max) {
                 isValid = false;
@@ -269,12 +303,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // 4. Check Date Constraints (only if valid so far and has value)
+        // 4. Date
         if (isValid && input.value && input.type === 'date') {
-            const selectedDate = new Date(input.value + 'T00:00:00'); // Ensure local date
+            const selectedDate = new Date(input.value + 'T00:00:00'); 
             
-            if (fieldData.field_validation) { // Check if validation object exists
-                // Check max_date: 'today'
+            if (fieldData.field_validation) { 
                 if (fieldData.field_validation.max_date === 'today') {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -284,7 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                // Check after_field: 'from_date' (This is the dynamic from_date <= to_date check)
                 if (isValid && fieldData.field_validation.after_field) {
                     const fromDateEl = form.querySelector(`#${fieldData.field_validation.after_field}`);
                     if (fromDateEl && fromDateEl.value) {
@@ -293,15 +325,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             isValid = false;
                             message = `'${fieldData.field_label}' cannot be before 'From Date'.`;
                         } else {
-                            // If this 'to_date' is now valid, we should also clear any error on the 'from_date'
                             showValidation(fromDateEl, true, '');
                         }
                     }
                 }
-                 // --- FIX: Add check for 'from_date' to validate against 'to_date' ---
                 else if (isValid && fieldData.field_name === 'from_date') {
-                    // Find the 'to_date' field this 'from_date' might affect
-                    // This relies on the 'to_date' field having an 'after_field' rule
                     const toDateFieldData = formFieldsData.find(f => f.field_validation && f.field_validation.after_field === fieldData.field_name);
                     if(toDateFieldData) {
                         const toDateEl = form.querySelector(`#${toDateFieldData.field_name}`);
@@ -310,10 +338,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (selectedDate > toDate) {
                                 isValid = false;
                                 message = `'From Date' cannot be after 'To Date'.`;
-                                // Also mark the 'to_date' as invalid
                                 showValidation(toDateEl, false, "'To Date' cannot be before 'From Date'.");
                             } else {
-                                // Both are valid in relation to each other
                                 showValidation(toDateEl, true, '');
                             }
                         }
@@ -322,25 +348,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // 5. Check File Constraints (only if valid and a file is selected)
+        // 5. File
         if (isValid && input.type === 'file' && input.files.length > 0) {
             const file = input.files[0];
-            const fileRules = fieldData.validation; // Get rules from definition
+            const fileRules = fieldData.validation; 
 
             if (fileRules) {
-                // Check File Type
-                const acceptedTypes = fileRules.accepted_types; // e.g., '.pdf'
+                const acceptedTypes = fileRules.accepted_types;
                 if (acceptedTypes) {
                     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-                    // Assumes acceptedTypes is a single string for now.
                     if (acceptedTypes.toLowerCase() !== fileExtension) {
                          isValid = false;
                          message = `Invalid file type. Only ${acceptedTypes} is allowed.`;
                     }
                 }
 
-                // Check File Size
-                const maxSizeString = fileRules.max_size; // e.g., '5MB'
+                const maxSizeString = fileRules.max_size;
                 if (isValid && maxSizeString) {
                     const maxSizeBytes = parseFileSize(maxSizeString);
                     if (maxSizeBytes && file.size > maxSizeBytes) {
@@ -355,47 +378,39 @@ document.addEventListener('DOMContentLoaded', function() {
         return isValid;
     };
 
-    // Attach event listeners for real-time validation
     form.querySelectorAll('input, select').forEach(input => {
-        // Use 'input' event for text/number for instant feedback
         const eventType = (input.type === 'text' || input.type === 'number') ? 'input' : 'change';
         input.addEventListener(eventType, () => validateField(input));
         
-        // Also validate on 'blur' (clicking out) for text, number, and date
         if (['text', 'number', 'date'].includes(input.type)) {
             input.addEventListener('blur', () => validateField(input));
         }
         
-        // Special listener for 'from_date' to re-validate 'to_date'
-        // This makes the date comparison logic robust
         if (input.id === 'from_date') {
             input.addEventListener('change', () => {
                 const toDateFieldData = formFieldsData.find(f => f.field_validation && f.field_validation.after_field === 'from_date');
                 if (toDateFieldData) {
                     const toDateEl = form.querySelector(`#${toDateFieldData.field_name}`);
                     if (toDateEl) {
-                        validateField(toDateEl); // Re-validate to_date when from_date changes
+                        validateField(toDateEl); 
                     }
                 }
             });
         }
     });
 
-    // Handle form submission: validate all required fields
     form.addEventListener('submit', function(event) {
         let isFormValid = true;
         let firstInvalidElement = null;
 
-        // Check all fields defined in our data
         formFieldsData.forEach(fieldData => {
             const input = form.querySelector(`[name="${fieldData.field_name}"]`);
             if (input) {
-                // For radio buttons, pass the first one to validate the group
                 const inputToValidate = input.type === 'radio' ? form.querySelector(`input[name="${fieldData.field_name}"]`) : input;
                 if (!validateField(inputToValidate)) {
                     isFormValid = false;
                     if (!firstInvalidElement) {
-                        firstInvalidElement = inputToValidate; // Find the first element that failed
+                        firstInvalidElement = inputToValidate; 
                     }
                 }
             }
@@ -406,7 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
             event.stopPropagation();
             alert('Please correct the errors marked in red before submitting.');
             
-            // Scroll to the first invalid field for better UX
             if(firstInvalidElement) {
                 firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidElement.focus();

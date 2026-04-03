@@ -1335,6 +1335,7 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
+
 # Create a table to store and map drive folder ids
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
@@ -1460,11 +1461,23 @@ def update_faculty_emails():
         faculty_emails.append(faculty["college_email"])
 
 # Get list of developer emails
-dev_emails = []
-def update_dev_emails():
-    dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
-    for dev in dev_dict:
-        dev_emails.append(dev["email"])
+# dev_emails = []
+# def update_dev_emails():
+#     dev_dict = db.execute("SELECT email FROM users WHERE role='dev'")
+#     for dev in dev_dict:
+#         dev_emails.append(dev["email"])
+
+def check_dev_email(email):
+
+    devs = db.execute("SELECT email FROM users WHERE role='dev'")
+
+    for dev in devs:
+        print(f"Comparing {dev["email"]}, {email}")
+        if dev["email"] == email:
+            print(f"Comparing {dev["email"]}, {email}")
+            return True
+        
+    return False
 
 # Send otp when to users registering manually(without google sign-in)
 def send_otp(to_mail):
@@ -1617,11 +1630,15 @@ def sodeca_home():
 def register():
 
     # If POST request
-    if request.method == "POST":
+    if request.method == "POST":        
 
         # email id
         email = request.form.get("email")
-        if not email.endswith('@skit.ac.in') and email not in dev_emails:
+
+        # Check if email id is of a developer
+        is_dev = check_dev_email(email)
+
+        if not email.endswith('@skit.ac.in') and not is_dev:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("register"))
 
@@ -1738,6 +1755,8 @@ def otp_verify():
             if session.get('user_role') == 'faculty':
                 return redirect(url_for("faculty_dashboard"))
             else:
+                flash("Registeration successfull.", "success")
+                flash("Please fill student details to access form submission.", "info")
                 return redirect(url_for("student_details"))
         except Exception as e:
             flash("A database error occurred. Please try registering again.", "danger")
@@ -1768,9 +1787,12 @@ def login_callback():
             if not email:
                 flash("Could not retrieve email from Google. Please try again.", "danger")
                 return redirect(url_for("login"))
-                
+            
+            # Check if email id is of a developer
+            is_dev = check_dev_email(email)
+
             # Check if the email belongs to the SKIT domain
-            if not email.endswith('@skit.ac.in') and email not in dev_emails:
+            if not email.endswith('@skit.ac.in') and not is_dev:
                 flash("Access Denied. You must log in with a your SKIT email address.", "danger")
                 return redirect(url_for("login"))
 
@@ -1838,6 +1860,11 @@ def login_callback():
             if session.get("user_role") == "faculty":
                 return redirect(url_for("faculty_dashboard"))
             else:
+                filled_student_details = db.execute("SELECT * FROM student_details WHERE student_user_id=?", session["user_id"])
+                if not filled_student_details:
+                    flash("Please fill student details to access form submission.", "info")
+                    return redirect(url_for("student_details"))
+                
                 return redirect(url_for("sodeca_forms"))
         else:
             flash("Could not fetch user info from Google.", "danger")
@@ -1858,7 +1885,11 @@ def login():
         if not email:
             flash("Valid SKIT Email is required", "danger")
             return redirect(url_for("login"))
-        if not email.endswith('@skit.ac.in') and email not in dev_emails:
+                
+        # Check if email id is of a developer
+        is_dev = check_dev_email(email)
+
+        if not email.endswith('@skit.ac.in') and not is_dev:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("login"))
 
@@ -1889,28 +1920,32 @@ def login():
             return redirect("/login")
 
         # Remember the user if login was successful
-        session["user_id"] = rows[0]["user_id"]
+        user_id = rows[0]["user_id"]
+        session["user_id"] = user_id
 
-        session["user_role"] = role(session.get("user_id"))
+        user_role = role(session.get("user_id"))
+        session["user_role"] = user_role
 
         # If Admin
-        if session.get("user_role") == 'admin':
+        if user_role == 'admin':
             return redirect(url_for("super_admin"))
         
         # If Faculty
         elif email in faculty_emails:
-            session["user_role"] = 'faculty' 
+            user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
-        # If Student
-        elif session.get("user_role") =='student':    
-            details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", rows[0]["user_id"])
+        # If Student or a developer
+        elif user_role == 'student' or user_role == 'dev':
+            details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", user_id)
             # If student has not filled details
             if not details_filled:
                 # Fill details first
-                flash("Login succesfull! You may fill the neccessary student details", "success")
+                flash("Login successful.", "success")
+                flash("Please fill student details to access form submission.", "info")
                 return redirect(url_for("student_details"))
             
+            flash("Login successful.", "success")
             return redirect(url_for("sodeca_forms"))
         
         elif session.get("user_role") == 'tester':
@@ -2047,7 +2082,7 @@ def student_details():
         if next_url and is_safe_url(next_url):
             return redirect(next_url)
     
-        return redirect(url_for("student_details"))
+        return redirect(url_for("sodeca_forms"))
     
     else:
         # Already available student details
@@ -2116,7 +2151,6 @@ def sodeca_forms():
         # redirect to fill form
         return redirect("/verify_student_details")
     else:
-        print("then I got here")
         return render_template("sodeca_forms.html", FORM_DEFINITIONS=FORM_DEFINITIONS)
 
 @app.route("/verify_student_details", methods=["GET", "POST"])
@@ -2156,10 +2190,14 @@ def fill_form():
         flash("Kindly confirm details by checking the checkbox", "warning")
         return redirect("/verify_student_details")
     
+    if session.get("finished_all_forms"):
+        flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
+        session.pop("finished_all_forms")
+        return redirect(url_for("sodeca_forms"))
+    
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
-        # flash("Please select atleast one form to submit", "danger")
-        flash("Kindly check your submissions and their approval status on the hompeage", "success")
+        flash("Please select atleast one form to submit", "danger")
         return redirect(url_for("sodeca_forms"))
 
     user_id = session["user_id"]
@@ -2168,15 +2206,19 @@ def fill_form():
     total_count = len(selected_forms)
 
     print(f"{current_form_index} and {total_count}")
+
     # If all forms are completed
     if current_form_index >= len(selected_forms):
 
+        print("I am about to pop out session hahaha!")
         # Clean up the session
         session.pop("selected_forms", None)
         session.pop("current_form_index", None)
 
-        flash("Kindly check your submissions and their approval status on your submissions page", "success")
-        return redirect(url_for("sodeca_forms"))
+        session["finished_all_forms"] = True
+
+        flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
+        return redirect(url_for("sodeca_home"))
 
     # current_form_index is the key in dict "selected_forms" defined in the start
     current_form = selected_forms[current_form_index]
@@ -2333,7 +2375,7 @@ def fill_form():
         session["current_form_index"] += 1
 
         # Form submission successful, show success page
-        percentage = (current_form_index+1 / total_count) * 100
+        percentage = ((current_form_index+1) / total_count) * 100
         return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=current_form_index, progress_width=percentage, total=total_count)
 
     # Just show the form to be filled
@@ -2411,12 +2453,15 @@ def view_details():
 def withdraw_entry():
     entry_id = request.form.get("entry_id")
     form = request.form.get("form_name")
+    print(f"Withdrawing entry from table: {form}")
+
     try:
         db.execute(f"UPDATE {form} SET withdrawn_at = datetime('now', '+5 hours', '+30 minutes') WHERE entry_id = ?", entry_id)
+        flash("Entry withdrawn", "success")
+
     except Exception as e:
         print(f"Database error: {e}")
-        flash(f"Could not withdraw, error: {e}")
-    flash("Entry withdrawn", "success")
+        flash(f"An unexpected error occured, please contact Admin", "danger")
     return redirect(url_for("your_submissions"))
 
 # Page for the faculty, to check submissions
@@ -3261,7 +3306,6 @@ def dev_management():
             # Add email in users table and assign role = "dev"
             db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
             flash(f"Successfully added {dev_email} as a developer", "success")
-            update_dev_emails()
 
         except Exception as e:
             flash(f"An unexpected database error occured.", "danger")
@@ -3279,7 +3323,6 @@ def remove_dev():
 
         try:
             db.execute("DELETE FROM users WHERE email=?", dev_email)
-            update_dev_emails()
 
         except Exception as e:
             flash(f"Removal failed, an unexpected error occured.", "danger")
