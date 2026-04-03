@@ -1335,6 +1335,7 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
+
 # Create a table to store and map drive folder ids
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
@@ -2189,6 +2190,11 @@ def fill_form():
         flash("Kindly confirm details by checking the checkbox", "warning")
         return redirect("/verify_student_details")
     
+    if session.get("finished_all_forms"):
+        flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
+        session.pop("finished_all_forms")
+        return redirect(url_for("sodeca_forms"))
+    
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
         flash("Please select atleast one form to submit", "danger")
@@ -2204,12 +2210,15 @@ def fill_form():
     # If all forms are completed
     if current_form_index >= len(selected_forms):
 
+        print("I am about to pop out session hahaha!")
         # Clean up the session
         session.pop("selected_forms", None)
         session.pop("current_form_index", None)
 
-        flash("Kindly check your submissions and their approval status on your submissions page", "success")
-        return redirect(url_for("sodeca_forms"))
+        session["finished_all_forms"] = True
+
+        flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
+        return redirect(url_for("sodeca_home"))
 
     # current_form_index is the key in dict "selected_forms" defined in the start
     current_form = selected_forms[current_form_index]
@@ -2366,7 +2375,7 @@ def fill_form():
         session["current_form_index"] += 1
 
         # Form submission successful, show success page
-        percentage = (current_form_index+1 / total_count) * 100
+        percentage = ((current_form_index+1) / total_count) * 100
         return render_template("fill_form.html", success=True, form_to_show=form_to_show, count=current_form_index, progress_width=percentage, total=total_count)
 
     # Just show the form to be filled
