@@ -2082,7 +2082,7 @@ def student_details():
         if next_url and is_safe_url(next_url):
             return redirect(next_url)
     
-        return redirect(url_for("student_details"))
+        return redirect(url_for("sodeca_forms"))
     
     else:
         # Already available student details
