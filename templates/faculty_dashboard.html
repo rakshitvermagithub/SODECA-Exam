@@ -91,16 +91,16 @@
     }
 
     .grid-header-title {
-        font-size: 1.5rem;
-        font-weight: 500;
-        color: #1a1a1a;
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #1c00a8;
         margin-bottom: 0;
     }
 
     /* Custom Pill Search Bar */
     .custom-search {
         border: 1.5px solid #1a1a1a;
-        border-radius: 2rem;
+        border-radius: 0.5rem;
         padding: 0.4rem 1rem;
         display: flex;
         align-items: center;
@@ -121,17 +121,95 @@
         font-weight: bold;
     }
 
-    /* Grid Placeholders */
-    .grid-pill {
+    /* --- Student Data Cards --- */
+    .student-card {
+        border: 1.5px dashed #495057; /* Dashed border from screenshot */
+        border-radius: 0.5rem;
         background-color: #f1f3f5;
-        border-radius: 1rem;
-        height: 70px;
-        width: 100%;
-        transition: background-color 0.2s ease;
-        cursor: pointer;
+        padding: 0.5rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+        height: 100%;
     }
-    .grid-pill:hover {
+    
+    .student-card:hover {
         background-color: #e9ecef;
+        border-color: #150080;
+    }
+
+    /* Left Side: Info */
+    .student-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .student-name {
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: #150080;
+        line-height: 1.1;
+    }
+    
+    .student-roll {
+        font-size: 0.95rem;
+        color: #150080;
+        font-weight: 400;
+    }
+
+    /* Right Side: Stats */
+    .student-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .stat-line {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    
+    .stat-line .stat-dot {
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    
+    .stat-num {
+        font-weight: 400;
+        color: #000000;
+        font-size: 1rem;
+        min-width: 14px;
+        text-align: right;
+    }
+
+    /* --- Pagination Controls --- */
+    .pagination-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #1a1a1a;
+        color: #1a1a1a;
+        background: transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+        background: #1a1a1a;
+        color: #fff;
+    }
+    
+    .pagination-btn:disabled {
+        border-color: #dee2e6;
+        color: #dee2e6;
+        cursor: not-allowed;
     }
 
     /* Mobile adjustments */
@@ -191,21 +269,146 @@
                 <h3 class="grid-header-title">{{ batch_is }}</h3>
                 
                 <div class="custom-search">
-                    <input type="text" placeholder="">
+                    <input type="text" id="studentSearch" placeholder="Search name or roll no...">
                     <i class="bi bi-search"></i>
                 </div>
             </div>
 
-            <div class="row g-4 mb-2">
-                {% for i in range(9) %}
-                <div class="col-12 col-md-4">
-                    <div class="grid-pill"></div>
+            <div class="row g-4 mb-4" id="studentCardsContainer">
+                
+                {% for student in students %}
+                <div class="col-12 col-md-6 col-xl-3 student-card-col">
+                    
+                    <div class="student-card" data-name="{{ student['student_name'] }}" data-roll="{{ student['university_roll_no'] }}">
+                        
+                        <div class="student-info">
+                            <div class="student-name">{{ student['student_name'] }}</div>
+                            <div class="student-roll">{{ student['university_roll_no'] }}</div>
+                        </div>
+                        
+                        <div class="student-stats">
+                            <div class="stat-line">
+                                <span class="stat-dot dot-yellow"></span> 
+                                <span class="stat-num">{{ student['pending_count'] }}</span>
+                            </div>
+                            <div class="stat-line">
+                                <span class="stat-dot dot-green"></span> 
+                                <span class="stat-num">{{ student['accepted_count'] }}</span>
+                            </div>
+                            <div class="stat-line">
+                                <span class="stat-dot dot-red"></span> 
+                                <span class="stat-num">{{ student['rejected_count'] }}</span>
+                            </div>
+                        </div>
+                        
+                    </div>
                 </div>
                 {% endfor %}
+                
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <div class="text-muted fw-medium" id="pageInfo">Showing 1-12 of 60</div>
+                <div class="d-flex gap-2">
+                    <button class="btn rounded-circle pagination-btn" id="prevPage" disabled>
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <button class="btn rounded-circle pagination-btn" id="nextPage">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
         </div>
 
     </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearch');
+    const cardElements = Array.from(document.querySelectorAll('.student-card-col'));
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    const cardsPerPage = 12; // 4 columns x 3 rows = 12 cards per page
+    let currentPage = 1;
+    let filteredCards = [...cardElements];
+
+    // Core function to update what is visible on the screen
+    function updateDisplay() {
+        // 1. Hide all cards initially
+        cardElements.forEach(card => card.style.display = 'none');
+
+        const totalFiltered = filteredCards.length;
+        const totalPages = Math.ceil(totalFiltered / cardsPerPage) || 1;
+
+        // 2. Safety bounds for current page
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        // 3. Calculate which cards to show
+        const startIndex = (currentPage - 1) * cardsPerPage;
+        const endIndex = Math.min(startIndex + cardsPerPage, totalFiltered);
+
+        // 4. Unhide the specific slice of cards
+        for (let i = startIndex; i < endIndex; i++) {
+            filteredCards[i].style.display = 'block'; 
+        }
+
+        // 5. Update the text (e.g., "Showing 1-12 of 60")
+        if (totalFiltered === 0) {
+            pageInfo.textContent = 'No students found.';
+        } else {
+            pageInfo.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalFiltered}`;
+        }
+
+        // 6. Disable/Enable buttons if at the start or end
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+    }
+
+    // Event Listener: When user types in search bar
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        // Filter the array based on data attributes we attached to HTML
+        filteredCards = cardElements.filter(col => {
+            const card = col.querySelector('.student-card');
+            const name = card.getAttribute('data-name').toLowerCase();
+            const roll = card.getAttribute('data-roll').toLowerCase();
+            
+            // Returns true if search term is inside name or roll number
+            return name.includes(searchTerm) || roll.includes(searchTerm);
+        });
+
+        // Always reset to page 1 when doing a new search
+        currentPage = 1; 
+        updateDisplay();
+    });
+
+    // Event Listener: Pagination 'Previous' Button
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateDisplay();
+        }
+    });
+
+    // Event Listener: Pagination 'Next' Button
+    nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredCards.length / cardsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateDisplay();
+        }
+    });
+
+    // Run once on page load to set up initial 12 cards
+    updateDisplay();
+});
+</script>
 {% endblock %}
