@@ -2464,6 +2464,75 @@ def withdraw_entry():
         flash(f"An unexpected error occured, please contact Admin", "danger")
     return redirect(url_for("your_submissions"))
 
+def student_submission_stats(batch_details):
+    """
+    Fetches ALL students for the batch with 'Smart Sorting' applied.
+    Data is passed to the frontend for client-side JavaScript pagination
+    and Python-side Grand Total calculation.
+    """
+    
+    # 1. Build the Activity Stream
+    subqueries = []
+    for form in form_name_list:
+        subqueries.append(f"""
+            SELECT student_id, status, submitted_at 
+            FROM {form} 
+            WHERE withdrawn_at IS NULL
+        """)
+    
+    master_union = " UNION ALL ".join(subqueries)
+
+    # 2. Build the Master Query WITHOUT Limits
+    final_sql = f"""
+        WITH FormActivities AS (
+            {master_union}
+        ),
+        StudentFormCounts AS (
+            SELECT 
+                student_id,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) AS accepted_count,
+                SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
+                MAX(CASE WHEN status = 'pending' THEN submitted_at ELSE NULL END) as latest_pending_date
+            FROM FormActivities
+            GROUP BY student_id
+        )
+        SELECT 
+            s.student_user_id,
+            s.student_name,
+            s.university_roll_no,
+            COALESCE(c.pending_count, 0) AS pending_count,
+            COALESCE(c.accepted_count, 0) AS accepted_count,
+            COALESCE(c.rejected_count, 0) AS rejected_count
+        FROM student_details s
+        LEFT JOIN StudentFormCounts c ON s.student_user_id = c.student_id
+        WHERE s.semester = ? 
+          AND s.branch = ? 
+          AND s.section = ? 
+          AND s.class_group = ?
+        ORDER BY 
+            CASE WHEN COALESCE(c.pending_count, 0) > 0 THEN 0 ELSE 1 END ASC,
+            c.latest_pending_date DESC,
+            s.university_roll_no ASC
+    """
+
+    # Base parameters for the batch
+    base_params = [
+        batch_details["semester"], 
+        batch_details["branch"], 
+        batch_details["section"], 
+        batch_details["class_group"]
+    ]
+
+    try:
+        # Execute the main query and return the full list of students
+        students = db.execute(final_sql, *base_params)
+        return students
+        
+    except Exception as e:
+        print(f"Error fetching student stats: {e}", file=sys.stderr)
+        return []
+    
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
 @app.route("/faculty_dashboard", methods=["GET"])
@@ -2487,6 +2556,21 @@ def faculty_dashboard():
         print(is_authorized)
         if not is_authorized:
             flash("Drive authorization is required. Please authorize your account first", "warning")
+        
+        # Submission requests stats of individual student in the batch
+        students = student_submission_stats(batch_details)
+
+        # Get count of all student's pending, accepted and rejected submissions requests
+        submission_counts = {
+            "pending": 0,
+            "accepted": 0,
+            "rejected": 0
+        }
+        
+        for student in students:
+            submission_counts["pending"] += student["pending_count"]
+            submission_counts["accepted"] += student["accepted_count"]
+            submission_counts["rejected"] += student["rejected_count"]
 
         # Empty list to store data from each form in db
         all_forms_data = []
@@ -2518,15 +2602,17 @@ def faculty_dashboard():
             # 4. Append the final, correct count (just the number) to your new list
             pending_entries.append(pending_count)
 
-        return render_template("faculty_dashboard.html", 
+        return render_template("faculty_dashboard.html",
+                                batch_details=batch_details,
+                                batch_is=batch_is,
+                                submission_counts=submission_counts,
                                 forms_data=all_forms_data,
                                 form_title_list=form_title,
                                 form_names=form_name_list,
                                 form_dict=form_dict,
                                 is_authorized=is_authorized,
-                                batch_details=batch_details,
+                                students=students,
                                 pending_entries=pending_entries,
-                                batch_is=batch_is
                                 )
 
 @app.route('/view_submission/<path:filename>') 
