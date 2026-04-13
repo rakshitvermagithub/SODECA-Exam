@@ -281,9 +281,10 @@
                 {% for student in students %}
                 <div class="col-12 col-md-6 col-xl-3 student-card-col">
                     
-                    <div class="student-card" data-name="{{ student['student_name'] }}" data-roll="{{ student['university_roll_no'] }}">
+                    <a href="/review_student?id={{ student.student_user_id }}" class="student-card" data-name="{{ student['student_name'] }}" data-roll="{{ student['university_roll_no'] }}">
                         
                         <div class="student-info">
+                            <div class="student-name" hidden>{{ student['student_user_id'] }}</div>
                             <div class="student-name">{{ student['student_name'] }}</div>
                             <div class="student-roll">{{ student['university_roll_no'] }}</div>
                         </div>
@@ -303,7 +304,7 @@
                             </div>
                         </div>
                         
-                    </div>
+                    </a>
                 </div>
                 {% endfor %}
                 

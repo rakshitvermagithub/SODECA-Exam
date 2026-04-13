@@ -2615,6 +2615,15 @@ def faculty_dashboard():
                                 pending_entries=pending_entries,
                                 )
 
+@app.route("/review_student", methods=["GET"])
+@login_required
+def review_student():
+    student_user_id = request.args.get("id")
+
+    
+
+    return render_template("review_student.html")
+
 @app.route('/view_submission/<path:filename>') 
 @login_required
 def view_submission(filename):
