@@ -29,8 +29,8 @@
         margin-bottom: 1rem;
     }
     .profile-stats-container {
-        border-top: 2px solid #ced4da;
-        border-bottom: 2px solid #ced4da;
+        border-top: 2px solid #b4b4b4;
+        border-bottom: 2px solid #b4b4b4;
         padding: 0.8rem 0;
         margin-top: 1rem;
         max-width: 350px;
@@ -98,71 +98,73 @@
         margin-right: 0.5rem;
     }
 
-    /* --- Detached Submissions Table --- */
+    /* --- STANDARD ATTACHED SUBMISSIONS TABLE --- */
     .table-responsive-custom {
-        max-height: 550px; /* Vertical Scroll */
+        max-height: 450px; /* CHANGED: Fixed height so the table never stretches */
         overflow-y: auto;
-        overflow-x: auto; /* Horizontal Scroll */
-        /* Padding bottom so box shadow isn't cut off when scrolling */
-        padding-bottom: 1rem; 
+        overflow-x: auto; 
+        background-color: #ffffff;
+        border: 1px solid #1a1a1a; 
+        border-radius: 0.5rem;
     }
     
+    /* --- CUSTOM SCROLLBAR FIX --- */
+    .table-responsive-custom::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-track:vertical {
+        background: transparent;
+        /* THIS IS THE MAGIC FIX: Pushes the scrollbar track below the header */
+        /* If your header text gets larger/smaller, adjust this pixel value! */
+        margin-top: 57px; 
+        margin-bottom: 5px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-track:horizontal {
+        background: transparent;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-thumb {
+        background: #adb5bd;
+        border-radius: 10px;
+    }
+    
+    .table-responsive-custom::-webkit-scrollbar-thumb:hover {
+        background: #6c757d;
+    }
+
     .submissions-table {
         width: 100%;
-        min-width: 850px; /* Forces horizontal scroll on phones */
-        /* Critical for the detached look: */
-        border-collapse: separate; 
-        border-spacing: 0; 
+        border-collapse: collapse; 
+        min-width: 850px; 
     }
     
-    /* The Detached Blue Header Pill */
-    .submissions-table thead tr {
-        background-color: #dce3f5; 
-    }
+    /* We keep the background color on the TH so scrolling stays clean */
     .submissions-table th {
+        background-color: #dce3f5; 
         padding: 1rem 1.5rem;
         font-weight: 500;
         color: #1a1a1a;
-        border: none;
+        border-bottom: 1px solid #1a1a1a; /* Solid line under the attached header */
         white-space: nowrap;
-        position: sticky; /* Keeps it visible when scrolling down */
+        position: sticky; 
         top: 0;
         z-index: 10;
     }
-    /* Round the edges of the header */
-    .submissions-table th:first-child { border-radius: 0.5rem 0 0 0.5rem; }
-    .submissions-table th:last-child { border-radius: 0 0.5rem 0.5rem 0; }
 
-    /* The Invisible Gap between Header and Body */
-    .spacer-row td {
-        height: 18px; /* Height of the gap */
-        padding: 0;
-        border: none !important;
-        background-color: transparent !important;
-    }
-
-    /* The White Table Body Box */
-    .submissions-table tbody tr:not(.spacer-row) td {
-        background-color: white;
-        border-bottom: 1px solid #e9ecef; /* Inner row dividers */
+    .submissions-table td {
         padding: 1rem 1.5rem;
         color: #333;
+        border-bottom: 1px solid #e9ecef; /* Subtle row dividers */
         vertical-align: middle;
     }
     
-    /* Drawing the outer border around the white box */
-    .submissions-table tbody tr:not(.spacer-row) td:first-child { border-left: 1px solid #1a1a1a; }
-    .submissions-table tbody tr:not(.spacer-row) td:last-child { border-right: 1px solid #1a1a1a; }
-    
-    /* Top edge of the white box */
-    .submissions-table tbody tr:nth-child(2) td { border-top: 1px solid #1a1a1a; }
-    .submissions-table tbody tr:nth-child(2) td:first-child { border-top-left-radius: 0.5rem; }
-    .submissions-table tbody tr:nth-child(2) td:last-child { border-top-right-radius: 0.5rem; }
-    
-    /* Bottom edge of the white box */
-    .submissions-table tbody tr:last-child td { border-bottom: 1px solid #1a1a1a; }
-    .submissions-table tbody tr:last-child td:first-child { border-bottom-left-radius: 0.5rem; }
-    .submissions-table tbody tr:last-child td:last-child { border-bottom-right-radius: 0.5rem; }
+    /* Remove bottom border for last row to stay clean inside the card */
+    .submissions-table tr:last-child td {
+        border-bottom: none;
+    }
 
     /* --- UI Elements --- */
     .sort-icon {
@@ -175,23 +177,23 @@
 
     /* For Status Column Header */
     .header-status-pill {
-        border: 1.2px solid #1800ad;
-        color: #1800ad;
+        border: 1.5px solid #1c00a8;
+        color: #1c00a8;
         border-radius: 2rem;
-        padding: 0.2rem 0.6rem;
-        font-weight: 450;
+        padding: 0.2rem 0.8rem;
+        font-weight: 500;
         display: inline-flex;
         align-items: center;
     }
 
     /* For Table Body Data */
     .status-pill {
-        border: 1px solid #1800ad;
-        color: #1800ad;
+        border: 1px solid #1c00a8;
+        color: #1c00a8;
         border-radius: 2rem;
         padding: 0.2rem 0.8rem;
         font-size: 0.9rem;
-        font-weight: 400;
+        font-weight: 500;
         display: inline-block;
     }
 
@@ -232,13 +234,13 @@
         
         <div class="row mb-5 align-items-center g-5">
             
-            <div class="col-lg-5">
+            <div class="col-lg-5">                
                 <div class="profile-stats-container">
                     <h1 class="profile-name">{{ session.get('name', 'Rakshit Verma') }}</h1>
                     <div class="profile-id">{{ session.get('university_roll_no', '24ESKCS675') }}</div>
 
-                    <div class="profile-stat">Total Accepted Submissions: <span class="fw-normal ms-1">12</span></div>
-                    <div class="profile-stat">Total Rejected Submissions: <span class="fw-normal ms-1">2</span></div>
+                    <div class="profile-stat">Pending Submissions: <span class="fw-normal ms-1">12</span></div>
+                    <div class="profile-stat">Accepted Submissions: <span class="fw-normal ms-1">2</span></div>
                     <div class="profile-stat">Total Pending Submissions: <span class="fw-normal ms-1">4</span></div>
                 </div>
             </div>
@@ -251,29 +253,19 @@
                             <tr>
                                 <th>Form Category</th>
                                 <th>Pending</th>
-                                <th>Submitted</th>
+                                <th>Accepted</th>
                                 <th>Rejected</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for key, values in summary_dict.items() %}
                             <tr>
-                                <td>Hackathon Participation</td>
-                                <td>2</td>
-                                <td>5</td>
-                                <td>0</td>
+                                <td>{{ form_dict[key] }}</td>
+                                <td>{{ values['pending'] }}</td>
+                                <td>{{ values['accepted'] }}</td>
+                                <td>{{ values['rejected'] }}</td>
                             </tr>
-                            <tr>
-                                <td>Sports Event</td>
-                                <td>1</td>
-                                <td>3</td>
-                                <td>1</td>
-                            </tr>
-                            <tr>
-                                <td>Cultural Activity</td>
-                                <td>1</td>
-                                <td>4</td>
-                                <td>1</td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -288,7 +280,7 @@
             </div>
         </div>
 
-        <div class="table-responsive-custom">
+        <div class="table-responsive-custom shadow-sm">
             <table class="submissions-table" id="mainTable">
                 <thead>
                     <tr>
@@ -300,21 +292,20 @@
                         </th>
                         <th>Proof</th>
                         <th onclick="sortTable(3)" style="cursor: pointer;">
-                            <span class="header-status-pill">Status</span> <i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-3"></i>
+                            <span class="header-status-pill">Status <i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-3"></i></span>
                         </th>
                         <th>Details</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr class="spacer-row"><td colspan="6"></td></tr>
-
+                    {% for submission in submissions %}
                     <tr>
-                        <td>2026-04-12 10:30 AM</td>
-                        <td>Hackathon Participation</td>
-                        <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> View.pdf</a></td>
-                        <td><span class="status-pill" style="color: #d39e00; border-color: #d39e00;">Pending</span></td>
-                        <td><button class="btn-details">View</button></td>
+                        <td>{{ submission["submitted_at"] }}</td>
+                        <td>{{ form_dict[submission["form_category"]] }}</td>
+                        <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> View</a></td>
+                        <td><span class="status-pill" style="color: #d39e00; border-color: #d39e00;">{{ submission["status"] }}</span></td>
+                        <td><button class="btn-details">Details</button></td>
                         <td>
                             <div class="d-flex gap-2">
                                 <button class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
@@ -322,6 +313,7 @@
                             </div>
                         </td>
                     </tr>
+                    {% endfor %}
                     <tr>
                         <td>2026-04-10 02:15 PM</td>
                         <td>Sports Event</td>
@@ -371,9 +363,6 @@
         let rows = document.getElementById('tableBody').getElementsByTagName('tr');
 
         for (let i = 0; i < rows.length; i++) {
-            // Skip the invisible spacer row
-            if (rows[i].classList.contains('spacer-row')) continue;
-
             let timeCol = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
             let formCol = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
             let statusCol = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
@@ -388,17 +377,12 @@
 
     // --- SORTING FUNCTIONALITY ---
     let sortDirection = {}; 
-    
-    // Add cycle tracker for the Status column
     const statusCycle = ['Pending', 'Accepted', 'Rejected'];
     let currentStatusIndex = 0;
 
     function sortTable(columnIndex) {
         let tbody = document.getElementById("tableBody");
-        
-        // Grab only the data rows (exclude the transparent spacer gap)
-        let rows = Array.from(tbody.querySelectorAll("tr:not(.spacer-row)"));
-        let spacerRow = tbody.querySelector(".spacer-row");
+        let rows = Array.from(tbody.querySelectorAll("tr"));
         
         // Reset all icons
         document.querySelectorAll('.sort-icon').forEach(icon => {
@@ -452,7 +436,6 @@
 
         // Clear table and re-append in correct order
         tbody.innerHTML = '';
-        if (spacerRow) tbody.appendChild(spacerRow); // Put the gap back at the top!
         rows.forEach(row => tbody.appendChild(row));
     }
 </script>

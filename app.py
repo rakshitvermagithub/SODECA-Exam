@@ -2620,9 +2620,42 @@ def faculty_dashboard():
 def review_student():
     student_user_id = request.args.get("id")
 
+    # Fetch all form submissions without any JOINs
+    submissions = []
     
+    for form in form_name_list:
+        try:
+            # Simple, direct index lookup. Blazingly fast.
+            # We fetch f.* as requested to get all specific details.
+            form_data = db.execute(f"""
+                SELECT *,
+                '{form}' as form_category 
+                FROM {form}
+                WHERE student_id = ? 
+                AND withdrawn_at IS NULL
+                ORDER BY submitted_at DESC
+            """, student_user_id)
+            
+            # Only add to our dictionary if they actually have submissions for this form
+            if form_data:
+                submissions.extend(form_data)
 
-    return render_template("review_student.html")
+        except Exception as e:
+            print(f"Error fetching data from {form} for student {student_user_id}: {e}", file=sys.stderr)
+
+    # Creating data for summary table
+    summary_dict = {}
+    for submission in submissions:
+
+        form_category = submission["form_category"]
+        status = submission['status']
+
+        if not summary_dict.get(form_category):
+            summary_dict[form_category] = {'pending': 0, 'accepted': 0, 'rejected': 0}
+        
+        summary_dict[form_category][status] += 1
+
+    return render_template("review_student.html", summary_dict=summary_dict, submissions=submissions, form_dict=form_dict)
 
 @app.route('/view_submission/<path:filename>') 
 @login_required
