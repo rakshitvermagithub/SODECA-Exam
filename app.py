@@ -2619,6 +2619,8 @@ def faculty_dashboard():
 @login_required
 def review_student():
     student_user_id = request.args.get("id")
+    student_name = request.args.get("name")
+    roll_no = request.args.get("roll_no")
 
     # Fetch all form submissions without any JOINs
     submissions = []
@@ -2645,6 +2647,8 @@ def review_student():
 
     # Creating data for summary table
     summary_dict = {}
+    total_dict = {'pending': 0, 'accepted': 0, 'rejected': 0}
+
     for submission in submissions:
 
         form_category = submission["form_category"]
@@ -2654,8 +2658,16 @@ def review_student():
             summary_dict[form_category] = {'pending': 0, 'accepted': 0, 'rejected': 0}
         
         summary_dict[form_category][status] += 1
+        total_dict[status] += 1
 
-    return render_template("review_student.html", summary_dict=summary_dict, submissions=submissions, form_dict=form_dict)
+    return render_template("review_student.html", 
+                            form_dict=form_dict,                   
+                            roll_no=roll_no,
+                            student_name=student_name,
+                            summary_dict=summary_dict, 
+                            submissions=submissions, 
+                            total_dict=total_dict
+                            )
 
 @app.route('/view_submission/<path:filename>') 
 @login_required

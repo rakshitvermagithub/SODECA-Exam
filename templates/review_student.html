@@ -23,23 +23,21 @@
         line-height: 1.2;
     }
     .profile-id {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 700;
         color: #1c00a8; 
-        margin-bottom: 1rem;
+        margin-bottom: 0.25rem;
     }
-    .profile-stats-container {
-        border-top: 2px solid #b4b4b4;
-        border-bottom: 2px solid #b4b4b4;
-        padding: 0.8rem 0;
-        margin-top: 1rem;
-        max-width: 350px;
+    .profile-email {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #6c757d;
     }
     .profile-stat {
         font-weight: 600;
         color: #495057;
         font-size: 0.95rem;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.5rem;
     }
 
     /* --- Summary Table --- */
@@ -49,23 +47,68 @@
         color: #1a1a1a;
     }
     .summary-table-container {
+        /* Removes hardcoded max-height and lets Flexbox match the left column's height */
+        flex-grow: 1; 
+        min-height: 220px; /* Guarantees a nice minimum height when empty */
+        overflow-y: auto;
         overflow-x: auto; 
-        max-width: 100%;
-    }
-    .summary-table {
         width: 100%;
-        border-collapse: collapse;
+        border: 1px solid #ced4da;
+        border-radius: 0.5rem;
         background-color: #ffffff;
     }
-    .summary-table th, .summary-table td {
-        border: 1px solid #1a1a1a;
-        padding: 0.6rem 1rem;
-        text-align: left;
-        font-size: 0.95rem;
+    
+    /* Custom thin scrollbar for the summary table */
+    .summary-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+    .summary-table-container::-webkit-scrollbar-track { background: transparent; }
+    .summary-table-container::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 10px; }
+
+    .summary-table {
+        width: 100%;
+        /* 'Separate' allows the outer container's border-radius to clip the table properly */
+        border-collapse: separate; 
+        border-spacing: 0;
     }
+
     .summary-table th {
         font-weight: 500;
         color: #1a1a1a;
+        padding: 0.8rem 1rem;
+        background-color: #ffffff;
+        /* Removed column dividers, kept solid bottom divider */
+        border: none;
+        border-bottom: 1.5px solid #1a1a1a;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .summary-table td {
+        /* Short height padding */
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        color: #333;
+        /* Lighter column and row dividers */
+        border-bottom: 1px solid #e9ecef;
+        border-right: 1px solid #e9ecef;
+    }
+
+    /* --- Summary Table Hover Effect --- */
+    .summary-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .summary-table tbody tr:hover {
+        background-color: #f4f5f7; /* A very subtle, soft grey */
+    }
+
+    /* Clean up the inner borders so they don't double up with the outer wrapper border */
+    .summary-table th:last-child,
+    .summary-table td:last-child {
+        border-right: none;
+    }
+    .summary-table tr:last-child td {
+        border-bottom: none;
     }
 
     /* --- Submissions Section Header --- */
@@ -191,7 +234,7 @@
         border: 1px solid #1c00a8;
         color: #1c00a8;
         border-radius: 2rem;
-        padding: 0.2rem 0.8rem;
+        padding: 0.2rem 0.6rem;
         font-size: 0.9rem;
         font-weight: 500;
         display: inline-block;
@@ -232,20 +275,34 @@
 <div class="dashboard-wrapper">
     <div class="container px-4 px-md-5" style="max-width: 1300px;">
         
-        <div class="row mb-5 align-items-center g-5">
+       <div class="row mb-5 align-items-stretch g-5">
             
-            <div class="col-lg-5">                
-                <div class="profile-stats-container">
-                    <h1 class="profile-name">{{ session.get('name', 'Rakshit Verma') }}</h1>
-                    <div class="profile-id">{{ session.get('university_roll_no', '24ESKCS675') }}</div>
-
-                    <div class="profile-stat">Pending Submissions: <span class="fw-normal ms-1">12</span></div>
-                    <div class="profile-stat">Accepted Submissions: <span class="fw-normal ms-1">2</span></div>
-                    <div class="profile-stat">Total Pending Submissions: <span class="fw-normal ms-1">4</span></div>
+            <div class="col-lg-4 d-flex flex-column justify-content-center">
+                <hr class="border-secondary opacity-25 mb-4" style="border-width: 2px;">
+                
+                <h1 class="profile-name">{{ student_name }}</h1>
+                <div class="profile-id">{{ roll_no }}</div>
+                <div class="profile-email mb-4">{{ email | default('student@skit.ac.in') }}</div>
+                
+                <div class="w-100">
+                    <div class="d-flex justify-content-between profile-stat">
+                        <span class="text-secondary fw-semibold">Pending Submissions:</span> 
+                        <span class="text-secondary fw-normal">{{ total_dict['pending'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between profile-stat">
+                        <span class="text-secondary fw-semibold">Accepted Submissions:</span> 
+                        <span class="text-secondary fw-normal">{{ total_dict['accepted'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between profile-stat mb-0">
+                        <span class="text-secondary fw-semibold">Rejected Submissions:</span> 
+                        <span class="text-secondary fw-normal">{{ total_dict['rejected'] }}</span>
+                    </div>
                 </div>
+
+                <hr class="border-secondary opacity-25 mt-4 mb-0" style="border-width: 2px;">
             </div>
 
-            <div class="col-lg-7">
+            <div class="col-lg-8 d-flex flex-column">
                 <h3 class="summary-title mb-3">Summary</h3>
                 <div class="summary-table-container">
                     <table class="summary-table">
@@ -258,14 +315,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for key, values in summary_dict.items() %}
-                            <tr>
-                                <td>{{ form_dict[key] }}</td>
-                                <td>{{ values['pending'] }}</td>
-                                <td>{{ values['accepted'] }}</td>
-                                <td>{{ values['rejected'] }}</td>
-                            </tr>
-                            {% endfor %}
+                            {% if summary_dict %}
+                                {% for key, values in summary_dict.items() %}
+                                <tr>
+                                    <td>{{ form_dict[key] }}</td>
+                                    <td>{{ values['pending'] }}</td>
+                                    <td>{{ values['accepted'] }}</td>
+                                    <td>{{ values['rejected'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted align-middle" style="height: 150px; border-bottom: none;">
+                                        <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+                                        No submissions yet
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -304,7 +370,17 @@
                         <td>{{ submission["submitted_at"] }}</td>
                         <td>{{ form_dict[submission["form_category"]] }}</td>
                         <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> View</a></td>
-                        <td><span class="status-pill" style="color: #d39e00; border-color: #d39e00;">{{ submission["status"] }}</span></td>
+
+                        {% set status = submission['status'] %}
+                        <td><span class="status-pill" 
+                        {% if status == 'accepted' %}
+                            style="color: #28a745; border-color: #28a745;"
+                        {% elif status == 'rejected' %}
+                            style="color: #dc3545; border-color: #dc3545;"
+                        {% else %} 
+                            style="color: #d39e00; border-color: #d39e00;"
+                        {% endif %}">{{ submission["status"] }}</span></td>
+
                         <td><button class="btn-details">Details</button></td>
                         <td>
                             <div class="d-flex gap-2">
@@ -377,7 +453,7 @@
 
     // --- SORTING FUNCTIONALITY ---
     let sortDirection = {}; 
-    const statusCycle = ['Pending', 'Accepted', 'Rejected'];
+    const statusCycle = ['pending', 'accepted', 'rejected'];
     let currentStatusIndex = 0;
 
     function sortTable(columnIndex) {
