@@ -23,7 +23,7 @@
         line-height: 1.2;
     }
     .profile-id {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         font-weight: 700;
         color: #1c00a8; 
         margin-bottom: 0.25rem;
@@ -31,7 +31,7 @@
     .profile-email {
         font-size: 0.95rem;
         font-weight: 500;
-        color: #6c757d;
+        color: #1978cb;
     }
     .profile-stat {
         font-weight: 600;
@@ -141,70 +141,46 @@
         margin-right: 0.5rem;
     }
 
-    /* --- STANDARD ATTACHED SUBMISSIONS TABLE --- */
-    .table-responsive-custom {
-        max-height: 450px; /* CHANGED: Fixed height so the table never stretches */
-        overflow-y: auto;
-        overflow-x: auto; 
+/* --- NEW OUTER WRAPPER --- */
+    .submissions-wrapper {
         background-color: #ffffff;
         border: 1px solid #1a1a1a; 
         border-radius: 0.5rem;
+        overflow: hidden; /* Keeps the rounded corners clean */
     }
-    
-    /* --- CUSTOM SCROLLBAR FIX --- */
-    .table-responsive-custom::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    .table-responsive-custom::-webkit-scrollbar-track:vertical {
-        background: transparent;
-        /* THIS IS THE MAGIC FIX: Pushes the scrollbar track below the header */
-        /* If your header text gets larger/smaller, adjust this pixel value! */
-        margin-top: 57px; 
-        margin-bottom: 5px;
-    }
-    
-    .table-responsive-custom::-webkit-scrollbar-track:horizontal {
-        background: transparent;
-    }
-    
-    .table-responsive-custom::-webkit-scrollbar-thumb {
-        background: #adb5bd;
-        border-radius: 10px;
-    }
-    
-    .table-responsive-custom::-webkit-scrollbar-thumb:hover {
-        background: #6c757d;
+
+    /* --- STANDARD ATTACHED SUBMISSIONS TABLE --- */
+    .table-responsive-custom {
+        max-height: 450px; /* Fixed height so the table never stretches */
+        overflow-y: auto;
+        overflow-x: auto; 
+        /* Borders and background moved to the outer wrapper */
     }
 
     .submissions-table {
         width: 100%;
         border-collapse: collapse; 
-        min-width: 850px; 
+        min-width: 750px; 
     }
     
-    /* We keep the background color on the TH so scrolling stays clean */
+    /* Header (Sticky properties removed) */
     .submissions-table th {
         background-color: #dce3f5; 
         padding: 1rem 1.5rem;
         font-weight: 500;
         color: #1a1a1a;
-        border-bottom: 1px solid #1a1a1a; /* Solid line under the attached header */
+        border-bottom: 1px solid #1a1a1a; 
         white-space: nowrap;
-        position: sticky; 
-        top: 0;
-        z-index: 10;
+        position: sticky; top: 0; z-index: 10;
     }
 
     .submissions-table td {
         padding: 1rem 1.5rem;
         color: #333;
-        border-bottom: 1px solid #e9ecef; /* Subtle row dividers */
+        border-bottom: 1px solid #e9ecef; 
         vertical-align: middle;
     }
     
-    /* Remove bottom border for last row to stay clean inside the card */
     .submissions-table tr:last-child td {
         border-bottom: none;
     }
@@ -221,9 +197,9 @@
     /* For Status Column Header */
     .header-status-pill {
         border: 1.5px solid #1c00a8;
-        color: #1c00a8;
+        color: #150080;
         border-radius: 2rem;
-        padding: 0.2rem 0.8rem;
+        padding: 0.2rem 0.7rem;
         font-weight: 500;
         display: inline-flex;
         align-items: center;
@@ -268,6 +244,72 @@
         padding: 0;
         font-weight: 500;
     }
+
+    /* --- Details Modal Styling --- */
+    .custom-modal {
+        border: 1px solid #1a1a1a;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        font-family: 'Poppins', sans-serif;
+    }
+    .custom-modal .modal-header {
+        border-bottom: 1.5px solid #1a1a1a;
+        background-color: #f4f5f7;
+        border-top-left-radius: calc(0.5rem - 1px);
+        border-top-right-radius: calc(0.5rem - 1px);
+        padding: 1rem 1.5rem;
+    }
+    .custom-modal .modal-title {
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 1.25rem;
+    }
+    .custom-modal .modal-body {
+        padding: 1.5rem;
+        color: #333;
+    }
+    .custom-modal .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: calc(0.5rem - 1px);
+        border-bottom-right-radius: calc(0.5rem - 1px);
+    }
+    .data-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+        font-weight: 500;
+    }
+    .data-value {
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+    }
+    
+    /* Footer Action Buttons */
+    .btn-modal-accept {
+        background-color: #e6f8ec;
+        color: #28a745;
+        border: 1px solid #28a745;
+        font-weight: 500;
+        padding: 0.4rem 1.2rem;
+        transition: all 0.2s;
+    }
+    .btn-modal-accept:hover { background-color: #28a745; color: white; }
+
+    .btn-modal-reject {
+        background-color: #fdeded;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+        font-weight: 500;
+        padding: 0.4rem 1.2rem;
+        transition: all 0.2s;
+    }
+    .btn-modal-reject:hover { background-color: #dc3545; color: white; }
 </style>
 {% endblock %}
 
@@ -286,16 +328,16 @@
                 
                 <div class="w-100">
                     <div class="d-flex justify-content-between profile-stat">
-                        <span class="text-secondary fw-semibold">Pending Submissions:</span> 
-                        <span class="text-secondary fw-normal">{{ total_dict['pending'] }}</span>
+                        <span class="fw-semibold">Pending Submissions:</span> 
+                        <span class="fw-normal">{{ total_dict['pending'] }}</span>
                     </div>
                     <div class="d-flex justify-content-between profile-stat">
-                        <span class="text-secondary fw-semibold">Accepted Submissions:</span> 
-                        <span class="text-secondary fw-normal">{{ total_dict['accepted'] }}</span>
+                        <span class="fw-semibold">Accepted Submissions:</span> 
+                        <span class="fw-normal">{{ total_dict['accepted'] }}</span>
                     </div>
                     <div class="d-flex justify-content-between profile-stat mb-0">
-                        <span class="text-secondary fw-semibold">Rejected Submissions:</span> 
-                        <span class="text-secondary fw-normal">{{ total_dict['rejected'] }}</span>
+                        <span class="fw-semibold">Rejected Submissions:</span> 
+                        <span class="fw-normal">{{ total_dict['rejected'] }}</span>
                     </div>
                 </div>
 
@@ -346,87 +388,145 @@
             </div>
         </div>
 
-        <div class="table-responsive-custom shadow-sm">
-            <table class="submissions-table" id="mainTable">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable(0)" style="cursor: pointer;">
-                            Time <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-0"></i>
-                        </th>
-                        <th onclick="sortTable(1)" style="cursor: pointer;">
-                            Form Category <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-1"></i>
-                        </th>
-                        <th>Proof</th>
-                        <th onclick="sortTable(3)" style="cursor: pointer;">
-                            <span class="header-status-pill">Status <i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-3"></i></span>
-                        </th>
-                        <th>Details</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    {% for submission in submissions %}
-                    <tr>
-                        <td>{{ submission["submitted_at"] }}</td>
-                        <td>{{ form_dict[submission["form_category"]] }}</td>
-                        <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> View</a></td>
+        <div class="submissions-wrapper shadow-sm">
+            <div class="table-responsive-custom">
+                <table class="submissions-table" id="mainTable">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #1a1a1a;">
+                            <th onclick="sortTable(0)" style="cursor: pointer;">
+                                Time <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-0"></i>
+                            </th>
+                            <th onclick="sortTable(1)" style="cursor: pointer;">
+                                Form Category <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-1"></i>
+                            </th>
+                            <th>Proof</th>
+                            <th onclick="sortTable(3)" style="cursor: pointer;">
+                                <span class="header-status-pill">Status</span><i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-3"></i>
+                            </th>
+                            <th>Details</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% for submission in submissions %}
+                        <tr>
+                            <td>{{ submission["submitted_at"] }}</td>
+                            <td>{{ form_dict[submission["form_category"]] }}</td>
+                            <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> View</a></td>
 
-                        {% set status = submission['status'] %}
-                        <td><span class="status-pill" 
-                        {% if status == 'accepted' %}
-                            style="color: #28a745; border-color: #28a745;"
-                        {% elif status == 'rejected' %}
-                            style="color: #dc3545; border-color: #dc3545;"
-                        {% else %} 
-                            style="color: #d39e00; border-color: #d39e00;"
-                        {% endif %}">{{ submission["status"] }}</span></td>
+                            {% set status = submission['status'] %}
+                            <td><span class="status-pill" 
+                            {% if status == 'accepted' %}
+                                style="color: #28a745; border-color: #28a745;"
+                            {% elif status == 'rejected' %}
+                                style="color: #dc3545; border-color: #dc3545;"
+                            {% else %} 
+                                style="color: #d39e00; border-color: #d39e00;"
+                            {% endif %}>{{ submission["status"] }}</span></td>
 
-                        <td><button class="btn-details">Details</button></td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <button class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
-                                <button class="btn-action-reject" title="Reject"><i class="bi bi-x-lg"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    <tr>
-                        <td>2026-04-10 02:15 PM</td>
-                        <td>Sports Event</td>
-                        <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Cert.pdf</a></td>
-                        <td><span class="status-pill" style="color: #28a745; border-color: #28a745;">Accepted</span></td>
-                        <td><button class="btn-details">View</button></td>
-                        <td>
-                            <span class="text-muted small">Processed</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2026-04-13 09:00 AM</td>
-                        <td>Cultural Activity</td>
-                        <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Photo.pdf</a></td>
-                        <td><span class="status-pill" style="color: #dc3545; border-color: #dc3545;">Rejected</span></td>
-                        <td><button class="btn-details">View</button></td>
-                        <td>
-                            <span class="text-muted small">Processed</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2026-04-11 11:45 AM</td>
-                        <td>Hackathon Participation</td>
-                        <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Award.pdf</a></td>
-                        <td><span class="status-pill" style="color: #d39e00; border-color: #d39e00;">Pending</span></td>
-                        <td><button class="btn-details">View</button></td>
-                        <td>
-                            <div class="d-flex gap-2">
-                                <button class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
-                                <button class="btn-action-reject" title="Reject"><i class="bi bi-x-lg"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            <td>
+                                <button class="btn-details" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#entryDetailsModal"
+                                        data-entry-id="{{ submission['entry_id'] }}" 
+                                        data-category="submission['form_category']">
+                                    Details
+                                </button>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
+                                    <button class="btn-action-reject" title="Reject"><i class="bi bi-x-lg"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <tr>
+                            <td>2026-04-10 02:15 PM</td>
+                            <td>Sports Event</td>
+                            <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Cert.pdf</a></td>
+                            <td><span class="status-pill" style="color: #28a745; border-color: #28a745;">Accepted</span></td>
+                            <td><button class="btn-details">View</button></td>
+                            <td>
+                                <span class="text-muted small">Processed</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2026-04-13 09:00 AM</td>
+                            <td>Cultural Activity</td>
+                            <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Photo.pdf</a></td>
+                            <td><span class="status-pill" style="color: #dc3545; border-color: #dc3545;">Rejected</span></td>
+                            <td><button class="btn-details">View</button></td>
+                            <td>
+                                <span class="text-muted small">Processed</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2026-04-11 11:45 AM</td>
+                            <td>Hackathon Participation</td>
+                            <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Award.pdf</a></td>
+                            <td><span class="status-pill" style="color: #d39e00; border-color: #d39e00;">Pending</span></td>
+                            <td><button class="btn-details">View</button></td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
+                                    <button class="btn-action-reject" title="Reject"><i class="bi bi-x-lg"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-4 py-3" style="background-color: #f8f9fa; border-top: 1px solid #1a1a1a; font-size: 0.95rem;">
+            </div>
         </div>
 
+    </div>
+</div>
+
+<!-- Submission Detail Modal Box -->
+<div class="modal fade" id="entryDetailsModal" tabindex="-1" aria-labelledby="entryDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+            
+            <div class="modal-header">
+                <h5 class="modal-title" id="entryDetailsModalLabel">Submission Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="data-label">Entry ID</div>
+                        <div class="data-value text-primary" id="modalEntryId">--</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label">Status</div>
+                        <div class="data-value" id="modalStatus">--</div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="data-label">Form Category</div>
+                        <div class="data-value" id="modalCategory">--</div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="data-label">Submission Time</div>
+                        <div class="data-value" id="modalTime">--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-light border fw-medium" data-bs-dismiss="modal">Close</button>
+                
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-modal-reject" id="btnRejectEntry"><i class="bi bi-x-lg me-1"></i> Reject</button>
+                    <button type="button" class="btn btn-modal-accept" id="btnAcceptEntry"><i class="bi bi-check-lg me-1"></i> Accept</button>
+                </div>
+            </div>
+            
+        </div>
     </div>
 </div>
 {% endblock %}
