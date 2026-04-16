@@ -9,7 +9,7 @@ from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
-    make_response
+    make_response, current_app
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -2727,11 +2727,6 @@ def upload_to_drive():
         flash(f"Error: Local file not found at {full_path}", "danger")
         return redirect(request.referrer)
 
-    # sem = request.form.get("semester")
-    # branch = request.form.get("branch")
-    # section = request.form.get("section")
-    # group = request.form.get("class_group")
-    # form_name = request.form.get("form_name")
     batch_str = request.form.get("batch_str")
 
     to_search_id = f"{batch_str}_{form_name}"
@@ -2747,21 +2742,38 @@ def upload_to_drive():
         return redirect(request.referrer)
 
     try:
-        creds_data = token.copy()
-        if 'access_token' in creds_data:
-            creds_data['token'] = creds_data.pop('access_token')
-        creds_data.pop('scope', None)
-        # creds_data.pop('userinfo', None)
-        creds_data.pop('expires_at', None)
-        creds_data.pop('expires_in', None)
-        creds_data.pop('token_type', None)
-        creds_data.pop('refresh_token_expires_in', None)
+        # 1. Safely extract the tokens from your session dictionary
+        access_token = token.get('access_token') or token.get('token')
+        refresh_token = token.get('refresh_token')
 
-        credentials = Credentials(**creds_data)
+        # 2. Safely grab the Client ID and Secret directly from Flask config
+        # (This prevents scope issues where global variables become None)
+        
+        client_id = current_app.config.get("GOOGLE_CLIENT_ID")
+        client_secret = current_app.config.get("GOOGLE_CLIENT_SECRET")
+        
+        # Quick debug print to ensure they aren't blank
+        print(f"DEBUG: Client ID loaded: {bool(client_id)}")
+        print(f"DEBUG: Client Secret loaded: {bool(client_secret)}")
+
+        # 3. Build the Credentials object
+        credentials = Credentials(
+            token=access_token,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id, 
+            client_secret=client_secret
+        )
+
+        import socket
+        socket.setdefaulttimeout(300)
+
         drive_service = build('drive', 'v3', credentials=credentials)
 
         file_metadata = {'name': filename, 'parents': [drive_folder_id]}
-        media = MediaFileUpload(full_path, resumable=True)
+        
+        # Resumable=False fixes the timeouts
+        media = MediaFileUpload(full_path, resumable=False)
 
         uploaded_file = drive_service.files().create(
             body=file_metadata, media_body=media, fields='id,name'
@@ -2772,7 +2784,13 @@ def upload_to_drive():
         sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
         db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
 
-        flash(f"Successfully uploaded file '{uploaded_file.get('name')}' (ID: {google_file_id})", "success")
+        # 3. CRITICAL: If the token was refreshed during the upload, save the new one back to the session!
+        if credentials.token != access_token:
+            token['access_token'] = credentials.token
+            session['drive_auth_token'] = token
+            session.modified = True
+
+        flash(f"Successfully uploaded file '{uploaded_file.get('name')}'", "success")
 
     except HttpError as error:
         # This error happens if the token is expired, invalid, or revoked.
