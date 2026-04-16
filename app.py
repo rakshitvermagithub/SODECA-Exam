@@ -2651,7 +2651,7 @@ def review_student():
             # We fetch f.* as requested to get all specific details.
             form_data = db.execute(f"""
                 SELECT *,
-                '{form}' as form_category 
+                '{form}' as form_name 
                 FROM {form}
                 WHERE student_id = ? 
                 AND withdrawn_at IS NULL
@@ -2671,13 +2671,13 @@ def review_student():
 
     for submission in submissions:
 
-        form_category = submission["form_category"]
+        form_name = submission["form_name"]
         status = submission['status']
 
-        if not summary_dict.get(form_category):
-            summary_dict[form_category] = {'pending': 0, 'accepted': 0, 'rejected': 0}
+        if not summary_dict.get(form_name):
+            summary_dict[form_name] = {'pending': 0, 'accepted': 0, 'rejected': 0}
         
-        summary_dict[form_category][status] += 1
+        summary_dict[form_name][status] += 1
         total_dict[status] += 1
 
     return render_template("review_student.html", 

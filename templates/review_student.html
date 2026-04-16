@@ -418,12 +418,12 @@
                         </thead>
                         <tbody>
                             {% if summary_dict %}
-                                {% for key, values in summary_dict.items() %}
+                                {% for form_name, status_counts in summary_dict.items() %}
                                 <tr>
-                                    <td>{{ form_dict[key] }}</td>
-                                    <td>{{ values['pending'] }}</td>
-                                    <td>{{ values['accepted'] }}</td>
-                                    <td>{{ values['rejected'] }}</td>
+                                    <td>{{ form_dict[form_name] }}</td>
+                                    <td>{{ status_counts['pending'] }}</td>
+                                    <td>{{ status_counts['accepted'] }}</td>
+                                    <td>{{ status_counts['rejected'] }}</td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
@@ -470,11 +470,14 @@
                     <tbody id="tableBody">
                         {% for submission in submissions %}
                         <tr>
+                            {% set entry_id = submission['entry_id'] %}
+                            {% set form_name = submission['form_name'] %}
+                            {% set status = submission['status'] %}
+
                             <td>{{ submission["submitted_at"] }}</td>
-                            <td>{{ form_dict[submission["form_category"]] }}</td>
+                            <td>{{ form_dict[form_name] }}</td>
                             <td><a href="{{ url_for('view_submission', filename=submission['certificate']) }}" target="_blank" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> {{ submission['certificate'] }}</a></td>
 
-                            {% set status = submission['status'] %}
                             <td><span class="status-pill" 
                             {% if status == 'accepted' %}
                                 style="color: #28a745; border-color: #28a745;"
@@ -488,31 +491,33 @@
                                 <button class="btn-details" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#entryDetailsModal"
-                                        data-category="{{ form_dict[submission['form_category']] }}"
+                                        data-category="{{ form_dict[form_name] }}"
                                         data-details="{{ submission | tojson | forceescape }}">
                                     Details
                                 </button>
                             </td>
                             <td>
-                                {% set entry_id = submission['entry_id'] %}
-                                {% set form_category = submission['form_category'] %}
+                                {% if status == 'pending' %}
                                 <div class="d-flex gap-2">
                                     <!-- If faculty clicks accept button then the proof automatically uploads to its
                                     repective destination folder in SODECA Master folder in G-Drive  -->
                                     <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
                                         <input type="hidden" name="entry_id" value="{{ entry_id }}">
                                         <input type="hidden" name="batch_str" value="{{ batch_str }}">
-                                        <input type="hidden" name="form_name" value="{{ form_category }}">
+                                        <input type="hidden" name="form_name" value="{{ form_name }}">
                                         <input type="hidden" name="filename" value="{{ submission['certificate'] }}">
                                         <button type="submit" class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
                                     </form>
                                     <button type="button" 
                                             class="btn-action-custom btn-action-reject" 
-                                            onclick="openRejectionModal('{{ entry_id }}', '{{ form_category }}')" 
+                                            onclick="openRejectionModal('{{ entry_id }}', '{{ form_name }}')" 
                                             title="Reject">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
+                                {% else %}
+                                <span class="text-muted small">Processed</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
