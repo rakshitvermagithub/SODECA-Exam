@@ -309,8 +309,8 @@
 
     .custom-modal-box {
         background: #ffffff;
-        border: 2px solid #1a1a1a;
-        border-radius: 1rem;
+        border: 1px solid #1a1a1a;
+        border-radius: 0.5rem;
         width: 90%; max-width: 450px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         transform: translateY(-20px);
@@ -322,25 +322,25 @@
 
     .modal-header-danger {
         padding: 1rem 1.5rem;
-        border-bottom: 2px solid #1a1a1a;
+        border-bottom: 1px solid #1a1a1a;
         background: #fdeded;
-        border-radius: 0.8rem 0.8rem 0 0;
+        border-radius: 0.5rem 0.5rem 0 0;
         display: flex; justify-content: space-between; align-items: center;
     }
     .modal-title-danger { margin: 0; color: #dc3545; font-size: 1.25rem; font-weight: 600; }
     .btn-close-custom { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1a1a1a; line-height: 1;}
 
-    .modal-body-custom { padding: 1.5rem; color: #333; }
+    .modal-body-custom { padding: 1.5rem; color: #333; font-size: 1.1rem;}
     .modal-footer-custom {
         padding: 1rem 1.5rem;
-        border-top: 2px solid #1a1a1a;
+        border-top: 1px solid #1a1a1a;
         background: #f8f9fa;
-        border-radius: 0 0 0.8rem 0.8rem;
+        border-radius: 0 0 0.5rem 0.5rem;
         display: flex; justify-content: space-between;
     }
 
     /* Textarea matching your design language */
-    .custom-label { display: block; font-size: 0.85rem; font-weight: 600; color: #1a1a1a; margin-bottom: 0.4rem; text-transform: uppercase; }
+    .custom-label { display: block; font-size: 0.85rem; font-weight: 600; color: #343434; margin-bottom: 0.4rem; text-transform: uppercase; }
     .custom-textarea {
         width: 100%; padding: 0.75rem;
         border: 1.5px solid #1a1a1a; border-radius: 0.5rem;
@@ -369,6 +369,74 @@
         transition: all 0.2s;
     }
     .btn-modal-reject:hover { background-color: #dc3545; color: white; }
+    /* --- Full Screen Processing Overlay --- */
+    .processing-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        /* Semi-transparent white with a blur effect */
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(4px); 
+        -webkit-backdrop-filter: blur(4px);
+        
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000; /* Ensure it sits above the Bootstrap modal */
+        
+        /* Hidden by default */
+        opacity: 0; 
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .processing-overlay.active {
+        opacity: 1; 
+        visibility: visible;
+    }
+
+    .processing-card {
+        background-color: #ffffff;
+        border: 2px solid #1a1a1a; /* Matches your design language */
+        border-radius: 1rem;
+        padding: 2.5rem 3.5rem;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+    
+    .processing-overlay.active .processing-card {
+        transform: scale(1);
+    }
+
+    /* Clean CSS Spinner */
+    .custom-spinner {
+        width: 48px; 
+        height: 48px;
+        border: 5px solid #f0f2f5;
+        border-top-color: #1c00a8; /* Primary blue accent */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem auto;
+    }
+
+    @keyframes spin { 
+        100% { transform: rotate(360deg); } 
+    }
+
+    .processing-title { 
+        margin: 0 0 0.5rem; 
+        color: #1a1a1a; 
+        font-weight: 600; 
+        font-size: 1.25rem;
+        font-family: 'Poppins', sans-serif;
+    }
+    .processing-text { 
+        margin: 0; 
+        color: #6c757d; 
+        font-size: 0.95rem; 
+        font-family: 'Poppins', sans-serif;
+    }
 </style>
 {% endblock %}
 
@@ -501,12 +569,12 @@
                                 <div class="d-flex gap-2">
                                     <!-- If faculty clicks accept button then the proof automatically uploads to its
                                     repective destination folder in SODECA Master folder in G-Drive  -->
-                                    <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
+                                    <form action="{{ url_for('upload_to_drive') }}" method="post" id="acceptForm" style="display: inline;">
                                         <input type="hidden" name="entry_id" value="{{ entry_id }}">
                                         <input type="hidden" name="batch_str" value="{{ batch_str }}">
                                         <input type="hidden" name="form_name" value="{{ form_name }}">
                                         <input type="hidden" name="filename" value="{{ submission['certificate'] }}">
-                                        <button type="submit" class="btn-action-accept" title="Accept"><i class="bi bi-check-lg"></i></button>
+                                        <button type="submit" class="btn-action-accept" id="btnAcceptEntry" title="Accept"><i class="bi bi-check-lg"></i></button>
                                     </form>
                                     <button type="button" 
                                             class="btn-action-custom btn-action-reject" 
@@ -521,15 +589,6 @@
                             </td>
                         </tr>
                         {% endfor %}
-                        <tr>
-                            <td>2026-04-13 09:00 AM</td>
-                            <td>Cultural Activity</td>
-                            <td><a href="#" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> Photo.pdf</a></td>
-                            <td><span class="status-pill" style="color: #dc3545; border-color: #dc3545;">Rejected</span></td>
-                            <td>
-                                <span class="text-muted small">Processed</span>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -597,6 +656,13 @@
             </div>
         </form>
 
+    </div>
+</div>
+<div id="processingOverlay" class="processing-overlay">
+    <div class="processing-card">
+        <div class="custom-spinner"></div>
+        <h4 class="processing-title">Uploading to Drive</h4>
+        <p class="processing-text">Securely transferring files. Please wait...</p>
     </div>
 </div>
 {% endblock %}
@@ -718,6 +784,37 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.getElementById('btnAcceptEntry').setAttribute('data-entry-id', detailsObj.entry_id);
             document.getElementById('btnRejectEntry').setAttribute('data-entry-id', detailsObj.entry_id);
+        });
+    }
+
+    // 1. Grab the elements
+    const acceptForm = document.getElementById('acceptForm'); // <-- Ensure your <form> has this ID!
+    const acceptButton = document.getElementById('btnAcceptEntry');
+    const processingOverlay = document.getElementById('processingOverlay');
+
+    if (acceptForm) {
+        acceptForm.addEventListener('submit', function(e) {
+            // Step 1: Prevent the browser from submitting immediately
+            e.preventDefault();
+
+            // Step 2: Disable the accept button to prevent double-clicks
+            if (acceptButton) {
+                acceptButton.disabled = true;
+                // Optional: Change button text
+                acceptButton.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Processing...'; 
+                acceptButton.style.opacity = '0.7';
+            }
+
+            // Step 3: Show the sleek full-screen overlay
+            processingOverlay.classList.add('active');
+
+            // Step 4: Trigger the actual backend submission
+            // We use a tiny 50ms setTimeout to give the browser time to render 
+            // the overlay and spinner animations before the main thread freezes for the POST request.
+            setTimeout(() => {
+                // Using HTMLFormElement prototype prevents triggering this event listener again in an infinite loop
+                HTMLFormElement.prototype.submit.call(acceptForm);
+            }, 50);
         });
     }
 });
