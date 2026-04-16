@@ -2619,8 +2619,28 @@ def faculty_dashboard():
 @login_required
 def review_student():
     student_user_id = request.args.get("id")
-    student_name = request.args.get("name")
-    roll_no = request.args.get("roll_no")
+
+    if not student_user_id:
+        flash("Invalid Student ID", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
+    # 2. The Micro-Query: Fetch Name, Roll, Sem, Section, Batch.
+    student_profile_data = db.execute(
+        "SELECT * FROM student_details WHERE student_user_id = ?", 
+        student_user_id
+    )
+    
+    if not student_profile_data:
+        flash("Student not found in database.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+        
+    student_profile = student_profile_data[0]
+    student_branch = student_profile['branch']
+    student_sem = student_profile['semester']
+    student_section = student_profile['section']
+    student_class_group = student_profile['class_group']
+
+    batch_str = f"{student_branch}_{student_sem}_{student_section}_{student_class_group}"
 
     # Fetch all form submissions without any JOINs
     submissions = []
@@ -2662,11 +2682,11 @@ def review_student():
 
     return render_template("review_student.html", 
                             form_dict=form_dict,                   
-                            roll_no=roll_no,
-                            student_name=student_name,
                             summary_dict=summary_dict, 
                             submissions=submissions, 
-                            total_dict=total_dict
+                            total_dict=total_dict,
+                            student_profile=student_profile,
+                            batch_str=batch_str
                             )
 
 @app.route('/view_submission/<path:filename>') 
@@ -2707,13 +2727,14 @@ def upload_to_drive():
         flash(f"Error: Local file not found at {full_path}", "danger")
         return redirect(request.referrer)
 
-    sem = request.form.get("semester")
-    branch = request.form.get("branch")
-    section = request.form.get("section")
-    group = request.form.get("class_group")
-    form_name = request.form.get("form_name")
-    
-    to_search_id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+    # sem = request.form.get("semester")
+    # branch = request.form.get("branch")
+    # section = request.form.get("section")
+    # group = request.form.get("class_group")
+    # form_name = request.form.get("form_name")
+    batch_str = request.form.get("batch_str")
+
+    to_search_id = f"{batch_str}_{form_name}"
     drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
     
     if drive_folder:
