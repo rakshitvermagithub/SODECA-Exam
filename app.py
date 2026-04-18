@@ -2174,9 +2174,8 @@ def verify_student_details():
         
         # If details are already available
         if not student_details_row:
-            flash("You cannot proceed with empty student details.", "danger")
-            flash("Go to Profile tab and submit your details", "warning")
-            return redirect(url_for('sodeca_forms'))
+            flash("Please submit student details before proceeding.", "warning")
+            return redirect(url_for('student_details'))
 
         # Show the page with filled details
         return render_template("verify_student_details.html", details=student_details_row[0])
