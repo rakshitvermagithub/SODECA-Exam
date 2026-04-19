@@ -1265,15 +1265,28 @@ FORM_DEFINITIONS = {
     }
 }
 
-# List of technical names of forms defined
+# List of technical names of forms defined(SQL Names)
 form_name_list = list(FORM_DEFINITIONS.keys())
 # List of title names of forms defined
 form_title = []
+form_values = []
+form_label = []
 for form in FORM_DEFINITIONS:
+    # form_values = [
+    #     ({"user_id":1, "name":"jdoe", "email":"jane@example.com"}),
+    #     ({"user_id":2, "name":"asmith", "email":"alex@example.com"})
+    # ]
+    query = f"SELECT * FROM {form}"
+    form_values.append(db.execute(query))
     form_title.append(FORM_DEFINITIONS[form]["title"])
+    form_label.append(FORM_DEFINITIONS[form]["fields"])
+
+print("Form Values looks like -> ", form_values)
+form_col = form_values[0][0].keys()
 
 # form name and title dictionary
 form_dict = dict(zip(form_name_list, form_title))
+form_dict_with_values = dict(zip(form_name_list, zip(form_label, zip(form_col,form_values))))
 
 # Initialise table to store user login details
 db.execute("""
@@ -3490,6 +3503,11 @@ def remove_dev():
             print(f"Error at updating dev emails: {e}")
 
         return redirect(url_for("dev_management"))
+
+@app.route("/forms_report", methods=["GET"])
+def forms_report():
+    if request.method == "GET":
+        return render_template("forms_report.html", form_dict=form_dict, tables=form_dict_with_values)
 
 if __name__ == '__main__':
 

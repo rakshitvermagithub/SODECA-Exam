@@ -7,3 +7,5 @@ venv/
 .vscode/
 static/certificates_folder
 credentials/
+.idea/
+sqlite3.exe
