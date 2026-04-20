@@ -25,6 +25,7 @@ import re
 import smtplib
 import sys
 import pandas as pd
+import json
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -1281,12 +1282,13 @@ for form in FORM_DEFINITIONS:
     form_title.append(FORM_DEFINITIONS[form]["title"])
     form_label.append(FORM_DEFINITIONS[form]["fields"])
 
-print("Form Values looks like -> ", form_values)
-form_col = form_values[0][0].keys()
+# print("Form Values looks like -> ", form_values[2])
+form_col = form_values[2][0].keys()
 
 # form name and title dictionary
 form_dict = dict(zip(form_name_list, form_title))
-form_dict_with_values = dict(zip(form_name_list, zip(form_label, zip(form_col,form_values))))
+# field_name and field_label
+# form_dict_with_values = dict(zip(form_name_list, dict(zip(form_label, zip(form_col,form_values)))))
 
 # Initialise table to store user login details
 db.execute("""
@@ -3521,10 +3523,14 @@ def remove_dev():
 
         return redirect(url_for("dev_management"))
 
-@app.route("/forms_report", methods=["GET"])
+@app.route("/forms_report", methods=["GET","POST"])
 def forms_report():
+    if request.method == "POST":
+        data = request.get_json()
+        form_id = data.get('form_id')
+        print(form_id)
     if request.method == "GET":
-        return render_template("forms_report.html", form_dict=form_dict, tables=form_dict_with_values)
+        return render_template("forms_report.html", form_dict=form_dict)
 
 if __name__ == '__main__':
 

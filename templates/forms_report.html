@@ -23,26 +23,25 @@
                         {% endif %}
                     {% endfor %}
                 </ul>
-                {% for table_id, table in tables.items() %}
+                
                 <div class="tab-content tab-hidden table-responsive pt-2" id="{{ table_id }}">
                     <table class = "table table-hover table-striped mt-3" id="{{ table_id }}">
                         <thead class = "table-dark">
-                            {% for table_column, table_rows in table %}
+                            
                                 <tr>
-                                    <th>{{ table_column['field_label'] }}</th>
+                                    <th>Column</th>
                                 </tr>
-                            {% endfor %}
+                            
                         </thead>
                         <tbody>
-                            {% for table_col, table_row in table_rows %}
+                            
                              <tr>
-                                <td>{{ table_row_tuple.table_col }}</td>
+                                <td>Row</td>
                              </tr>
-                            {% endfor %}
+                            
                         </tbody>
                     </table>
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -50,7 +49,7 @@
 
 {% block script %}
     <script id="my-table-ids" type="application/json">
-        {{ form_dict.keys()|tojson|safe }}
+        {{ form_dict.keys()|list|tojson|safe }}
     </script>
 
     <script>
@@ -64,6 +63,26 @@
         }
 
         function openTab(evt, containerId) {
+            console.log("Inside");
+            fetch('/forms_report', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'form_id': containerId
+                })
+            })
+            .then(response=>response.json())
+            .then(data => {
+                if(data.success) {
+                    window.location.href = '/forms_report';
+                } else {
+                    alert("Wrong table name: " + data.error);
+                }
+            })
+            .catch(error => console.error('Error during fetching data: ', error));
+
             document.querySelectorAll(".tab-content").forEach(tab => {
                 tab.style.display = ""; // clear inline style
                 tab.classList.remove("active");
