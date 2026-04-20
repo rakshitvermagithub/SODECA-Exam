@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Faculty List
+{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block main %}
+    {% include "message.html" %}]
+    <div class="container ms-5 mt-4 mb-3">
+
+        <div class=" row g-3">
+            <!-- ye left wale section ka code hai  -->
+            <div class="col-12 col-md-7">
+                <ul class="nav nav-tabs" role="tablist">
+                    {% for form_id, form_name in form_dict.items() %}
+                        {% if loop.first %}
+                        <li><button class="nav-link active" id="{{ form_id }}" onclick="openTab(event, '{{ form_id }}')">{{ form_name }}</button></li>
+                        {% else %}
+                        <li><button class="nav-link" id="{{ form_id }}" onclick="openTab(event, '{{ form_id }}')">{{ form_name }}</button></li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                {% for table_id, table in tables.items() %}
+                <div class="tab-content tab-hidden table-responsive pt-2" id="{{ table_id }}">
+                    <table class = "table table-hover table-striped mt-3" id="{{ table_id }}">
+                        <thead class = "table-dark">
+                            {% for table_column, table_rows in table %}
+                                <tr>
+                                    <th>{{ table_column['field_label'] }}</th>
+                                </tr>
+                            {% endfor %}
+                        </thead>
+                        <tbody>
+                            {% for table_col, table_row in table_rows %}
+                             <tr>
+                                <td>{{ table_row_tuple.table_col }}</td>
+                             </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script id="my-table-ids" type="application/json">
+        {{ form_dict.keys()|tojson|safe }}
+    </script>
+
+    <script>
+        const ids = JSON.parse(document.getElementById('my-table-ids').textContent);
+        for (let i = 0; i < ids.length; ++i) {
+            new DataTable(`#${ids[i]}`, {
+                paging: false,
+                scrollY: '260px',
+                scrollX: true
+            });
+        }
+
+        function openTab(evt, containerId) {
+            document.querySelectorAll(".tab-content").forEach(tab => {
+                tab.style.display = ""; // clear inline style
+                tab.classList.remove("active");
+                tab.classList.add("tab-hidden");
+            });
+
+            document.querySelectorAll(".nav-link").forEach(btn => {
+                btn.classList.remove("active");
+            });
+
+            const activeContainer = document.getElementById(`fn_${containerId}`);
+            activeContainer.classList.remove("tab-hidden");
+            activeContainer.classList.add("active");
+            evt.currentTarget.classList.add("active");
+
+            const downloadButton = document.querySelector('[id^="download-button"]');
+            downloadButton.disabled = true;
+            downloadButton.id = 'download-button-'+containerId;
+        }
+    </script>
+{% endblock %}
