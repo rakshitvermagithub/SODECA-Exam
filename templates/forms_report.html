@@ -5,15 +5,31 @@
 {% endblock %}
 
 {% block css %}
+    <style>
+        th, td {
+          /* The "no-wrap" magic */
+          white-space: nowrap;
+        }
+        label {
+            margin-left: 0.25rem;
+        }
+        .form-check-input {
+            cursor: pointer;
+        }
+        .nav-link.active {
+            background-color: #3498db !important;
+            color: #ffffff !important;
+        }
+    </style>
 {% endblock %}
 
 {% block main %}
-    {% include "message.html" %}]
+    {% include "message.html" %}
     <div class="container ms-5 mt-4 mb-3">
 
-        <div class=" row g-3">
+        <div class="row g-3">
             <!-- ye left wale section ka code hai  -->
-            <div class="col-12 col-md-7">
+            <div class="col-12 col-md-12">
                 <ul class="nav nav-tabs" role="tablist">
                     {% for form_id, form_name in form_dict.items() %}
                         {% if loop.first %}
@@ -24,23 +40,121 @@
                     {% endfor %}
                 </ul>
                 
-                <div class="tab-content tab-hidden table-responsive pt-2" id="{{ table_id }}">
-                    <table class = "table table-hover table-striped mt-3" id="{{ table_id }}">
+                <div class="table-responsive pt-2" id="dynamic_table">
+                    <table class = "table table-hover table-striped mt-3" id="tb_blood_donor">
                         <thead class = "table-dark">
-                            
                                 <tr>
-                                    <th>Column</th>
+                                    <th>Entry ID</th>
+                                    <th>Student ID</th>
+                                    <th>Event Title</th>
+                                    <th>From Date</th>
+                                    <th>To Date</th>
+                                    <th>Organizer</th>
+                                    <th>Venue</th>
+                                    <th>Certificate</th>
+                                    <th>Google_file_id</th>
+                                    <th>Status</th>
+                                    <th>Submitted At</th>
                                 </tr>
-                            
+
                         </thead>
                         <tbody>
-                            
+                            {% for row_val in rows %}
                              <tr>
-                                <td>Row</td>
+                                <td>{{ row_val['entry_id'] }}</td>
+                                <td>{{ row_val['student_id'] }}</td>
+                                <td>{{ row_val['event_title'] }}</td>
+                                <td>{{ row_val['from_date'] }}</td>
+                                <td>{{ row_val['to_date'] }}</td>
+                                <td>{{ row_val['organizer'] }}</td>
+                                <td>{{ row_val['venue'] }}</td>
+                                <td>{{ row_val['certificate'] }}</td>
+                                <td>{{ row_val['google_file_id'] }}</td>
+                                <td>{{ row_val['status'] }}</td>
+                                <td>{{ row_val['submitted_at'] }}</td>
                              </tr>
-                            
+                            {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                <div class="d-flex justify-content-center mx-3">
+                    <div class="text-center">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#downloadData">Download</button>
+                    </div>
+                </div>
+                <!-- Download Modal Begins -->
+                <div class="modal fade" id="downloadData">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form action="/download/downloadFormData" id="donwload-form" method="POST">
+                                <!-- Modal Header -->
+                                <div class="modal-header" style="background-color: #6c757d">
+                                    <h4 class="modal-title text-white">Download Selected Forms Data</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <!-- Modal body -->
+                                <div class="modal-body">
+                                    <h5 class="text-primary">Select the Forms to dowload</h5>
+                                    <div class="row ms-1">
+                                        <div class="col-sm-12 col-12">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input group-required" id="radio" name="optradio-all" value="all">
+                                                <label class="form-check-label" for="radio">Select All</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input group-required" id="radio1" name="optradio" value="blood_donor">
+                                                <label class="form-check-label" for="radio1">Blood Donor</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio2" name="optradio" value="part_in_comp">
+                                                <label class="form-check-label" for="radio2">Participation in Competition/Contest/ Activity</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio3" name="optradio" value="part_in_work">
+                                                <label class="form-check-label" for="radio3">Workshop/Seminar/ Webinar/Conference Attended</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio4" name="optradio" value="expert_lecture">
+                                                <label class="form-check-label" for="radio4">Expert Lecture Attended</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio5" name="optradio" value="event_organized">
+                                                <label class="form-check-label" for="radio5">Organized an Event</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio6" name="optradio" value="winner_achievement">
+                                                <label class="form-check-label" for="radio6">Winner/Award/ Other Achievement</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio7" name="optradio" value="internship_stipend">
+                                                <label class="form-check-label" for="radio7">Internship/Training (Only with Stipend) before Placement</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio8" name="optradio" value="paper_presented">
+                                                <label class="form-check-label" for="radio8">Paper Presented in Conference</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio9" name="optradio" value="financial_grant">
+                                                <label class="form-check-label" for="radio9">Financial Grant Received</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="radio10" name="optradio" value="online_course">
+                                                <label class="form-check-label" for="radio10">Coursera / edX Certification</label>
+                                            </div>
+                                        </div>
+                                        <div class="invalid-feedback">Please select at least one option.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Modal footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class = "btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-success" data-bs-dismiss="modal">Download Excel File</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -48,59 +162,24 @@
 {% endblock %}
 
 {% block script %}
+    <!-- Try to avoid this sending all ids and rendering all table at once. -->
     <script id="my-table-ids" type="application/json">
         {{ form_dict.keys()|list|tojson|safe }}
     </script>
-
     <script>
-        const ids = JSON.parse(document.getElementById('my-table-ids').textContent);
-        for (let i = 0; i < ids.length; ++i) {
-            new DataTable(`#${ids[i]}`, {
-                paging: false,
-                scrollY: '260px',
-                scrollX: true
+        const selectAllUI = document.getElementById('radio');
+        const allChildCheckboxes = document.querySelectorAll('input[name="optradio"]');
+        selectAllUI.addEventListener('change', function () {
+            allChildCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllUI.checked;
             });
-        }
-
-        function openTab(evt, containerId) {
-            console.log("Inside");
-            fetch('/forms_report', {
-                method: 'POST',
-                headers: {
-                    'Content-type': 'application/json',
-                },
-                body: JSON.stringify({
-                    'form_id': containerId
-                })
+        });
+        allChildCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                if(!checkbox.checked) selectAllUI.checked = false;
             })
-            .then(response=>response.json())
-            .then(data => {
-                if(data.success) {
-                    window.location.href = '/forms_report';
-                } else {
-                    alert("Wrong table name: " + data.error);
-                }
-            })
-            .catch(error => console.error('Error during fetching data: ', error));
+        })
 
-            document.querySelectorAll(".tab-content").forEach(tab => {
-                tab.style.display = ""; // clear inline style
-                tab.classList.remove("active");
-                tab.classList.add("tab-hidden");
-            });
-
-            document.querySelectorAll(".nav-link").forEach(btn => {
-                btn.classList.remove("active");
-            });
-
-            const activeContainer = document.getElementById(`fn_${containerId}`);
-            activeContainer.classList.remove("tab-hidden");
-            activeContainer.classList.add("active");
-            evt.currentTarget.classList.add("active");
-
-            const downloadButton = document.querySelector('[id^="download-button"]');
-            downloadButton.disabled = true;
-            downloadButton.id = 'download-button-'+containerId;
-        }
     </script>
+    <script src="/static/dynamic_form_rendering.js"></script>
 {% endblock %}

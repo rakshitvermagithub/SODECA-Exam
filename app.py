@@ -1,10 +1,10 @@
 import io
-import secrets
-import string
 
 from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
 from collections import defaultdict
+
+from backend.downloadData import download_bp
 from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
@@ -25,11 +25,12 @@ import re
 import smtplib
 import sys
 import pandas as pd
-import json
 
 app = Flask(__name__)
 app.config.from_object(Config)
 Session(app)
+
+app.register_blueprint(download_bp, url_prefix='/download')
 
 app.secret_key = app.config["SECRET_KEY"]
 
@@ -1280,10 +1281,8 @@ for form in FORM_DEFINITIONS:
     query = f"SELECT * FROM {form}"
     form_values.append(db.execute(query))
     form_title.append(FORM_DEFINITIONS[form]["title"])
-    form_label.append(FORM_DEFINITIONS[form]["fields"])
 
 # print("Form Values looks like -> ", form_values[2])
-form_col = form_values[2][0].keys()
 
 # form name and title dictionary
 form_dict = dict(zip(form_name_list, form_title))
@@ -1941,12 +1940,15 @@ def login():
         user_role = role(session.get("user_id"))
         session["user_role"] = user_role
 
+        update_faculty_emails()
+
         # If Admin
         if user_role == 'admin':
             return redirect(url_for("super_admin"))
-        
+
         # If Faculty
         elif email in faculty_emails:
+            print("isFaculty")
             user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
@@ -3528,9 +3530,25 @@ def forms_report():
     if request.method == "POST":
         data = request.get_json()
         form_id = data.get('form_id')
-        print(form_id)
+        single_form_query = f"SELECT * FROM {form_id}"
+        result = db.execute(single_form_query)
+        column_labels = ['Entry ID', 'Student ID']
+        for x in FORM_DEFINITIONS[form_id]["fields"]:
+            column_labels.append(x["field_label"])
+        column_labels.extend(['Google_file_id','Status','Submitted At'])
+
+        sql_cols = ['entry_id','student_id']
+        for col in FORM_DEFINITIONS[form_id]["fields"]:
+            sql_cols.append(col["field_name"])
+        sql_cols.extend(['google_file_id','status','submitted_at'])
+        if result:
+            return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': column_labels})
+        else:
+            return jsonify({'success': False, 'message': 'No data available'})
+
     if request.method == "GET":
-        return render_template("forms_report.html", form_dict=form_dict)
+        result = db.execute(f"SELECT * FROM blood_donor")
+        return render_template("forms_report.html", form_dict=form_dict, rows=result)
 
 if __name__ == '__main__':
 
