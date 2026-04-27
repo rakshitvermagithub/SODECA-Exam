@@ -3531,7 +3531,9 @@ def forms_report():
         data = request.get_json()
         form_id = data.get('form_id')
         single_form_query = f"SELECT * FROM {form_id}"
+        
         result = db.execute(single_form_query)
+
         column_labels = ['Entry ID', 'Student ID']
         for x in FORM_DEFINITIONS[form_id]["fields"]:
             column_labels.append(x["field_label"])

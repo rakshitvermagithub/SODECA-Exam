@@ -26,6 +26,10 @@ download_bp = Blueprint('download', __name__)
 def downloadFormData():
     if request.method == "POST":
         selected_forms = request.form.getlist("optradio")
+        if not selected_forms:
+            flash("Please select atleast one form to download.", "danger")
+            return redirect(url_for("forms_report"))
+        
         workbook = openpyxl.Workbook()
         default_sheet = workbook.active
         workbook.remove(default_sheet)

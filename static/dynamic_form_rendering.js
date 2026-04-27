@@ -60,15 +60,15 @@ function updateTable(row_values, sql_col, column_name, table_id) {
             </tr>
         </thead>
         <tbody>
-            <tr>
     `;
     row_values.forEach((row_val) => {
+        table_html_structure += `<tr>`;
         sql_col.forEach((col_val) => {
             table_html_structure += `<td>${row_val[col_val]}</td>`;
-        })
-    })
+        });
+        table_html_structure += `</tr>`;
+    });
     table_html_structure += `
-                </tr>
             </tbody>
         </table>
     `
