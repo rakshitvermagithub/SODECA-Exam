@@ -2566,12 +2566,6 @@ def faculty_dashboard():
             batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
         else:
             batch_is = None
-
-        is_authorized = 'drive_auth_token' in session
-        print(session.get('drive_auth_token'))
-        print(is_authorized)
-        if not is_authorized:
-            flash("Drive authorization is required. Please authorize your account first", "warning")
         
         # Submission requests stats of individual student in the batch
         students = student_submission_stats(batch_details)
@@ -2626,7 +2620,6 @@ def faculty_dashboard():
                                 form_title_list=form_title,
                                 form_names=form_name_list,
                                 form_dict=form_dict,
-                                is_authorized=is_authorized,
                                 students=students,
                                 pending_entries=pending_entries,
                                 )
