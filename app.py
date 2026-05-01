@@ -1864,6 +1864,9 @@ def login_callback():
                         print(f"Unauthorized user with Email ID: {email} tried to access the portal at {get_current_ist_time()}")
                         return redirect(url_for("sodeca_home"))
 
+            if session.get("user_role") == "admin":
+                return redirect(url_for("super_admin"))
+
             if session.get("user_role") == "faculty":
                 return redirect(url_for("faculty_dashboard"))
             else:
