@@ -109,7 +109,7 @@ function openTab(evt, containerId) {
         const spinnerContainer = document.getElementById(`tb_${targetContainerId}`)
         spinnerContainer.innerHTML = loadingTableStructure;
     }
-    fetch('/forms_report', {
+    fetch('/batch_report', {
         method: 'POST',
         headers: {
             'Content-type': 'application/json',

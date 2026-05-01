@@ -2618,8 +2618,8 @@ def faculty_dashboard():
                                 )
 
 
-@app.route("/forms_report", methods=["GET","POST"])
-def forms_report():
+@app.route("/batch_report", methods=["GET","POST"])
+def batch_report():
     if request.method == "POST":
         data = request.get_json()
         form_id = data.get('form_id')
@@ -2651,7 +2651,7 @@ def forms_report():
                             JOIN student_details as s 
                             ON f.student_id = s.student_user_id""")
                 
-        return render_template("forms_report.html", form_dict=form_dict, rows=result)
+        return render_template("batch_report.html", form_dict=form_dict, rows=result)
 
 @app.route("/review_student", methods=["GET"])
 @login_required
