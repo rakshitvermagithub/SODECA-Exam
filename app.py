@@ -1274,20 +1274,13 @@ form_title = []
 form_values = []
 form_label = []
 for form in FORM_DEFINITIONS:
-    # form_values = [
-    #     ({"user_id":1, "name":"jdoe", "email":"jane@example.com"}),
-    #     ({"user_id":2, "name":"asmith", "email":"alex@example.com"})
-    # ]
+
     query = f"SELECT * FROM {form}"
     form_values.append(db.execute(query))
     form_title.append(FORM_DEFINITIONS[form]["title"])
 
-# print("Form Values looks like -> ", form_values[2])
-
 # form name and title dictionary
 form_dict = dict(zip(form_name_list, form_title))
-# field_name and field_label
-# form_dict_with_values = dict(zip(form_name_list, dict(zip(form_label, zip(form_col,form_values)))))
 
 # Initialise table to store user login details
 db.execute("""
@@ -3523,26 +3516,34 @@ def forms_report():
     if request.method == "POST":
         data = request.get_json()
         form_id = data.get('form_id')
-        single_form_query = f"SELECT * FROM {form_id}"
         
-        result = db.execute(single_form_query)
+        result = db.execute(f"""SELECT * FROM {form_id} as f
+                            JOIN student_details as s 
+                            ON f.student_id = s.student_user_id""")
 
-        column_labels = ['Entry ID', 'Student ID']
-        for x in FORM_DEFINITIONS[form_id]["fields"]:
-            column_labels.append(x["field_label"])
-        column_labels.extend(['Google_file_id','Status','Submitted At'])
+        col_labels = ['Entry ID', 'Student ID', 'Univ. Roll Num.', 'Student Name', 
+                        'Branch', 'Sem.', 'Section', 'Group', 'Batch Counselor']
+        sql_cols = ['entry_id', 'student_id', 'university_roll_no', 'student_name', 
+                    'branch', 'semester', 'section', 'class_group', 'batch_counselor']
 
-        sql_cols = ['entry_id','student_id']
-        for col in FORM_DEFINITIONS[form_id]["fields"]:
-            sql_cols.append(col["field_name"])
+        for field in FORM_DEFINITIONS[form_id]["fields"]:
+            col_labels.append(field["field_label"])
+            sql_cols.append(field["field_name"])
+
+        col_labels.extend(['Google_file_id','Status','Submitted At'])
         sql_cols.extend(['google_file_id','status','submitted_at'])
-        if result:
-            return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': column_labels})
-        else:
+
+        # If selected form has no entries
+        if not result:
             return jsonify({'success': False, 'message': 'No data available'})
 
+        return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': col_labels})
+
     if request.method == "GET":
-        result = db.execute(f"SELECT * FROM blood_donor")
+        result = db.execute(f"""SELECT * FROM blood_donor as f
+                            JOIN student_details as s 
+                            ON f.student_id = s.student_user_id""")
+                
         return render_template("forms_report.html", form_dict=form_dict, rows=result)
 
 if __name__ == '__main__':

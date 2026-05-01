@@ -212,8 +212,17 @@
                         <table class="table" id="tb_blood_donor">
                             <thead>
                                 <tr>
+                                    <!-- Student Info Headers -->
                                     <th>Entry ID</th>
                                     <th>Student ID</th>
+                                    <th>Univ. Roll Num.</th>
+                                    <th>Student Name</th>
+                                    <th>Branch</th>
+                                    <th>Sem.</th>
+                                    <th>Section</th>
+                                    <th>Group</th>
+                                    <th>Batch Counselor</th>
+                                    <!-- Event Info Headers -->
                                     <th>Event Title</th>
                                     <th>From Date</th>
                                     <th>To Date</th>
@@ -227,9 +236,18 @@
                             </thead>
                             <tbody>
                                 {% for row_val in rows %}
-                                 <tr>
+                                <tr>
+                                    <!-- Student Info Data -->
                                     <td>{{ row_val['entry_id'] }}</td>
                                     <td>{{ row_val['student_id'] }}</td>
+                                    <td>{{ row_val['university_roll_no'] }}</td>
+                                    <td>{{ row_val['student_name'] }}</td>
+                                    <td>{{ row_val['branch'] }}</td>
+                                    <td>{{ row_val['semester'] }}</td>
+                                    <td>{{ row_val['section'] }}</td>
+                                    <td>{{ row_val['class_group'] }}</td>
+                                    <td>{{ row_val['batch_counselor'] }}</td>
+                                    <!-- Event Info Data -->
                                     <td>{{ row_val['event_title'] }}</td>
                                     <td>{{ row_val['from_date'] }}</td>
                                     <td>{{ row_val['to_date'] }}</td>
@@ -239,7 +257,7 @@
                                     <td>{{ row_val['google_file_id'] }}</td>
                                     <td>{{ row_val['status'] }}</td>
                                     <td>{{ row_val['submitted_at'] }}</td>
-                                 </tr>
+                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
