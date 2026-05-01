@@ -1,6 +1,7 @@
 from io import BytesIO
 
 import openpyxl
+from openpyxl.styles import Alignment, Font
 import os
 from flask_session import Session
 from cs50 import SQL
@@ -103,12 +104,37 @@ def downloadFormData():
                 for key, val in row.items():
                     if key == 'google_file_id' and val != 'pending':
                         # Wrap it in Excel's native hyperlink formula
-                        formula = f'=HYPERLINK("https://drive.google.com/file/d/{val}/view", "Drive Link")'
+                        formula = f'=HYPERLINK("https://drive.google.com/file/d/{val}/view", "Proof")'
                         row_data.append(formula)
                     else:
                         row_data.append(val)
 
                 sheet.append(row_data)
+
+            # Create the alignment style (wrap text, and align to the top of the cell)
+            wrap_alignment = Alignment(wrap_text=True, vertical='top')
+
+            # Create the classic Excel hyperlink style (Blue and Underlined)
+            link_font = Font(color="0563C1", underline="single")
+
+            # Loop through every column in the sheet
+            for col in sheet.columns:
+                column_letter = col[0].column_letter 
+                header_cell = col[0] # The first cell in any column is always the header
+                
+                # Set the dynamic width based on the header's text length
+                if header_cell.value:
+                    header_length = len(str(header_cell.value))
+                    # We add +2 as a tiny padding buffer so the text doesn't touch the exact pixel edge
+                    sheet.column_dimensions[column_letter].width = header_length + 5 
+                
+                for cell in col:
+                    # Apply the text wrapping to every cell
+                    cell.alignment = wrap_alignment
+                    
+                    # Apply the blue hyperlink style to links
+                    if isinstance(cell.value, str) and cell.value.startswith('=HYPERLINK'):
+                        cell.font = link_font
 
         output = BytesIO()
         workbook.save(output)

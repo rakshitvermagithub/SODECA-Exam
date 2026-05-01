@@ -2617,6 +2617,42 @@ def faculty_dashboard():
                                 pending_entries=pending_entries,
                                 )
 
+
+@app.route("/forms_report", methods=["GET","POST"])
+def forms_report():
+    if request.method == "POST":
+        data = request.get_json()
+        form_id = data.get('form_id')
+        
+        result = db.execute(f"""SELECT * FROM {form_id} as f
+                            JOIN student_details as s 
+                            ON f.student_id = s.student_user_id""")
+
+        col_labels = ['Entry ID', 'Student ID', 'Univ. Roll Num.', 'Student Name', 
+                        'Branch', 'Sem.', 'Section', 'Group', 'Batch Counselor']
+        sql_cols = ['entry_id', 'student_id', 'university_roll_no', 'student_name', 
+                    'branch', 'semester', 'section', 'class_group', 'batch_counselor']
+
+        for field in FORM_DEFINITIONS[form_id]["fields"]:
+            col_labels.append(field["field_label"])
+            sql_cols.append(field["field_name"])
+
+        col_labels.extend(['Google_file_id','Status','Submitted At'])
+        sql_cols.extend(['google_file_id','status','submitted_at'])
+
+        # If selected form has no entries
+        if not result:
+            return jsonify({'success': False, 'message': 'No data available'})
+
+        return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': col_labels})
+
+    if request.method == "GET":
+        result = db.execute(f"""SELECT * FROM blood_donor as f
+                            JOIN student_details as s 
+                            ON f.student_id = s.student_user_id""")
+                
+        return render_template("forms_report.html", form_dict=form_dict, rows=result)
+
 @app.route("/review_student", methods=["GET"])
 @login_required
 def review_student():
@@ -3510,41 +3546,6 @@ def remove_dev():
             print(f"Error at updating dev emails: {e}")
 
         return redirect(url_for("dev_management"))
-
-@app.route("/forms_report", methods=["GET","POST"])
-def forms_report():
-    if request.method == "POST":
-        data = request.get_json()
-        form_id = data.get('form_id')
-        
-        result = db.execute(f"""SELECT * FROM {form_id} as f
-                            JOIN student_details as s 
-                            ON f.student_id = s.student_user_id""")
-
-        col_labels = ['Entry ID', 'Student ID', 'Univ. Roll Num.', 'Student Name', 
-                        'Branch', 'Sem.', 'Section', 'Group', 'Batch Counselor']
-        sql_cols = ['entry_id', 'student_id', 'university_roll_no', 'student_name', 
-                    'branch', 'semester', 'section', 'class_group', 'batch_counselor']
-
-        for field in FORM_DEFINITIONS[form_id]["fields"]:
-            col_labels.append(field["field_label"])
-            sql_cols.append(field["field_name"])
-
-        col_labels.extend(['Google_file_id','Status','Submitted At'])
-        sql_cols.extend(['google_file_id','status','submitted_at'])
-
-        # If selected form has no entries
-        if not result:
-            return jsonify({'success': False, 'message': 'No data available'})
-
-        return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': col_labels})
-
-    if request.method == "GET":
-        result = db.execute(f"""SELECT * FROM blood_donor as f
-                            JOIN student_details as s 
-                            ON f.student_id = s.student_user_id""")
-                
-        return render_template("forms_report.html", form_dict=form_dict, rows=result)
 
 if __name__ == '__main__':
 
