@@ -617,13 +617,26 @@
             
             <div class="modal-footer d-flex justify-content-between">
                 <button type="button" class="btn btn-light border fw-medium" data-bs-dismiss="modal">Close</button>
-                
+
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-modal-reject" id="btnRejectEntry"><i class="bi bi-x-lg me-1"></i> Reject</button>
-                    <button type="button" class="btn btn-modal-accept" id="btnAcceptEntry"><i class="bi bi-check-lg me-1"></i> Accept</button>
+                    <!-- Reject Button: We will attach the click event via JS -->
+                    <button type="button" class="btn btn-modal-reject" id="btnRejectEntry">
+                        <i class="bi bi-x-lg me-1"></i> Reject
+                    </button>
+                    
+                    <!-- Accept Form -->
+                    <form action="{{ url_for('upload_to_drive') }}" method="post" id="acceptForm">
+                        <input type="hidden" name="entry_id" id="acceptHiddenEntryId" value="">
+                        <input type="hidden" name="batch_str" value="{{ batch_str }}"> 
+                        <input type="hidden" name="form_name" id="acceptHiddenFormName" value="">
+                        <input type="hidden" name="filename" id="acceptHiddenFilename" value="">
+                        
+                        <button type="submit" id="btnAcceptEntry" class="btn btn-modal-accept">
+                            <i class="bi bi-check-lg me-1"></i> Accept
+                        </button>
+                    </form>
                 </div>
             </div>
-            
         </div>
     </div>
 </div>
@@ -753,12 +766,12 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     const detailsModal = document.getElementById('entryDetailsModal');
-    
+        
     if (detailsModal) {
         detailsModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const rawData = button.getAttribute('data-details');
-            const detailsObj = JSON.parse(rawData); 
+            const detailsObj = JSON.parse(rawData);
             
             const dynamicContainer = document.getElementById('dynamicModalDetails');
             dynamicContainer.innerHTML = ''; // Clear previous data
@@ -782,8 +795,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            document.getElementById('btnAcceptEntry').setAttribute('data-entry-id', detailsObj.entry_id);
-            document.getElementById('btnRejectEntry').setAttribute('data-entry-id', detailsObj.entry_id);
+            // Fill the hidden inputs for the Accept form
+            document.getElementById('acceptHiddenEntryId').value = detailsObj.entry_id;
+            document.getElementById('acceptHiddenFilename').value = detailsObj.certificate;
+            
+            // If form_name is inside the submission dict, use it. 
+            // Otherwise, grab it from the button's data-category attribute.
+            const currentFormName = detailsObj.form_name || button.getAttribute('data-category');
+            document.getElementById('acceptHiddenFormName').value = currentFormName;
+
+            // 2. Dynamically set the Reject button's onclick action
+            const rejectBtn = document.getElementById('btnRejectEntry');
+            rejectBtn.setAttribute('onclick', `openRejectionModal('${detailsObj.entry_id}', '${currentFormName}')`);
+            
+            // Optional UX enhancement: Close this Details modal if they click Reject
+            rejectBtn.onclick = function() {
+                bootstrap.Modal.getInstance(detailsModal).hide();
+                openRejectionModal(detailsObj.entry_id, currentFormName);
+            };
         });
     }
 
