@@ -2575,48 +2575,15 @@ def faculty_dashboard():
             submission_counts["accepted"] += student["accepted_count"]
             submission_counts["rejected"] += student["rejected_count"]
 
-        # Empty list to store data from each form in db
-        all_forms_data = []
-        pending_entries = []
-
-        # Get all forms available in form's definitions
-        for form in form_name_list:
-            # Get the data for different forms with BATCH SPECIFIED
-            form_data = db.execute(f"""
-                SELECT 
-                    s.*,
-                    f.*
-                FROM student_details s
-                INNER JOIN {form} f ON s.student_user_id = f.student_id
-                WHERE s.semester = ? 
-                AND s.branch = ? 
-                AND s.section = ? 
-                AND s.class_group = ? 
-                AND f.withdrawn_at IS NULL
-            """, batch_details["semester"], batch_details["branch"], batch_details["section"], batch_details["class_group"])
-
-            # Append it in list of differnet forms' with data
-            all_forms_data.append(form_data)
-            pending_count = 0
-            for row in form_data:
-                if row['status'] == 'pending':
-                    pending_count += 1
-                
-            # 4. Append the final, correct count (just the number) to your new list
-            pending_entries.append(pending_count)
-
         return render_template("faculty_dashboard.html",
                                 batch_details=batch_details,
                                 batch_is=batch_is,
                                 submission_counts=submission_counts,
-                                forms_data=all_forms_data,
                                 form_title_list=form_title,
                                 form_names=form_name_list,
                                 form_dict=form_dict,
                                 students=students,
-                                pending_entries=pending_entries,
                                 )
-
 
 @app.route("/batch_report", methods=["GET","POST"])
 def batch_report():
