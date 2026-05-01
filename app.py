@@ -2606,7 +2606,7 @@ def batch_report():
 
         
         result = db.execute(f"""SELECT * FROM {form_id} as f
-                            JOIN student_details as s 
+                            INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
                             WHERE s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
                             batch_details["branch"], batch_details["semester"],
@@ -2632,9 +2632,10 @@ def batch_report():
 
     if request.method == "GET":
         result = db.execute(f"""SELECT * FROM blood_donor as f
-                            JOIN student_details as s 
+                            INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
-                            WHERE s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
+                            WHERE f.withdrawn_at IS NULL 
+                            AND s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
                             batch_details["branch"], batch_details["semester"],
                             batch_details["section"], batch_details["class_group"])
                 

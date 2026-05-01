@@ -25,6 +25,12 @@ download_bp = Blueprint('download', __name__)
 
 @download_bp.route('/downloadFormData', methods=["POST"])
 def downloadFormData():
+    if not session.get("batch_details"):
+        flash("Batch is not assigned. Contact Admin", "danger")
+        return redirect("faculty_dashboard")
+    
+    batch_details = session.get("batch_details")
+
     if request.method == "POST":
         selected_forms = request.form.getlist("optradio")
         if not selected_forms:
@@ -88,14 +94,15 @@ def downloadFormData():
 
             # --- EXECUTE THE MERGED QUERY ---
             # INNER JOIN merges the profile and form data. 
-            # IS NULL perfectly filters out withdrawn entries.
-            query = f"""
+            # IS NULL perfectly filters out withdrawn entries.                
+            rows = db.execute(f"""
                 SELECT {select_sql}
                 FROM {form} f
                 INNER JOIN student_details s ON f.student_id = s.student_user_id
-                WHERE f.withdrawn_at IS NULL
-            """
-            rows = db.execute(query)
+                WHERE f.withdrawn_at IS NULL 
+                AND s.branch=? AND s.semester=? AND s.section=? AND class_group=?""", 
+                batch_details["branch"], batch_details["semester"],
+                batch_details["section"], batch_details["class_group"])
             
             # --- POPULATE THE EXCEL SHEET ---
             for row in rows:
