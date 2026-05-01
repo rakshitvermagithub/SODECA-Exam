@@ -280,7 +280,7 @@
             </div>
 
             <div class="row g-4 mb-4" id="studentCardsContainer">
-                
+            {% if students %}
                 {% for student in students %}
                 <div class="col-12 col-md-6 col-xl-3 student-card-col">
                     {% set student_name = student['student_name'] %}
@@ -311,7 +311,7 @@
                     </a>
                 </div>
                 {% endfor %}
-                
+            {% endif %}
             </div>
 
             <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">

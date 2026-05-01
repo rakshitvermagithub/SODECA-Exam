@@ -1799,9 +1799,9 @@ def login_callback():
             is_dev = check_dev_email(email)
 
             # Check if the email belongs to the SKIT domain
-            if not email.endswith('@skit.ac.in') and not is_dev:
-                flash("Access Denied. You must log in with a your SKIT email address.", "danger")
-                return redirect(url_for("login"))
+            # if not email.endswith('@skit.ac.in') and not is_dev:
+            #     flash("Access Denied. You must log in with a your SKIT email address.", "danger")
+            #     return redirect(url_for("login"))
 
             google_id = user_info['sub']
             first_name = user_info.get('given_name', '')
@@ -1963,7 +1963,9 @@ def login():
         
         elif session.get("user_role") == 'tester':
             return redirect(url_for('sodeca_home'))
-
+        
+        flash("Invalid username/password", "danger")
+        return url_for("login")
     else:
         return render_template("login.html")
 
@@ -2554,49 +2556,61 @@ def faculty_dashboard():
 
         if role(session.get("user_id")) != 'faculty' and role(session.get("user_id")) != 'tester':
             return "Access Denied!", 400
-                
-        if session.get("user_id"):
-            # Get batch details, assigned to faculty
-            batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
-            batch_details = batch[0]
-            batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
-        else:
-            batch_is = None
         
-        # Submission requests stats of individual student in the batch
-        students = student_submission_stats(batch_details)
-
-        # Get count of all student's pending, accepted and rejected submissions requests
+        # Initialize count of all student's pending, accepted and rejected 
+        # submissions requests from your batch
         submission_counts = {
             "pending": 0,
             "accepted": 0,
             "rejected": 0
         }
         
+        # Get batch details, assigned to faculty
+        batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
+        
+        # If batch is not assigned by admin
+        if not batch:
+            return render_template("faculty_dashboard.html",
+                                batch_is="No Batch Assgined...",
+                                submission_counts=submission_counts,
+                                students=None,
+                                )
+        batch_details = batch[0]
+        session["batch_details"] = batch_details
+        batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
+    
+        # Submission requests stats of individual student in the batch
+        students = student_submission_stats(batch_details)
         for student in students:
             submission_counts["pending"] += student["pending_count"]
             submission_counts["accepted"] += student["accepted_count"]
             submission_counts["rejected"] += student["rejected_count"]
 
         return render_template("faculty_dashboard.html",
-                                batch_details=batch_details,
                                 batch_is=batch_is,
                                 submission_counts=submission_counts,
-                                form_title_list=form_title,
-                                form_names=form_name_list,
-                                form_dict=form_dict,
                                 students=students,
                                 )
 
 @app.route("/batch_report", methods=["GET","POST"])
 def batch_report():
+    if not session.get("batch_details"):
+        flash("Batch is not assigned. Contact Admin", "danger")
+        return redirect("faculty_dashboard")
+    
+    batch_details = session.get("batch_details")
+    
     if request.method == "POST":
         data = request.get_json()
         form_id = data.get('form_id')
+
         
         result = db.execute(f"""SELECT * FROM {form_id} as f
                             JOIN student_details as s 
-                            ON f.student_id = s.student_user_id""")
+                            ON f.student_id = s.student_user_id
+                            WHERE s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
+                            batch_details["branch"], batch_details["semester"],
+                            batch_details["section"], batch_details["class_group"])
 
         col_labels = ['Entry ID', 'Student ID', 'Univ. Roll Num.', 'Student Name', 
                         'Branch', 'Sem.', 'Section', 'Group', 'Batch Counselor']
@@ -2619,7 +2633,10 @@ def batch_report():
     if request.method == "GET":
         result = db.execute(f"""SELECT * FROM blood_donor as f
                             JOIN student_details as s 
-                            ON f.student_id = s.student_user_id""")
+                            ON f.student_id = s.student_user_id
+                            WHERE s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
+                            batch_details["branch"], batch_details["semester"],
+                            batch_details["section"], batch_details["class_group"])
                 
         return render_template("batch_report.html", form_dict=form_dict, rows=result)
 
