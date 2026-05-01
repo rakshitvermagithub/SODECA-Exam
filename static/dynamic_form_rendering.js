@@ -39,6 +39,7 @@ new DataTable(`#tb_blood_donor`, {
     });
 function updateTable(row_values, sql_col, column_name, table_id) {
     const table_to_update = document.getElementById('dynamic_table');
+    
     if (table_id === 'empty-table') {
         table_to_update.innerHTML = noDataAvailableTableStructure;
         new DataTable(`#empty_table`, {
@@ -48,31 +49,52 @@ function updateTable(row_values, sql_col, column_name, table_id) {
         });
         return;
     }
+    
     let table_html_structure = `
-        <table class = "table table-hover table-striped mt-3" id="tb_${table_id}">
-            <thead class = "table-dark">
+        <table class="table table-hover table-striped mt-3" id="tb_${table_id}">
+            <thead class="table-dark">
                 <tr>
     `;
+    
     column_name.forEach((col) => {
         table_html_structure += `<th>${col}</th>`;
-    })
+    });
+    
     table_html_structure += `
-            </tr>
-        </thead>
-        <tbody>
+                </tr>
+            </thead>
+            <tbody>
     `;
+    
     row_values.forEach((row_val) => {
         table_html_structure += `<tr>`;
+        
         sql_col.forEach((col_val) => {
-            table_html_structure += `<td>${row_val[col_val]}</td>`;
+            let cell_data = row_val[col_val];
+            
+            // Check if the current column is the Google File ID
+            if (col_val === 'google_file_id' && cell_data != 'pending') {
+                // Wrap the ID in a clickable Google Drive link
+                cell_data = `<a href="https://drive.google.com/file/d/${cell_data}/view" target="_blank" 
+                class="text-primary">Drive link</a>`;
+            } else if (cell_data === null || cell_data === undefined) {
+                // Handle null/undefined values to prevent 'null' text in the table
+                cell_data = 'Pending';
+            }
+            
+            table_html_structure += `<td>${cell_data}</td>`;
         });
+        
         table_html_structure += `</tr>`;
     });
+    
     table_html_structure += `
             </tbody>
         </table>
-    `
+    `;
+    
     table_to_update.innerHTML = table_html_structure;
+    
     new DataTable(`#tb_${table_id}`, {
         paging: false,
         scrollY: '260px',
