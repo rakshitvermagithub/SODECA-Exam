@@ -1,15 +1,15 @@
 import io
-import secrets
-import string
 
 from authlib.integrations.flask_client import OAuth
 from cs50 import SQL
 from collections import defaultdict
+
+from backend.downloadData import download_bp
 from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
-    make_response
+    make_response, current_app
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -29,6 +29,8 @@ import pandas as pd
 app = Flask(__name__)
 app.config.from_object(Config)
 Session(app)
+
+app.register_blueprint(download_bp, url_prefix='/download')
 
 app.secret_key = app.config["SECRET_KEY"]
 
@@ -1265,11 +1267,16 @@ FORM_DEFINITIONS = {
     }
 }
 
-# List of technical names of forms defined
+# List of technical names of forms defined(SQL Names)
 form_name_list = list(FORM_DEFINITIONS.keys())
 # List of title names of forms defined
 form_title = []
+form_values = []
+form_label = []
 for form in FORM_DEFINITIONS:
+
+    query = f"SELECT * FROM {form}"
+    form_values.append(db.execute(query))
     form_title.append(FORM_DEFINITIONS[form]["title"])
 
 # form name and title dictionary
@@ -1926,12 +1933,15 @@ def login():
         user_role = role(session.get("user_id"))
         session["user_role"] = user_role
 
+        update_faculty_emails()
+
         # If Admin
         if user_role == 'admin':
             return redirect(url_for("super_admin"))
-        
+
         # If Faculty
         elif email in faculty_emails:
+            print("isFaculty")
             user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
@@ -2174,9 +2184,8 @@ def verify_student_details():
         
         # If details are already available
         if not student_details_row:
-            flash("You cannot proceed with empty student details.", "danger")
-            flash("Go to Profile tab and submit your details", "warning")
-            return redirect(url_for('sodeca_forms'))
+            flash("Please submit student details before proceeding.", "warning")
+            return redirect(url_for('student_details'))
 
         # Show the page with filled details
         return render_template("verify_student_details.html", details=student_details_row[0])
@@ -2464,6 +2473,75 @@ def withdraw_entry():
         flash(f"An unexpected error occured, please contact Admin", "danger")
     return redirect(url_for("your_submissions"))
 
+def student_submission_stats(batch_details):
+    """
+    Fetches ALL students for the batch with 'Smart Sorting' applied.
+    Data is passed to the frontend for client-side JavaScript pagination
+    and Python-side Grand Total calculation.
+    """
+    
+    # 1. Build the Activity Stream
+    subqueries = []
+    for form in form_name_list:
+        subqueries.append(f"""
+            SELECT student_id, status, submitted_at 
+            FROM {form} 
+            WHERE withdrawn_at IS NULL
+        """)
+    
+    master_union = " UNION ALL ".join(subqueries)
+
+    # 2. Build the Master Query WITHOUT Limits
+    final_sql = f"""
+        WITH FormActivities AS (
+            {master_union}
+        ),
+        StudentFormCounts AS (
+            SELECT 
+                student_id,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) AS accepted_count,
+                SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
+                MAX(CASE WHEN status = 'pending' THEN submitted_at ELSE NULL END) as latest_pending_date
+            FROM FormActivities
+            GROUP BY student_id
+        )
+        SELECT 
+            s.student_user_id,
+            s.student_name,
+            s.university_roll_no,
+            COALESCE(c.pending_count, 0) AS pending_count,
+            COALESCE(c.accepted_count, 0) AS accepted_count,
+            COALESCE(c.rejected_count, 0) AS rejected_count
+        FROM student_details s
+        LEFT JOIN StudentFormCounts c ON s.student_user_id = c.student_id
+        WHERE s.semester = ? 
+          AND s.branch = ? 
+          AND s.section = ? 
+          AND s.class_group = ?
+        ORDER BY 
+            CASE WHEN COALESCE(c.pending_count, 0) > 0 THEN 0 ELSE 1 END ASC,
+            c.latest_pending_date DESC,
+            s.university_roll_no ASC
+    """
+
+    # Base parameters for the batch
+    base_params = [
+        batch_details["semester"], 
+        batch_details["branch"], 
+        batch_details["section"], 
+        batch_details["class_group"]
+    ]
+
+    try:
+        # Execute the main query and return the full list of students
+        students = db.execute(final_sql, *base_params)
+        return students
+        
+    except Exception as e:
+        print(f"Error fetching student stats: {e}", file=sys.stderr)
+        return []
+    
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
 @app.route("/faculty_dashboard", methods=["GET"])
@@ -2481,53 +2559,140 @@ def faculty_dashboard():
             batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
         else:
             batch_is = None
+        
+        # Submission requests stats of individual student in the batch
+        students = student_submission_stats(batch_details)
 
-        is_authorized = 'drive_auth_token' in session
-        print(session.get('drive_auth_token'))
-        print(is_authorized)
-        if not is_authorized:
-            flash("Drive authorization is required. Please authorize your account first", "warning")
+        # Get count of all student's pending, accepted and rejected submissions requests
+        submission_counts = {
+            "pending": 0,
+            "accepted": 0,
+            "rejected": 0
+        }
+        
+        for student in students:
+            submission_counts["pending"] += student["pending_count"]
+            submission_counts["accepted"] += student["accepted_count"]
+            submission_counts["rejected"] += student["rejected_count"]
 
-        # Empty list to store data from each form in db
-        all_forms_data = []
-        pending_entries = []
-
-        # Get all forms available in form's definitions
-        for form in form_name_list:
-            # Get the data for different forms with BATCH SPECIFIED
-            form_data = db.execute(f"""
-                SELECT 
-                    s.*,
-                    f.*
-                FROM student_details s
-                INNER JOIN {form} f ON s.student_user_id = f.student_id
-                WHERE s.semester = ? 
-                AND s.branch = ? 
-                AND s.section = ? 
-                AND s.class_group = ? 
-                AND f.withdrawn_at IS NULL
-            """, batch_details["semester"], batch_details["branch"], batch_details["section"], batch_details["class_group"])
-
-            # Append it in list of differnet forms' with data
-            all_forms_data.append(form_data)
-            pending_count = 0
-            for row in form_data:
-                if row['status'] == 'pending':
-                    pending_count += 1
-                
-            # 4. Append the final, correct count (just the number) to your new list
-            pending_entries.append(pending_count)
-
-        return render_template("faculty_dashboard.html", 
-                                forms_data=all_forms_data,
+        return render_template("faculty_dashboard.html",
+                                batch_details=batch_details,
+                                batch_is=batch_is,
+                                submission_counts=submission_counts,
                                 form_title_list=form_title,
                                 form_names=form_name_list,
                                 form_dict=form_dict,
-                                is_authorized=is_authorized,
-                                batch_details=batch_details,
-                                pending_entries=pending_entries,
-                                batch_is=batch_is
+                                students=students,
                                 )
+
+@app.route("/batch_report", methods=["GET","POST"])
+def batch_report():
+    if request.method == "POST":
+        data = request.get_json()
+        form_id = data.get('form_id')
+        
+        result = db.execute(f"""SELECT * FROM {form_id} as f
+                            JOIN student_details as s 
+                            ON f.student_id = s.student_user_id""")
+
+        col_labels = ['Entry ID', 'Student ID', 'Univ. Roll Num.', 'Student Name', 
+                        'Branch', 'Sem.', 'Section', 'Group', 'Batch Counselor']
+        sql_cols = ['entry_id', 'student_id', 'university_roll_no', 'student_name', 
+                    'branch', 'semester', 'section', 'class_group', 'batch_counselor']
+
+        for field in FORM_DEFINITIONS[form_id]["fields"]:
+            col_labels.append(field["field_label"])
+            sql_cols.append(field["field_name"])
+
+        col_labels.extend(['Google_file_id','Status','Submitted At'])
+        sql_cols.extend(['google_file_id','status','submitted_at'])
+
+        # If selected form has no entries
+        if not result:
+            return jsonify({'success': False, 'message': 'No data available'})
+
+        return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': col_labels})
+
+    if request.method == "GET":
+        result = db.execute(f"""SELECT * FROM blood_donor as f
+                            JOIN student_details as s 
+                            ON f.student_id = s.student_user_id""")
+                
+        return render_template("batch_report.html", form_dict=form_dict, rows=result)
+
+@app.route("/review_student", methods=["GET"])
+@login_required
+def review_student():
+    student_user_id = request.args.get("id")
+
+    if not student_user_id:
+        flash("Invalid Student ID", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
+    # 2. The Micro-Query: Fetch Name, Roll, Sem, Section, Batch.
+    student_profile_data = db.execute(
+        "SELECT * FROM student_details WHERE student_user_id = ?", 
+        student_user_id
+    )
+    
+    if not student_profile_data:
+        flash("Student not found in database.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+        
+    student_profile = student_profile_data[0]
+    student_branch = student_profile['branch']
+    student_sem = student_profile['semester']
+    student_section = student_profile['section']
+    student_class_group = student_profile['class_group']
+
+    batch_str = f"{student_branch}_{student_sem}_{student_section}_{student_class_group}"
+
+    # Fetch all form submissions without any JOINs
+    submissions = []
+    
+    for form in form_name_list:
+        try:
+            # Simple, direct index lookup. Blazingly fast.
+            # We fetch f.* as requested to get all specific details.
+            form_data = db.execute(f"""
+                SELECT *,
+                '{form}' as form_name 
+                FROM {form}
+                WHERE student_id = ? 
+                AND withdrawn_at IS NULL
+                ORDER BY submitted_at DESC
+            """, student_user_id)
+            
+            # Only add to our dictionary if they actually have submissions for this form
+            if form_data:
+                submissions.extend(form_data)
+
+        except Exception as e:
+            print(f"Error fetching data from {form} for student {student_user_id}: {e}", file=sys.stderr)
+
+    # Creating data for summary table
+    summary_dict = {}
+    total_dict = {'pending': 0, 'accepted': 0, 'rejected': 0}
+
+    for submission in submissions:
+
+        form_name = submission["form_name"]
+        status = submission['status']
+
+        if not summary_dict.get(form_name):
+            summary_dict[form_name] = {'pending': 0, 'accepted': 0, 'rejected': 0}
+        
+        summary_dict[form_name][status] += 1
+        total_dict[status] += 1
+
+    return render_template("review_student.html", 
+                            form_dict=form_dict,                   
+                            summary_dict=summary_dict, 
+                            submissions=submissions, 
+                            total_dict=total_dict,
+                            student_profile=student_profile,
+                            batch_str=batch_str
+                            )
 
 @app.route('/view_submission/<path:filename>') 
 @login_required
@@ -2567,13 +2732,9 @@ def upload_to_drive():
         flash(f"Error: Local file not found at {full_path}", "danger")
         return redirect(request.referrer)
 
-    sem = request.form.get("semester")
-    branch = request.form.get("branch")
-    section = request.form.get("section")
-    group = request.form.get("class_group")
-    form_name = request.form.get("form_name")
-    
-    to_search_id = f"{branch}_{sem}_{section}_{group}_{form_name}"
+    batch_str = request.form.get("batch_str")
+
+    to_search_id = f"{batch_str}_{form_name}"
     drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
     
     if drive_folder:
@@ -2586,21 +2747,38 @@ def upload_to_drive():
         return redirect(request.referrer)
 
     try:
-        creds_data = token.copy()
-        if 'access_token' in creds_data:
-            creds_data['token'] = creds_data.pop('access_token')
-        creds_data.pop('scope', None)
-        # creds_data.pop('userinfo', None)
-        creds_data.pop('expires_at', None)
-        creds_data.pop('expires_in', None)
-        creds_data.pop('token_type', None)
-        creds_data.pop('refresh_token_expires_in', None)
+        # 1. Safely extract the tokens from your session dictionary
+        access_token = token.get('access_token') or token.get('token')
+        refresh_token = token.get('refresh_token')
 
-        credentials = Credentials(**creds_data)
+        # 2. Safely grab the Client ID and Secret directly from Flask config
+        # (This prevents scope issues where global variables become None)
+        
+        client_id = current_app.config.get("GOOGLE_CLIENT_ID")
+        client_secret = current_app.config.get("GOOGLE_CLIENT_SECRET")
+        
+        # Quick debug print to ensure they aren't blank
+        print(f"DEBUG: Client ID loaded: {bool(client_id)}")
+        print(f"DEBUG: Client Secret loaded: {bool(client_secret)}")
+
+        # 3. Build the Credentials object
+        credentials = Credentials(
+            token=access_token,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id, 
+            client_secret=client_secret
+        )
+
+        import socket
+        socket.setdefaulttimeout(300)
+
         drive_service = build('drive', 'v3', credentials=credentials)
 
         file_metadata = {'name': filename, 'parents': [drive_folder_id]}
-        media = MediaFileUpload(full_path, resumable=True)
+        
+        # Resumable=False fixes the timeouts
+        media = MediaFileUpload(full_path, resumable=False)
 
         uploaded_file = drive_service.files().create(
             body=file_metadata, media_body=media, fields='id,name'
@@ -2611,7 +2789,13 @@ def upload_to_drive():
         sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
         db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
 
-        flash(f"Successfully uploaded file '{uploaded_file.get('name')}' (ID: {google_file_id})", "success")
+        # 3. CRITICAL: If the token was refreshed during the upload, save the new one back to the session!
+        if credentials.token != access_token:
+            token['access_token'] = credentials.token
+            session['drive_auth_token'] = token
+            session.modified = True
+
+        flash(f"Successfully uploaded file '{uploaded_file.get('name')}'", "success")
 
     except HttpError as error:
         # This error happens if the token is expired, invalid, or revoked.

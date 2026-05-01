@@ -1,0 +1,875 @@
+{% extends "layout.html" %}
+
+{% block title %}Student Submissions{% endblock %}
+
+{% block css %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* --- General Layout --- */
+    .dashboard-wrapper {
+        background-color: #f0f2f5; 
+        font-family: 'Poppins', sans-serif;
+        padding: 3rem 0;
+        min-height: calc(100vh - 64px);
+    }
+
+    /* --- Profile Section --- */
+    .profile-name {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 0;
+        line-height: 1.2;
+    }
+    .profile-id {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1c00a8; 
+        margin-bottom: 0.25rem;
+    }
+    .profile-email {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #1978cb;
+    }
+    .profile-stat {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* --- Summary Table --- */
+    .summary-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+    .summary-table-container {
+        /* Removes hardcoded max-height and lets Flexbox match the left column's height */
+        flex-grow: 1; 
+        min-height: 220px; /* Guarantees a nice minimum height when empty */
+        overflow-y: auto;
+        overflow-x: auto; 
+        width: 100%;
+        border: 1px solid #ced4da;
+        border-radius: 0.5rem;
+        background-color: #ffffff;
+    }
+    
+    /* Custom thin scrollbar for the summary table */
+    .summary-table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+    .summary-table-container::-webkit-scrollbar-track { background: transparent; }
+    .summary-table-container::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 10px; }
+
+    .summary-table {
+        width: 100%;
+        /* 'Separate' allows the outer container's border-radius to clip the table properly */
+        border-collapse: separate; 
+        border-spacing: 0;
+    }
+
+    .summary-table th {
+        font-weight: 500;
+        color: #1a1a1a;
+        padding: 0.8rem 1rem;
+        background-color: #ffffff;
+        /* Removed column dividers, kept solid bottom divider */
+        border: none;
+        border-bottom: 1.5px solid #1a1a1a;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .summary-table td {
+        /* Short height padding */
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        color: #333;
+        /* Lighter column and row dividers */
+        border-bottom: 1px solid #e9ecef;
+        border-right: 1px solid #e9ecef;
+    }
+
+    /* --- Summary Table Hover Effect --- */
+    .summary-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    .summary-table tbody tr:hover {
+        background-color: #f4f5f7; /* A very subtle, soft grey */
+    }
+
+    /* Clean up the inner borders so they don't double up with the outer wrapper border */
+    .summary-table th:last-child,
+    .summary-table td:last-child {
+        border-right: none;
+    }
+    .summary-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* --- Submissions Section Header --- */
+    .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1c00a8;
+        margin-bottom: 0;
+    }
+
+    .custom-search {
+        border: 1px solid #1a1a1a;
+        border-radius: 0.3rem;
+        padding: 0.3rem 0.8rem;
+        display: flex;
+        align-items: center;
+        width: 280px;
+        background-color: #fff;
+    }
+    .custom-search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        width: 100%;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.95rem;
+    }
+    .custom-search i {
+        color: #1a1a1a;
+        margin-right: 0.5rem;
+    }
+
+/* --- NEW OUTER WRAPPER --- */
+    .submissions-wrapper {
+        background-color: #ffffff;
+        border: 1px solid #1a1a1a; 
+        border-radius: 0.5rem;
+        overflow: hidden; /* Keeps the rounded corners clean */
+    }
+
+    /* --- STANDARD ATTACHED SUBMISSIONS TABLE --- */
+    .table-responsive-custom {
+        max-height: 450px; /* Fixed height so the table never stretches */
+        overflow-y: auto;
+        overflow-x: auto; 
+        /* Borders and background moved to the outer wrapper */
+    }
+
+    .submissions-table {
+        width: 100%;
+        border-collapse: collapse; 
+        min-width: 750px; 
+    }
+    
+    /* Header (Sticky properties removed) */
+    .submissions-table th {
+        background-color: #dce3f5; 
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+        color: #1a1a1a;
+        border-bottom: 1px solid #1a1a1a; 
+        white-space: nowrap;
+        position: sticky; top: 0; z-index: 10;
+    }
+
+    .submissions-table td {
+        padding: 1rem 1.5rem;
+        color: #333;
+        border-bottom: 1px solid #e9ecef; 
+        vertical-align: middle;
+    }
+    
+    .submissions-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* --- UI Elements --- */
+    .sort-icon {
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 0.85rem;
+        transition: color 0.2s;
+    }
+    .sort-icon:hover, .sort-icon.active { color: #1c00a8; font-weight: bold; }
+
+    /* For Status Column Header */
+    .header-status-pill {
+        border: 1.5px solid #1c00a8;
+        color: #150080;
+        border-radius: 2rem;
+        padding: 0.2rem 0.7rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* For Table Body Data */
+    .status-pill {
+        border: 1px solid #1c00a8;
+        color: #1c00a8;
+        border-radius: 2rem;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .btn-action-accept {
+        background-color: #e6f8ec;
+        color: #28a745;
+        border: 1px solid #28a745;
+        border-radius: 0.3rem;
+        padding: 0.3rem 0.7rem;
+        transition: all 0.2s;
+    }
+    .btn-action-accept:hover { background-color: #28a745; color: white; }
+
+    .btn-action-reject {
+        background-color: #fdeded;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+        border-radius: 0.3rem;
+        padding: 0.3rem 0.7rem;
+        transition: all 0.2s;
+    }
+    .btn-action-reject:hover { background-color: #dc3545; color: white; }
+
+    .btn-details {
+        color: #1c00a8;
+        text-decoration: underline;
+        background: none;
+        border: none;
+        padding: 0;
+        font-weight: 500;
+    }
+
+    /* --- Details Modal Styling --- */
+    .custom-modal {
+        border: 1px solid #1a1a1a;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        font-family: 'Poppins', sans-serif;
+    }
+    .custom-modal .modal-header {
+        border-bottom: 1.5px solid #1a1a1a;
+        background-color: #f4f5f7;
+        border-top-left-radius: calc(0.5rem - 1px);
+        border-top-right-radius: calc(0.5rem - 1px);
+        padding: 1rem 1.5rem;
+    }
+    .custom-modal .modal-title {
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 1.25rem;
+    }
+    .custom-modal .modal-body {
+        padding: 1.5rem;
+        color: #333;
+    }
+    .custom-modal .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: calc(0.5rem - 1px);
+        border-bottom-right-radius: calc(0.5rem - 1px);
+    }
+    .data-label {
+        font-size: 0.85rem;
+        color: #150080;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem; /* Slightly more space above the box */
+        font-weight: 600; /* Made bolder */
+    }
+    .data-value {
+        font-size: 0.95rem;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        min-height: 38px; /* Ensures a standard input height even if empty */
+    }
+
+    /* --- Custom Rejection Modal Styles --- */
+    .custom-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 9999;
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s;
+    }
+    .custom-modal-overlay.show {
+        opacity: 1; visibility: visible;
+    }
+
+    .custom-modal-box {
+        background: #ffffff;
+        border: 1px solid #1a1a1a;
+        border-radius: 0.5rem;
+        width: 90%; max-width: 450px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        transform: translateY(-20px);
+        transition: transform 0.2s;
+    }
+    .custom-modal-overlay.show .custom-modal-box {
+        transform: translateY(0);
+    }
+
+    .modal-header-danger {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #1a1a1a;
+        background: #fdeded;
+        border-radius: 0.5rem 0.5rem 0 0;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-title-danger { margin: 0; color: #dc3545; font-size: 1.25rem; font-weight: 600; }
+    .btn-close-custom { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1a1a1a; line-height: 1;}
+
+    .modal-body-custom { padding: 1.5rem; color: #333; font-size: 1.1rem;}
+    .modal-footer-custom {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #1a1a1a;
+        background: #f8f9fa;
+        border-radius: 0 0 0.5rem 0.5rem;
+        display: flex; justify-content: space-between;
+    }
+
+    /* Textarea matching your design language */
+    .custom-label { display: block; font-size: 0.85rem; font-weight: 600; color: #343434; margin-bottom: 0.4rem; text-transform: uppercase; }
+    .custom-textarea {
+        width: 100%; padding: 0.75rem;
+        border: 1.5px solid #1a1a1a; border-radius: 0.5rem;
+        font-family: inherit; font-size: 0.95rem; resize: none; outline: none;
+        transition: border-color 0.2s;
+    }
+    .custom-textarea:focus { border-color: #dc3545; }
+    
+    /* Footer Action Buttons */
+    .btn-modal-accept {
+        background-color: #e6f8ec;
+        color: #28a745;
+        border: 1px solid #28a745;
+        font-weight: 500;
+        padding: 0.4rem 1.2rem;
+        transition: all 0.2s;
+    }
+    .btn-modal-accept:hover { background-color: #28a745; color: white; }
+
+    .btn-modal-reject {
+        background-color: #fdeded;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+        font-weight: 500;
+        padding: 0.4rem 1.2rem;
+        transition: all 0.2s;
+    }
+    .btn-modal-reject:hover { background-color: #dc3545; color: white; }
+    /* --- Full Screen Processing Overlay --- */
+    .processing-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        /* Semi-transparent white with a blur effect */
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(4px); 
+        -webkit-backdrop-filter: blur(4px);
+        
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000; /* Ensure it sits above the Bootstrap modal */
+        
+        /* Hidden by default */
+        opacity: 0; 
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .processing-overlay.active {
+        opacity: 1; 
+        visibility: visible;
+    }
+
+    .processing-card {
+        background-color: #ffffff;
+        border: 2px solid #1a1a1a; /* Matches your design language */
+        border-radius: 1rem;
+        padding: 2.5rem 3.5rem;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+    
+    .processing-overlay.active .processing-card {
+        transform: scale(1);
+    }
+
+    /* Clean CSS Spinner */
+    .custom-spinner {
+        width: 48px; 
+        height: 48px;
+        border: 5px solid #f0f2f5;
+        border-top-color: #1c00a8; /* Primary blue accent */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem auto;
+    }
+
+    @keyframes spin { 
+        100% { transform: rotate(360deg); } 
+    }
+
+    .processing-title { 
+        margin: 0 0 0.5rem; 
+        color: #1a1a1a; 
+        font-weight: 600; 
+        font-size: 1.25rem;
+        font-family: 'Poppins', sans-serif;
+    }
+    .processing-text { 
+        margin: 0; 
+        color: #6c757d; 
+        font-size: 0.95rem; 
+        font-family: 'Poppins', sans-serif;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+<div class="dashboard-wrapper">
+    <div class="container px-4 px-md-5" style="max-width: 1300px;">
+        
+       <div class="row mb-5 align-items-stretch g-5">
+            
+            <div class="col-lg-4 d-flex flex-column justify-content-center">
+                <hr class="border-secondary opacity-25 mb-4" style="border-width: 2px;">
+                
+                <h1 class="profile-name">{{ student_profile['student_name'] | default('Student Name')}}</h1>
+                <div class="profile-id">{{ student_profile['university_roll_no'] | default('Roll No')}}</div>
+                <div class="profile-email mb-4">{{ student_profile['college_email'] | default('student@skit.ac.in') }}</div>
+                
+                <div class="w-100">
+                    <div class="d-flex justify-content-between profile-stat">
+                        <span class="fw-semibold">Pending Submissions:</span> 
+                        <span class="fw-normal">{{ total_dict['pending'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between profile-stat">
+                        <span class="fw-semibold">Accepted Submissions:</span> 
+                        <span class="fw-normal">{{ total_dict['accepted'] }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between profile-stat mb-0">
+                        <span class="fw-semibold">Rejected Submissions:</span> 
+                        <span class="fw-normal">{{ total_dict['rejected'] }}</span>
+                    </div>
+                </div>
+
+                <hr class="border-secondary opacity-25 mt-4 mb-0" style="border-width: 2px;">
+            </div>
+
+            <div class="col-lg-8 d-flex flex-column">
+                <h3 class="summary-title mb-3">Summary</h3>
+                <div class="summary-table-container">
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Form Category</th>
+                                <th>Pending</th>
+                                <th>Accepted</th>
+                                <th>Rejected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if summary_dict %}
+                                {% for form_name, status_counts in summary_dict.items() %}
+                                <tr>
+                                    <td>{{ form_dict[form_name] }}</td>
+                                    <td>{{ status_counts['pending'] }}</td>
+                                    <td>{{ status_counts['accepted'] }}</td>
+                                    <td>{{ status_counts['rejected'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted align-middle" style="height: 150px; border-bottom: none;">
+                                        <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+                                        No submissions yet
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <h2 class="section-title">Submissions</h2>
+            <div class="custom-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="tableSearch" placeholder="Search...">
+            </div>
+        </div>
+
+        <div class="submissions-wrapper shadow-sm">
+            <div class="table-responsive-custom">
+                <table class="submissions-table" id="mainTable">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #1a1a1a;">
+                            <th onclick="sortTable(0)" style="cursor: pointer;">
+                                Time <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-0"></i>
+                            </th>
+                            <th onclick="sortTable(1)" style="cursor: pointer;">
+                                Form Category <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-1"></i>
+                            </th>
+                            <th>Proof</th>
+                            <th onclick="sortTable(3)" style="cursor: pointer;">
+                                <span class="header-status-pill">Status</span><i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-3"></i>
+                            </th>
+                            <th>Details</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% for submission in submissions %}
+                        <tr>
+                            {% set entry_id = submission['entry_id'] %}
+                            {% set form_name = submission['form_name'] %}
+                            {% set status = submission['status'] %}
+
+                            <td>{{ submission["submitted_at"] }}</td>
+                            <td>{{ form_dict[form_name] }}</td>
+                            <td><a href="{{ url_for('view_submission', filename=submission['certificate']) }}" target="_blank" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> {{ submission['certificate'] }}</a></td>
+
+                            <td><span class="status-pill" 
+                            {% if status == 'accepted' %}
+                                style="color: #28a745; border-color: #28a745;"
+                            {% elif status == 'rejected' %}
+                                style="color: #dc3545; border-color: #dc3545;"
+                            {% else %} 
+                                style="color: #d39e00; border-color: #d39e00;"
+                            {% endif %}>{{ submission["status"] }}</span></td>
+
+                            <td>
+                                <button class="btn-details" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#entryDetailsModal"
+                                        data-category="{{ form_dict[form_name] }}"
+                                        data-details="{{ submission | tojson | forceescape }}">
+                                    Details
+                                </button>
+                            </td>
+                            <td>
+                                {% if status == 'pending' %}
+                                <div class="d-flex gap-2">
+                                    <!-- If faculty clicks accept button then the proof automatically uploads to its
+                                    repective destination folder in SODECA Master folder in G-Drive  -->
+                                    <form action="{{ url_for('upload_to_drive') }}" method="post" id="acceptForm" style="display: inline;">
+                                        <input type="hidden" name="entry_id" value="{{ entry_id }}">
+                                        <input type="hidden" name="batch_str" value="{{ batch_str }}">
+                                        <input type="hidden" name="form_name" value="{{ form_name }}">
+                                        <input type="hidden" name="filename" value="{{ submission['certificate'] }}">
+                                        <button type="submit" class="btn-action-accept" id="btnAcceptEntry" title="Accept"><i class="bi bi-check-lg"></i></button>
+                                    </form>
+                                    <button type="button" 
+                                            class="btn-action-custom btn-action-reject" 
+                                            onclick="openRejectionModal('{{ entry_id }}', '{{ form_name }}')" 
+                                            title="Reject">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <span class="text-muted small">Processed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-4 py-3" style="background-color: #f8f9fa; border-top: 1px solid #1a1a1a; font-size: 0.95rem;">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Submission details box -->
+<div class="modal fade" id="entryDetailsModal" tabindex="-1" aria-labelledby="entryDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content custom-modal">
+            
+            <div class="modal-header">
+                <h5 class="modal-title" id="entryDetailsModalLabel">Submission Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="row g-3" id="dynamicModalDetails">
+                    </div>
+            </div>
+            
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-light border fw-medium" data-bs-dismiss="modal">Close</button>
+
+                <div class="d-flex gap-2">
+                    <!-- Reject Button: We will attach the click event via JS -->
+                    <button type="button" class="btn btn-modal-reject" id="btnRejectEntry">
+                        <i class="bi bi-x-lg me-1"></i> Reject
+                    </button>
+                    
+                    <!-- Accept Form -->
+                    <form action="{{ url_for('upload_to_drive') }}" method="post" id="acceptForm">
+                        <input type="hidden" name="entry_id" id="acceptHiddenEntryId" value="">
+                        <input type="hidden" name="batch_str" value="{{ batch_str }}"> 
+                        <input type="hidden" name="form_name" id="acceptHiddenFormName" value="">
+                        <input type="hidden" name="filename" id="acceptHiddenFilename" value="">
+                        
+                        <button type="submit" id="btnAcceptEntry" class="btn btn-modal-accept">
+                            <i class="bi bi-check-lg me-1"></i> Accept
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject entry confirmation box -->
+<div class="custom-modal-overlay" id="rejectionModalOverlay">
+    <div class="custom-modal-box">
+        
+        <div class="modal-header-danger">
+            <h5 class="modal-title-danger"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Rejection</h5>
+            <button type="button" class="btn-close-custom" onclick="closeRejectionModal()">×</button>
+        </div>
+        
+        <form action="{{ url_for('reject_entry') }}" method="POST">
+            <div class="modal-body-custom">
+                <p style="margin-top:0;">Are you sure you want to reject submission <strong id="displayEntryId" style="color: #1c00a8;"></strong>?</p>
+                
+                <input type="hidden" name="entry_id" id="hiddenEntryId">
+                <input type="hidden" name="form_name" id="hiddenFormName">
+                
+                <div style="margin-top: 1.5rem;">
+                    <label for="rejectionNote" class="custom-label">Rejection Note (Optional)</label>
+                    <textarea name="rejection_note" id="rejectionNote" class="custom-textarea" rows="3" placeholder="Provide a reason..."></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-footer-custom">
+                <button type="button" class="btn-action-custom btn-action-details" onclick="closeRejectionModal()">Cancel</button>
+                <button type="submit" class="btn-action-custom btn-action-reject" style="font-weight: 600;">Confirm Reject</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+<div id="processingOverlay" class="processing-overlay">
+    <div class="processing-card">
+        <div class="custom-spinner"></div>
+        <h4 class="processing-title">Uploading to Drive</h4>
+        <p class="processing-text">Securely transferring files. Please wait...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    // --- SEARCH FUNCTIONALITY ---
+    document.getElementById('tableSearch').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.getElementById('tableBody').getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            let timeCol = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+            let formCol = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+            let statusCol = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
+
+            if (timeCol.includes(filter) || formCol.includes(filter) || statusCol.includes(filter)) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    });
+
+    // --- SORTING FUNCTIONALITY ---
+    let sortDirection = {}; 
+    const statusCycle = ['pending', 'accepted', 'rejected'];
+    let currentStatusIndex = 0;
+
+    function sortTable(columnIndex) {
+        let tbody = document.getElementById("tableBody");
+        let rows = Array.from(tbody.querySelectorAll("tr"));
+        
+        // Reset all icons
+        document.querySelectorAll('.sort-icon').forEach(icon => {
+            icon.classList.remove('bi-arrow-up', 'bi-arrow-down', 'active');
+            icon.classList.add('bi-arrow-down-up');
+        });
+
+        let activeIcon = document.getElementById('sort-icon-' + columnIndex);
+
+        // --- Custom Categorization Logic for Status (Index 3) ---
+        if (columnIndex === 3) {
+            let activeStatus = statusCycle[currentStatusIndex];
+            
+            // Advance cycle for the next click
+            currentStatusIndex = (currentStatusIndex + 1) % statusCycle.length;
+
+            activeIcon.classList.remove('bi-arrow-down-up');
+            activeIcon.classList.add('bi-arrow-down', 'active'); // Using down arrow to show grouping
+
+            rows.sort((a, b) => {
+                let valA = a.getElementsByTagName("td")[columnIndex].textContent.trim();
+                let valB = b.getElementsByTagName("td")[columnIndex].textContent.trim();
+                
+                // Pull rows matching the active status to the top
+                if (valA === activeStatus && valB !== activeStatus) return -1;
+                if (valB === activeStatus && valA !== activeStatus) return 1;
+                
+                // For all other non-active statuses, group them alphabetically
+                if (valA < valB) return -1;
+                if (valA > valB) return 1;
+                return 0;
+            });
+        } 
+        // --- Standard Asc/Desc Sort for Other Columns ---
+        else {
+            let dir = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            sortDirection[columnIndex] = dir;
+
+            activeIcon.classList.remove('bi-arrow-down-up');
+            activeIcon.classList.add(dir === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down', 'active');
+
+            rows.sort((a, b) => {
+                let valA = a.getElementsByTagName("td")[columnIndex].textContent.trim();
+                let valB = b.getElementsByTagName("td")[columnIndex].textContent.trim();
+
+                if (valA < valB) return dir === 'asc' ? -1 : 1;
+                if (valA > valB) return dir === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // Clear table and re-append in correct order
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const detailsModal = document.getElementById('entryDetailsModal');
+        
+    if (detailsModal) {
+        detailsModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const rawData = button.getAttribute('data-details');
+            const detailsObj = JSON.parse(rawData);
+            
+            const dynamicContainer = document.getElementById('dynamicModalDetails');
+            dynamicContainer.innerHTML = ''; // Clear previous data
+            
+            // REMOVED 'entry_id', 'form_category', 'submitted_at' from here
+            // so they automatically get generated as boxes by the loop!
+            const hiddenColumns = [
+                'student_id', 'withdrawn_at', 'status', 'certificate', 'full_path'
+            ];
+
+            for (const [key, value] of Object.entries(detailsObj)) {
+                if (hiddenColumns.includes(key) || value === null || value === '') continue;
+                
+                const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                dynamicContainer.innerHTML += `
+                    <div class="col-12 col-md-4">
+                        <div class="data-label">${formattedKey}</div>
+                        <div class="data-value text-break">${value}</div>
+                    </div>
+                `;
+            }
+            
+            // Fill the hidden inputs for the Accept form
+            document.getElementById('acceptHiddenEntryId').value = detailsObj.entry_id;
+            document.getElementById('acceptHiddenFilename').value = detailsObj.certificate;
+            
+            // If form_name is inside the submission dict, use it. 
+            // Otherwise, grab it from the button's data-category attribute.
+            const currentFormName = detailsObj.form_name || button.getAttribute('data-category');
+            document.getElementById('acceptHiddenFormName').value = currentFormName;
+
+            // 2. Dynamically set the Reject button's onclick action
+            const rejectBtn = document.getElementById('btnRejectEntry');
+            rejectBtn.setAttribute('onclick', `openRejectionModal('${detailsObj.entry_id}', '${currentFormName}')`);
+            
+            // Optional UX enhancement: Close this Details modal if they click Reject
+            rejectBtn.onclick = function() {
+                bootstrap.Modal.getInstance(detailsModal).hide();
+                openRejectionModal(detailsObj.entry_id, currentFormName);
+            };
+        });
+    }
+
+    // 1. Grab the elements
+    const acceptForm = document.getElementById('acceptForm'); // <-- Ensure your <form> has this ID!
+    const acceptButton = document.getElementById('btnAcceptEntry');
+    const processingOverlay = document.getElementById('processingOverlay');
+
+    if (acceptForm) {
+        acceptForm.addEventListener('submit', function(e) {
+            // Step 1: Prevent the browser from submitting immediately
+            e.preventDefault();
+
+            // Step 2: Disable the accept button to prevent double-clicks
+            if (acceptButton) {
+                acceptButton.disabled = true;
+                // Optional: Change button text
+                acceptButton.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Processing...'; 
+                acceptButton.style.opacity = '0.7';
+            }
+
+            // Step 3: Show the sleek full-screen overlay
+            processingOverlay.classList.add('active');
+
+            // Step 4: Trigger the actual backend submission
+            // We use a tiny 50ms setTimeout to give the browser time to render 
+            // the overlay and spinner animations before the main thread freezes for the POST request.
+            setTimeout(() => {
+                // Using HTMLFormElement prototype prevents triggering this event listener again in an infinite loop
+                HTMLFormElement.prototype.submit.call(acceptForm);
+            }, 50);
+        });
+    }
+});
+
+    // --- Modal Trigger Logic ---
+    function openRejectionModal(entryId, formName) {
+        // Inject visual entry ID
+        document.getElementById('displayEntryId').textContent = '#' + entryId;
+        
+        // Inject hidden data for the backend POST
+        document.getElementById('hiddenEntryId').value = entryId;
+        document.getElementById('hiddenFormName').value = formName;
+        
+        // Clear old notes and show modal
+        document.getElementById('rejectionNote').value = ''; 
+        document.getElementById('rejectionModalOverlay').classList.add('show');
+    }
+
+    function closeRejectionModal() {
+        document.getElementById('rejectionModalOverlay').classList.remove('show');
+    }
+
+    // Optional: Close modal if user clicks the dark background outside the box
+    document.getElementById('rejectionModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeRejectionModal();
+    });
+
+</script>
+{% endblock %}

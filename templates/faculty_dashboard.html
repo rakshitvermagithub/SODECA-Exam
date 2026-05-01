@@ -1,395 +1,421 @@
 {% extends "layout.html" %}
 
-{% block title %}
-    Faculty Dashboard
-{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block css %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-    .page-wrapper {
-        min-height: calc(100vh - 140px); /* Adjust 140px based on header + footer height */
-        background-color: #f0f2f5;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+    a {
+        text-decoration: none;
+    }
+    /* --- Dashboard Specific Styles --- */
+    .dashboard-wrapper {
+        background-color: #f0f2f5; /* Light grey background to match layout */
+        font-family: 'Poppins', sans-serif;
+        padding: 2rem 0;
+        min-height: calc(100vh - 64px);
     }
 
-    .card-minimalist {
-        border: none;
-        border-top: 5px solid var(--bs-primary);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    /* --- Top Stats Bar --- */
+    .stats-bar {
+        background-color: #ffffff;
+        border: 1.5px solid #1a1a1a;
         border-radius: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch; /* Stretches button to fill height */
+        padding: 0.3rem; /* Small padding inside the bar */
+        margin-bottom: 2rem;
+        overflow: hidden; /* Keeps the button neatly inside the rounded corners */
     }
 
-    .form-title {
-        position: relative;
-        padding-bottom: 0.5rem;
+    .stats-content {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        padding: 0.5rem 1rem;
+        flex-wrap: wrap; /* Allows wrapping on smaller screens */
+        gap: 1.5rem;
     }
 
-    .form-title::after {
-        content: '';
-        position: absolute;
-        display: block;
-        width: 50px;
-        height: 3px;
-        background: var(--bs-primary);
-        border-radius: 2px;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
+    .stats-title {
+        font-size: 1.1rem;
+        font-weight: 400;
+        color: #1a1a1a;
+        margin-bottom: 0;
     }
 
-    /* --- Custom Table Styles --- */
-    .table thead {
-        background-color: #f8f9fa;
+    .stat-item {
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        color: #333;
     }
-    .table th {
+
+    .stat-dot {
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .dot-green { background-color: #80ed99; }
+    .dot-red { background-color: #ff9b85; }
+    .dot-yellow { background-color: #ffd166; }
+
+    .stat-count {
+        margin-left: 10px;
+        font-weight: 500;
+    }
+
+    .btn-batch-reports {
+        background-color: #1c00a8; /* Deep purple/blue from the screenshot */
+        color: #ffffff;
+        border: none;
+        border-radius: 0.3rem;
+        padding: 0 1.5rem;
         font-weight: 600;
-        color: #495057;
+        font-size: 1rem;
+        transition: background-color 0.2s ease;
+        white-space: nowrap;
     }
-    .table td {
-        vertical-align: middle;
-    }
-    .table-hover tbody tr:hover {
-        background-color: #f0f2f5;
+    .btn-batch-reports:hover {
+        background-color: #150080;
+        color: #ffffff;
     }
 
-    /* Styling for DataTables buttons to match our design */
-    .dt-buttons .btn {
-        padding: 10px;
-        background-color: white;
-        color: #495057;
-        transition: all 0.2s ease;
+    /* --- Main Grid Area --- */
+    .grid-card {
+        background-color: #ffffff;
+        border: 1.5px solid #1a1a1a;
+        border-radius: 0.5rem;
+        padding: 2rem;
     }
-    .dt-buttons .btn:hover {
-        background-color: var(--bs-primary);
-        color: white;
-        border-color: #adb5bd;
+
+    .grid-header-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #1c00a8;
+        margin-bottom: 0;
+    }
+
+    /* Custom Pill Search Bar */
+    .custom-search {
+        border: 1.5px solid #1a1a1a;
+        border-radius: 0.5rem;
+        padding: 0.4rem 1rem;
+        display: flex;
+        align-items: center;
+        width: 280px;
+        background-color: #fff;
+    }
+    .custom-search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        width: 100%;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.95rem;
+    }
+    .custom-search i {
+        font-size: 1rem;
+        color: #1a1a1a;
+        font-weight: bold;
+    }
+
+    /* --- Student Data Cards --- */
+    .student-card {
+        border: 1.5px dashed #495057; /* Dashed border from screenshot */
+        border-radius: 0.5rem;
+        background-color: #f1f3f5;
+        padding: 0.5rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+        height: 100%;
     }
     
-    /* Navigation Table styles */
-    .nav-table a {
-        text-decoration: none;
-        color: inherit;
-        display: block;
+    .student-card:hover {
+        background-color: #e9ecef;
+        border-color: #150080;
     }
-    .form-row {
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 12px;
-        border-top: 4px solid #0d6efd;
+
+    /* Left Side: Info */
+    .student-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .student-name {
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: #150080;
+        line-height: 1.1;
+    }
+    
+    .student-roll {
+        font-size: 0.95rem;
+        color: #150080;
+        font-weight: 400;
+    }
+
+    /* Right Side: Stats */
+    .student-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    
+    .stat-line {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    
+    .stat-line .stat-dot {
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    
+    .stat-num {
+        font-weight: 400;
+        color: #000000;
+        font-size: 1rem;
+        min-width: 14px;
+        text-align: right;
+    }
+
+    /* --- Pagination Controls --- */
+    .pagination-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #1a1a1a;
+        color: #1a1a1a;
+        background: transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+        background: #1a1a1a;
+        color: #fff;
+    }
+    
+    .pagination-btn:disabled {
+        border-color: #dee2e6;
+        color: #dee2e6;
+        cursor: not-allowed;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+        .stats-bar {
+            flex-direction: column;
+            padding: 0;
+        }
+        .stats-content {
+            padding: 1rem;
+            justify-content: center;
+        }
+        .btn-batch-reports {
+            padding: 1rem;
+            border-radius: 0 0 0.4rem 0.4rem; /* Rounds bottom corners on mobile */
+            width: 100%;
+        }
+        .custom-search {
+            width: 100%;
+            margin-top: 1rem;
+        }
     }
 </style>
-<link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
-<link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 {% endblock %}
-
-{% block batch %}
-    {{ batch_is }}
-{% endblock %}
-
 
 {% block main %}
 {% include "message.html" %}
 
-<div class="page-wrapper">
-    {% if not is_authorized %}
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-12 col-md-8 col-lg-6">
-                    <div class="card card-minimalist p-4 text-center">
-                        <div class="card-body">
-                            <h4 class="form-title mb-4">Authorization Required</h4>
-                            <p class="text-muted">To approve and manage student submissions, you must first authorize this application to access your Google Drive.</p>
-                            <a href="{{ url_for('authorize_drive') }}" class="btn btn-primary mt-3">
-                                <i class="bi bi-google me-2"></i>Login with Google to Manage Files
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% else %}
-        <!-- Forms Navigation Table -->
-        <div class="container mb-5">
-            <div class="row justify-content-center">
-                <div class="col-12 col-lg-10">
-                    <div class="card card-minimalist">
-                        <div class="card-body p-4">
-                             <h3 class="text-center mb-4 form-title">Forms list</h3>
-                                <table class="table table-hover nav-table">
-                                    <tbody>
-                                    {% for name in form_title_list %}
-                                        <tr>
-                                            <!-- The anchor link now wraps the content and links to the table ID -->
-                                            <td>
-                                                <a href="#{{ form_names[loop.index0] }}-anchor">
-                                                    <div class="d-flex justify-content-between align-items-center fs-5">
-                                                        <span>{{loop.index}}. {{ name }}</span>
-                                                        <!-- Badge for pending entries -->
-                                                        <span class="d-flex align-items-center">
-                                                            {% set pending_count = pending_entries[loop.index0]%}
-                                                            {% if pending_count != 0 %}
-                                                            <span class="badge fw-medium bg-danger rounded-pill me-3">{{ pending_entries[loop.index0] }}</span>
-                                                            {% endif %}
-                                                            <i class="bi bi-box-arrow-up-right text-primary"></i>
-                                                        </span>
-                                                    </div>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                    </tbody>
-                                </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dynamically Generated Data Tables -->
-        {% for form in forms_data %}
-            {% set outer_loop = loop %}
-            <!-- Anchor for navigation -->
-            <div class="container py-4" id="{{ form_names[(outer_loop.index0)] }}-anchor">
-                <div class="row justify-content-center">
-                    <div class="col-12">
-                        <div class="card shadow border-dark-subtle">
-                            <div class="card-body p-4">
-                                <h3 class="text-center mb-4 form-title">{{ form_title_list[(outer_loop.index0)] }} ({{ batch_is }})</h3>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered border-dark-subtle table-hover" id="{{ form_names[(outer_loop.index0)] }}" style="width:100%">
-                                        <thead>
-                                            <tr>
-                                                {% for header in form[0] %}
-                                                    {% if header != 'full_path' and header != 'student_id' and header != 'student_user_id' and header != 'entry_id' %}
-                                                        <th>{{ header }}</th>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for row in form %}
-                                            <tr>
-                                                {% for key, value in row.items() %}
-                                                    {% if key == 'certificate' %}
-                                                        <td>
-                                                            <a href="{{ url_for('view_submission', filename=value) }}" target="_blank">{{ value }}</a>
-                                                        </td>
-                                                    {% elif key == 'status' %}
-                                                        <td>
-                                                            {% if value == 'accepted' %}
-                                                                <span class="badge bg-success">Accepted</span>
-                                                            {% elif value == 'rejected' %}
-                                                                <span class="badge bg-danger">Rejected</span>
-                                                            {% else %}
-                                                                <div class="btn-group btn-group-sm">
-                                                                    <form action="{{ url_for('upload_to_drive') }}" method="post" style="display: inline;">
-                                                                        <input type="hidden" name="entry_id" value="{{ row['entry_id'] }}">
-                                                                        <input type="hidden" name="semester" value="{{ batch_details['semester'] }}">
-                                                                        <input type="hidden" name="branch" value="{{ batch_details['branch'] }}">
-                                                                        <input type="hidden" name="section" value="{{ batch_details['section'] }}">
-                                                                        <input type="hidden" name="class_group" value="{{ batch_details['class_group'] }}">
-                                                                        <input type="hidden" name="form_name" value="{{ form_names[outer_loop.index0] }}">
-                                                                        <input type="hidden" name="filename" value="{{ row['certificate'] }}">
-                                                                        <button type="submit" class="btn btn-outline-success">Accept</button>
-                                                                    </form>
-                                                                    <form action="" method="POST" style="display: inline;">
-                                                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" 
-                                                                            data-bs-target="#rejectionModal" data-entry-id = "{{ row['entry_id'] }}" 
-                                                                            data-form-name = "{{ form_names[outer_loop.index0] }}">
-                                                                            Reject
-                                                                        </button>
-                                                                    </form>
-                                                                </div>
-                                                            {% endif %}
-                                                        </td>
-                                                    {% elif key == 'google_file_id' and value != 'pending' %}
-                                                        <td>
-                                                            <a href="https://drive.google.com/file/d/{{ value }}/view" target="_blank">https://drive.google.com/file/d/{{ value }}/view</a>
-                                                        </td>
-                                                    {% elif key == 'rejection_note' %}
-                                                        <td class="text-center">
-                                                            {% if value %}
-                                                                <!-- Button triggers the new View Note modal -->
-                                                                <button type="button" class="btn btn-sm btn-outline-info" 
-                                                                        data-bs-toggle="modal" 
-                                                                        data-bs-target="#viewNoteModal" 
-                                                                        data-note="{{ value }}">
-                                                                    <i class="bi bi-eye-fill"></i> View
-                                                                </button>
-                                                            {% else %}
-                                                                <span class="text-muted">-</span>
-                                                            {% endif %}
-                                                        </td>
-                                                    {% elif key == 'full_path' or key == 'student_id' or key == 'student_user_id' or key == 'entry_id' %}
-                                                        <!-- This column is hidden as per the header logic -->
-                                                    {% else %}
-                                                        <td>{{ value }}</td>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-        <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content rounded-3 border-0 shadow">
-                    
-                    <!-- Header: Aligned with design language (Primary Blue) -->
-                    <div class="modal-header bg-primary text-white border-bottom-0">
-                        <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="dashboard-wrapper">
+    <div class="container" style="max-width: 1100px;">
+        
+        <div class="stats-bar">
+            <div class="stats-content">
+                <h5 class="stats-title">Submission Requests</h5>
+                
+                <div class="d-flex flex-wrap gap-4 align-items-center">
+                    <div class="stat-item">
+                        <span class="stat-dot dot-yellow"></span> Pending 
+                        <span class="stat-count">{{ submission_counts['pending'] if submission_counts else 5 }}</span>
                     </div>
 
-                    <form action="{{ url_for('reject_entry') }}" method="post" id="rejectionForm">
-                        <div class="modal-body">
-                            <!-- Hidden Inputs for logic -->
-                            <input type="hidden" name="entry_id" id="reject_entry_id">
-                            <input type="hidden" name="form_name" id="reject_form_name">
-                            <input type="hidden" name="full_path" id="reject_full_path">
+                    <div class="stat-item">
+                        <span class="stat-dot dot-green"></span> Accepted 
+                        <span class="stat-count">{{ submission_counts['accepted'] if submission_counts else 0 }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-dot dot-red"></span> Rejected 
+                        <span class="stat-count">{{ submission_counts['rejected'] if submission_counts else 5 }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-batch-reports" onclick="window.location.href = '/batch_report'">Batch Reports</button>
+        </div>
+
+        <div class="grid-card">
+            
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5">
+                <h3 class="grid-header-title">{{ batch_is }}</h3>
+                
+                <div class="custom-search">
+                    <input type="text" id="studentSearch" placeholder="Search name or roll no...">
+                    <i class="bi bi-search"></i>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4" id="studentCardsContainer">
+                
+                {% for student in students %}
+                <div class="col-12 col-md-6 col-xl-3 student-card-col">
+                    {% set student_name = student['student_name'] %}
+                    {% set roll_no = student['university_roll_no'] %}
+                    <a href="/review_student?id={{ student['student_user_id'] }}" 
+                    class="student-card" data-name="{{ student['student_name'] }}" data-roll="{{ student['university_roll_no'] }}">
                         
-                            <!-- Standard Label (Simple/Official Style) -->
-                            <div class="mb-1">
-                                <label for="rejected_note" class="form-label text-secondary fw-bold small text-uppercase">Reason for Rejection</label>
-                                <input type="text" class="form-control bg-light" id="rejected_note" name="rejection_note" rows="4" placeholder="Type your note here...">
+                        <div class="student-info">
+                            <div class="student-name">{{ student_name }}</div>
+                            <div class="student-roll">{{ roll_no  }}</div>
+                        </div>
+                        
+                        <div class="student-stats">
+                            <div class="stat-line">
+                                <span class="stat-dot dot-yellow"></span> 
+                                <span class="stat-num">{{ student['pending_count'] }}</span>
+                            </div>
+                            <div class="stat-line">
+                                <span class="stat-dot dot-green"></span> 
+                                <span class="stat-num">{{ student['accepted_count'] }}</span>
+                            </div>
+                            <div class="stat-line">
+                                <span class="stat-dot dot-red"></span> 
+                                <span class="stat-num">{{ student['rejected_count'] }}</span>
                             </div>
                         </div>
+                        
+                    </a>
+                </div>
+                {% endfor %}
+                
+            </div>
 
-                        <!-- Footer -->
-                        <div class="modal-footer border-top-0 pt-0">
-                            <!-- Skip button rejects entry without a reason -->
-                            <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted">
-                                Skip (Reject without Note)
-                            </button>
-
-                            <!-- Submit Button: Aligned with design language (Primary Blue) -->
-                            <button type="submit" class="btn btn-primary px-4">Submit</button>
-                        </div>
-                    </form>
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <div class="text-muted fw-medium" id="pageInfo">Showing 1-12 of 60</div>
+                <div class="d-flex gap-2">
+                    <button class="btn rounded-circle pagination-btn" id="prevPage" disabled>
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <button class="btn rounded-circle pagination-btn" id="nextPage">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
                 </div>
             </div>
+
         </div>
-        <!-- View Rejection Note Modal -->
-        <div class="modal fade" id="viewNoteModal" tabindex="-1" aria-labelledby="viewNoteModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content rounded-3 border-0 shadow">
-                    <div class="modal-header bg-info-subtle text-info-emphasis border-bottom-0">
-                        <h5 class="modal-title fw-bold" id="viewNoteModalLabel">Rejection Note</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-4">
-                        <div class="p-3 bg-light rounded border">
-                            <p id="noteContent" class="mb-0 text-break" style="white-space: pre-wrap;"></p>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-top-0 pt-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
+
+    </div>
 </div>
 {% endblock %}
 
 {% block script %}
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-<script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
-<script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap5.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.bootstrap5.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearch');
+    const cardElements = Array.from(document.querySelectorAll('.student-card-col'));
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
 
-        
-        // 1. Get the dictionary directly from Jinja
-        // Expected format: {"blood_donor": "Blood Donor", "participation": "Participation", ...}
-        const formsMap = {{ form_dict | tojson }};
+    const cardsPerPage = 12; // 4 columns x 3 rows = 12 cards per page
+    let currentPage = 1;
+    let filteredCards = [...cardElements];
 
-        // 2. Iterate using Object.entries()
-        // This gives us [key, value] for every item in the dictionary
-        Object.entries(formsMap).forEach(([formId, formTitle]) => {   
-            // formId = "blood_donor"
-            // formTitle = "Blood Donor"
+    // Core function to update what is visible on the screen
+    function updateDisplay() {
+        // 1. Hide all cards initially
+        cardElements.forEach(card => card.style.display = 'none');
 
-            // Create a clean filename (e.g., "SODECA_Report_Blood_Donor")
-            const cleanTitle = formTitle.replace(/ /g, '_');
-            const fileName = `SODECA_${cleanTitle}`;
+        const totalFiltered = filteredCards.length;
+        const totalPages = Math.ceil(totalFiltered / cardsPerPage) || 1;
 
-            // Initialise data tables
-            new DataTable(`#${formId}`, {
-                layout: {
-                    topStart: {
-                        buttons: [
-                            { extend: 'copy', className: 'btn-sm border-primary-subtle'},
-                            { extend: 'csv', className: 'btn-sm border-primary-subtle'},
-                            { extend: 'excel', className: 'btn-sm border-primary-subtle', filename: fileName},
-                            { extend: 'pdf', className: 'btn-sm border-primary-subtle', filename: fileName },
-                            { extend: 'print', className: 'btn-sm border-primary-subtle' }
-                        ]
-                    }
-                },
-                scrollY: '400px',
-                scrollX: true,
-                scrollCollapse: true, // Optional, collapses table height if data is small
-            });
-        });
+        // 2. Safety bounds for current page
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
 
-        // Handle modal data population
-        const rejectedModal = document.getElementById('rejectionModal');
-        
-        rejectedModal.addEventListener('show.bs.modal', function(event) {
-            // Get the button that triggered the modal
-            const button = event.relatedTarget;
-            
-            // Extract data from data-* attributes
-            const entry_id = button.getAttribute('data-entry-id');
-            const form_name = button.getAttribute('data-form-name');
-            
-            // Update the modal's hidden input fields
-            rejectedModal.querySelector('#reject_entry_id').value = entry_id;
-            rejectedModal.querySelector('#reject_form_name').value = form_name;
-        });
+        // 3. Calculate which cards to show
+        const startIndex = (currentPage - 1) * cardsPerPage;
+        const endIndex = Math.min(startIndex + cardsPerPage, totalFiltered);
 
-        const skipBtn = document.getElementById('skipAddNote');
-        if (skipBtn) {
-            skipBtn.addEventListener('click', function() {
-                // 1. Clear the text input
-                document.getElementById('rejected_note').value = '';
-                
-                // 2. Submit the form
-                document.getElementById('rejectionForm').submit();
-            });
+        // 4. Unhide the specific slice of cards
+        for (let i = startIndex; i < endIndex; i++) {
+            filteredCards[i].style.display = 'block'; 
         }
-        // ... existing DataTables code ...
 
-        // --- Handle View Note Modal ---
-        const viewNoteModal = document.getElementById('viewNoteModal');
-        if (viewNoteModal) {
-            viewNoteModal.addEventListener('show.bs.modal', function(event) {
-                // Button that triggered the modal
-                const button = event.relatedTarget;
-                // Extract info from data-note attribute
-                const note = button.getAttribute('data-note');
-                // Update the modal's content
-                const noteContent = viewNoteModal.querySelector('#noteContent');
-                
-                // Handle case where note might be empty string logically (though Jinja handles null)
-                noteContent.textContent = note ? note : "No detail provided.";
-            });
+        // 5. Update the text (e.g., "Showing 1-12 of 60")
+        if (totalFiltered === 0) {
+            pageInfo.textContent = 'No students found.';
+        } else {
+            pageInfo.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalFiltered}`;
+        }
+
+        // 6. Disable/Enable buttons if at the start or end
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+    }
+
+    // Event Listener: When user types in search bar
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        // Filter the array based on data attributes we attached to HTML
+        filteredCards = cardElements.filter(col => {
+            const card = col.querySelector('.student-card');
+            const name = card.getAttribute('data-name').toLowerCase();
+            const roll = card.getAttribute('data-roll').toLowerCase();
+            
+            // Returns true if search term is inside name or roll number
+            return name.includes(searchTerm) || roll.includes(searchTerm);
+        });
+
+        // Always reset to page 1 when doing a new search
+        currentPage = 1; 
+        updateDisplay();
+    });
+
+    // Event Listener: Pagination 'Previous' Button
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateDisplay();
         }
     });
+
+    // Event Listener: Pagination 'Next' Button
+    nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredCards.length / cardsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateDisplay();
+        }
+    });
+
+    // Run once on page load to set up initial 12 cards
+    updateDisplay();
+});
 </script>
 {% endblock %}
