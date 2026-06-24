@@ -5,6 +5,13 @@ from cs50 import SQL
 from collections import defaultdict
 
 from backend.downloadData import download_bp
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+import uuid
+# Thread-safe in-memory job tracker
+job_status = {}
+job_status_lock = threading.Lock()
+
 from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
@@ -89,24 +96,23 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Decorator to ensure drive is authorized
 def drive_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         token = session.get('drive_auth_token')
         
-        # If not authorized
         if not token:
-            # We send a special category "drive_auth_popup" in message.html
-            # which triggers a modal box with drive authorization button
+            # If it's a JSON/fetch request, return JSON error instead of redirect
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return {"error": "drive_auth_required"}, 401
+            
+            # Original behavior for normal form requests
             flash("Google Drive authorization is missing.", "drive_auth_popup")
-            
-            # Redirect back to the page the user was on
             return redirect(request.referrer or '/')
-            
+        
         return f(*args, **kwargs)
     return decorated_function
-
+    
 def is_safe_url(target):
     """Check if the URL is safe for redirects"""
     ref_url = urlparse(request.host_url)
@@ -2204,10 +2210,10 @@ def fill_form():
         flash("Kindly confirm details by checking the checkbox", "warning")
         return redirect("/verify_student_details")
     
-    if session.get("finished_all_forms"):
-        flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
-        session.pop("finished_all_forms")
-        return redirect(url_for("sodeca_forms"))
+    # if session.get("finished_all_forms"):
+    #     flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
+    #     session.pop("finished_all_forms")
+    #     return redirect(url_for("sodeca_forms"))
     
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
@@ -2647,21 +2653,38 @@ def review_student():
         flash("Invalid Student ID", "danger")
         return redirect(url_for("faculty_dashboard"))
 
-    # 2. The Micro-Query: Fetch Name, Roll, Sem, Section, Batch.
     student_profile_data = db.execute(
         "SELECT * FROM student_details WHERE student_user_id = ?", 
         student_user_id
     )
-    
+
     if not student_profile_data:
         flash("Student not found in database.", "danger")
         return redirect(url_for("faculty_dashboard"))
         
     student_profile = student_profile_data[0]
+    faculty_assigned_batch = session["batch_details"]
+
     student_branch = student_profile['branch']
+    if (faculty_assigned_batch['branch'] != student_branch):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
     student_sem = student_profile['semester']
+    if (faculty_assigned_batch['semester'] != student_sem):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
     student_section = student_profile['section']
+    if (faculty_assigned_batch['section'] != student_section):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
     student_class_group = student_profile['class_group']
+    if (faculty_assigned_batch['class_group'] != student_class_group):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
 
     batch_str = f"{student_branch}_{student_sem}_{student_section}_{student_class_group}"
 
@@ -2729,6 +2752,73 @@ def view_submission(filename):
         flash("Error: The requested file could not be found on the server.", "danger")
         return redirect(url_for('faculty_dashboard'))
 
+def upload_single_file(entry_id, form_name, filename, batch_str, token, job_id, client_id, client_secret):
+    """Worker function that runs in a background thread for each file upload."""
+    full_path = os.path.join(UPLOAD_FOLDER, filename)
+
+    # Mark this file as uploading in the shared tracker
+    with job_status_lock:
+        job_status[job_id]["files"][entry_id]["status"] = "uploading"
+
+    try:
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"Local file not found: {full_path}")
+
+        to_search_id = f"{batch_str}_{form_name}"
+        drive_folder = db.execute(
+            "SELECT drive_folder_id FROM drive_folder_map WHERE id=?", 
+            to_search_id
+        )
+
+        if not drive_folder:
+            raise ValueError(f"Drive folder not found for: {to_search_id}")
+
+        drive_folder_id = drive_folder[0]["drive_folder_id"]
+
+        access_token = token.get('access_token') or token.get('token')
+        refresh_token = token.get('refresh_token')
+
+        credentials = Credentials(
+            token=access_token,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret
+        )
+
+        import socket
+        socket.setdefaulttimeout(300)
+
+        drive_service = build('drive', 'v3', credentials=credentials)
+        file_metadata = {'name': filename, 'parents': [drive_folder_id]}
+        media = MediaFileUpload(full_path, resumable=False)
+
+        uploaded_file = drive_service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id,name'
+        ).execute()
+
+        google_file_id = uploaded_file.get('id')
+
+        # Only update DB after Drive confirms success — prevents inconsistent state
+        sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
+        db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
+
+        # Mark success in shared tracker
+        with job_status_lock:
+            job_status[job_id]["files"][entry_id]["status"] = "done"
+            job_status[job_id]["files"][entry_id]["filename"] = uploaded_file.get('name')
+            job_status[job_id]["completed"] += 1
+
+    except Exception as e:
+        print(f"Upload failed for entry {entry_id}: {e}", file=sys.stderr)
+        # Mark failure — DB is NOT updated, stays as pending
+        with job_status_lock:
+            job_status[job_id]["files"][entry_id]["status"] = "failed"
+            job_status[job_id]["files"][entry_id]["error"] = str(e)
+            job_status[job_id]["failed"] += 1
+
 @app.route("/upload_to_drive", methods=["POST"])
 @login_required
 @drive_auth_required
@@ -2761,7 +2851,7 @@ def upload_to_drive():
     else:
         # Handle the error gracefully
         print(f"Critical Error: Drive folder not found for ID: {to_search_id}")
-        flash("Destination folder not found in Drive map. Please contact admin.", "danger")
+        flash("Destination folder not found in Drive map. Please contact Admin.", "danger")
         return redirect(request.referrer)
 
     try:
@@ -2833,6 +2923,76 @@ def upload_to_drive():
         flash(f"An unexpected error occurred: {e}", "danger")
 
     return redirect(request.referrer)
+
+@app.route("/bulk_upload_to_drive", methods=["POST"])
+@login_required
+@drive_auth_required
+def bulk_upload_to_drive():
+    """Accepts multiple submissions concurrently using a thread pool."""
+    token = session.get('drive_auth_token')
+    if not token:
+        return {"error": "Drive authorization required"}, 401
+
+    # Parse list of submissions from frontend
+    submissions = request.json.get('submissions', [])
+    if not submissions:
+        return {"error": "No submissions provided"}, 400
+
+    client_id = current_app.config.get("GOOGLE_CLIENT_ID")
+    client_secret = current_app.config.get("GOOGLE_CLIENT_SECRET")
+
+    # Create a unique job ID for this bulk upload session
+    job_id = str(uuid.uuid4())
+
+    # Initialize job tracker with all files as pending
+    with job_status_lock:
+        job_status[job_id] = {
+            "total": len(submissions),
+            "completed": 0,
+            "failed": 0,
+            "files": {
+                str(s['entry_id']): {
+                    "status": "pending",
+                    "filename": s['filename']
+                }
+                for s in submissions
+            }
+        }
+
+    # Launch thread pool — max 3 concurrent uploads to respect Drive API limits
+    def run_pool():
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(
+                    upload_single_file,
+                    str(s['entry_id']),
+                    s['form_name'],
+                    s['filename'],
+                    s['batch_str'],
+                    token,
+                    job_id,
+                    client_id,
+                    client_secret
+                ): s for s in submissions
+            }
+
+    # Run pool in a background thread so route returns immediately
+    pool_thread = threading.Thread(target=run_pool)
+    pool_thread.daemon = True
+    pool_thread.start()
+
+    return {"job_id": job_id}, 202
+
+@app.route("/upload-status/<job_id>", methods=["GET"])
+@login_required
+def upload_status(job_id):
+    """Faculty frontend polls this to get live upload progress."""
+    with job_status_lock:
+        job = job_status.get(job_id)
+        if not job:
+            return {"error": "Job not found"}, 404
+        # Return a copy to avoid holding the lock during JSON serialization
+        return dict(job)
 
 @app.route("/reject_entry", methods=["POST"])
 @login_required

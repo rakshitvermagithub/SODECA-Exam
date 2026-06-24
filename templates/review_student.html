@@ -516,11 +516,29 @@
             </div>
         </div>
 
+        <div class="mb-3">
+            <button 
+                id="bulkAcceptBtn" 
+                class="btn btn-success d-none" 
+                onclick="startBulkUpload()">
+                <i class="bi bi-check-all"></i> Accept Selected (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+
+        <div id="bulkProgressContainer" class="d-none mb-3">
+            <h6>Uploading certificates...</h6>
+            <div id="bulkProgressList"></div>
+        </div>
+
+
         <div class="submissions-wrapper shadow-sm">
             <div class="table-responsive-custom">
                 <table class="submissions-table" id="mainTable">
                     <thead>
                         <tr style="border-bottom: 1px solid #1a1a1a;">
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                            </th>
                             <th onclick="sortTable(0)" style="cursor: pointer;">
                                 Time <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-0"></i>
                             </th>
@@ -541,6 +559,21 @@
                             {% set entry_id = submission['entry_id'] %}
                             {% set form_name = submission['form_name'] %}
                             {% set status = submission['status'] %}
+
+                            {% if status == 'pending' %}
+                            <td>
+                                <input 
+                                    type="checkbox" 
+                                    class="submission-checkbox"
+                                    data-entry-id="{{ entry_id }}"
+                                    data-form-name="{{ form_name }}"
+                                    data-filename="{{ submission['certificate'] }}"
+                                    data-batch-str="{{ batch_str }}"
+                                    onchange="updateBulkButton()">
+                            </td>
+                            {% else %}
+                            <td></td>
+                            {% endif %}
 
                             <td>{{ submission["submitted_at"] }}</td>
                             <td>{{ form_dict[form_name] }}</td>
@@ -878,10 +911,126 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('rejectionModalOverlay').classList.remove('show');
     }
 
-    // Optional: Close modal if user clicks the dark background outside the box
+    // Close modal if user clicks the dark background outside the box
     document.getElementById('rejectionModalOverlay').addEventListener('click', function(e) {
         if (e.target === this) closeRejectionModal();
     });
 
+    function updateBulkButton() {
+        const checked = document.querySelectorAll('.submission-checkbox:checked');
+        const btn = document.getElementById('bulkAcceptBtn');
+        const count = document.getElementById('selectedCount');
+        count.textContent = checked.length;
+        if (checked.length > 0) {
+            btn.classList.remove('d-none');
+        } else {
+            btn.classList.add('d-none');
+        }
+    }
+
+    function toggleSelectAll(master) {
+        document.querySelectorAll('.submission-checkbox').forEach(cb => {
+            cb.checked = master.checked;
+        });
+        updateBulkButton();
+    }
+
+    async function startBulkUpload() {
+        const checkboxes = document.querySelectorAll('.submission-checkbox:checked');
+        const submissions = Array.from(checkboxes).map(cb => ({
+            entry_id: cb.dataset.entryId,
+            form_name: cb.dataset.formName,
+            filename: cb.dataset.filename,
+            batch_str: cb.dataset.batchStr
+        }));
+
+        document.getElementById('bulkAcceptBtn').disabled = true;
+
+        const progressContainer = document.getElementById('bulkProgressContainer');
+        const progressList = document.getElementById('bulkProgressList');
+        progressContainer.classList.remove('d-none');
+
+        submissions.forEach(s => {
+            progressList.innerHTML += `
+                <div id="progress-${s.entry_id}" class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-secondary">Pending</span>
+                    <small>${s.filename}</small>
+                </div>`;
+        });
+
+        const response = await fetch('/bulk_upload_to_drive', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ submissions })
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
+        if (response.status === 401) {
+            const data = await response.json();
+            console.log('401 data received:', data);
+            
+            if (data.error === 'drive_auth_required') {
+                console.log('Drive auth required — attempting to show modal');
+                
+                progressContainer.classList.add('d-none');
+                progressList.innerHTML = '';
+                document.getElementById('bulkAcceptBtn').disabled = false;
+                
+                const modalEl = document.getElementById('driveAuthModal');
+                console.log('Modal element found:', modalEl);
+                
+                if (modalEl) {
+                    console.log('Showing modal now');
+                    const authModal = new bootstrap.Modal(modalEl);
+                    authModal.show();
+                }
+                return;
+            }
+        }
+
+        if (!response.ok) {
+            alert('Something went wrong starting the upload. Please try again.');
+            document.getElementById('bulkAcceptBtn').disabled = false;
+            return;
+        }
+
+        const { job_id } = await response.json();
+
+        const interval = setInterval(async () => {
+            const statusRes = await fetch(`/upload-status/${job_id}`);
+            const job = await statusRes.json();
+
+            Object.entries(job.files).forEach(([entry_id, file]) => {
+                const el = document.getElementById(`progress-${entry_id}`);
+                if (!el) return;
+                const colors = { 
+                    pending: 'secondary', 
+                    uploading: 'warning', 
+                    done: 'success', 
+                    failed: 'danger' 
+                };
+                const labels = { 
+                    pending: 'Pending', 
+                    uploading: 'Uploading...', 
+                    done: 'Done ✓', 
+                    failed: 'Failed ✗' 
+                };
+                el.querySelector('.badge').className = `badge bg-${colors[file.status]}`;
+                el.querySelector('.badge').textContent = labels[file.status];
+            });
+
+            const allDone = job.completed + job.failed === job.total;
+            if (allDone) {
+                clearInterval(interval);
+                document.getElementById('bulkAcceptBtn').disabled = false;
+                setTimeout(() => location.reload(), 2000);
+            }
+        }, 2000);
+    }
 </script>
 {% endblock %}
