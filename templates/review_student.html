@@ -151,7 +151,7 @@
 
     /* --- STANDARD ATTACHED SUBMISSIONS TABLE --- */
     .table-responsive-custom {
-        max-height: 450px; /* Fixed height so the table never stretches */
+        max-height: 370px; /* Fixed height so the table never stretches */
         overflow-y: auto;
         overflow-x: auto; 
         /* Borders and background moved to the outer wrapper */
@@ -166,7 +166,7 @@
     /* Header (Sticky properties removed) */
     .submissions-table th {
         background-color: #dce3f5; 
-        padding: 1rem 1.5rem;
+        padding: 0.7rem 1rem;
         font-weight: 500;
         color: #1a1a1a;
         border-bottom: 1px solid #1a1a1a; 
@@ -175,7 +175,7 @@
     }
 
     .submissions-table td {
-        padding: 1rem 1.5rem;
+        padding: 0.7rem 1rem;
         color: #333;
         border-bottom: 1px solid #e9ecef; 
         vertical-align: middle;
@@ -544,8 +544,20 @@
 
                             <td>{{ submission["submitted_at"] }}</td>
                             <td>{{ form_dict[form_name] }}</td>
-                            <td><a href="{{ url_for('view_submission', filename=submission['certificate']) }}" target="_blank" class="text-primary"><i class="bi bi-file-earmark-pdf"></i> {{ submission['certificate'] }}</a></td>
-
+                            <td>
+                                <a href="{{ url_for('view_submission', filename=submission['certificate']) }}" 
+                                target="_blank" 
+                                class="text-primary d-inline-flex align-items-center"
+                                title="{{ submission['certificate'] }}">
+                                    
+                                    <i class="bi bi-file-earmark-pdf me-2 flex-shrink-0"></i>
+                                    
+                                    <span class="d-inline-block text-truncate" style="max-width: 150px;">
+                                        {{ submission['certificate'] }}
+                                    </span>
+                                    
+                                </a>
+                            </td>
                             <td><span class="status-pill" 
                             {% if status == 'accepted' %}
                                 style="color: #28a745; border-color: #28a745;"

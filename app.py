@@ -2604,7 +2604,6 @@ def batch_report():
         data = request.get_json()
         form_id = data.get('form_id')
 
-        
         result = db.execute(f"""SELECT * FROM {form_id} as f
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
@@ -2612,10 +2611,8 @@ def batch_report():
                             batch_details["branch"], batch_details["semester"],
                             batch_details["section"], batch_details["class_group"])
 
-        col_labels = ['Entry ID', 'Student ID', 'Univ. Roll Num.', 'Student Name', 
-                        'Branch', 'Sem.', 'Section', 'Group', 'Batch Counselor']
-        sql_cols = ['entry_id', 'student_id', 'university_roll_no', 'student_name', 
-                    'branch', 'semester', 'section', 'class_group', 'batch_counselor']
+        col_labels = ['Entry ID', 'Univ. Roll Num.', 'Student Name', 'Batch Counselor']
+        sql_cols = ['entry_id', 'university_roll_no', 'student_name', 'batch_counselor']
 
         for field in FORM_DEFINITIONS[form_id]["fields"]:
             col_labels.append(field["field_label"])
