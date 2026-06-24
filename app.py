@@ -2210,10 +2210,10 @@ def fill_form():
         flash("Kindly confirm details by checking the checkbox", "warning")
         return redirect("/verify_student_details")
     
-    if session.get("finished_all_forms"):
-        flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
-        session.pop("finished_all_forms")
-        return redirect(url_for("sodeca_forms"))
+    # if session.get("finished_all_forms"):
+    #     flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
+    #     session.pop("finished_all_forms")
+    #     return redirect(url_for("sodeca_forms"))
     
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
