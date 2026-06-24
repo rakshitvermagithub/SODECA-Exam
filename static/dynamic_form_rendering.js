@@ -1,6 +1,6 @@
 const loadingTableStructure = `
     <div class="table-responsive pt-2" id="dynamic_table">
-        <table class = "table table-hover table-striped mt-3" id="loading_table">
+        <table class = "table table-striped table-bordered display nowrap" id="loading_table">
             <tbody>
                  <tr>
                     <td class="d-flex justify-content-center">
@@ -16,7 +16,7 @@ const loadingTableStructure = `
 
 const noDataAvailableTableStructure = `
     <div class="table-responsive pt-2" id="dynamic_table">
-        <table class = "table table-hover table-striped mt-3" id="empty_table">
+        <table class = "table table-striped table-bordered display nowrap" id="empty_table">
             <thead class = "table-dark">
                     <tr>
                         <th class="text-center">No Data Available</th>
@@ -51,7 +51,7 @@ function updateTable(row_values, sql_col, column_name, table_id) {
     }
     
     let table_html_structure = `
-        <table class="table table-hover table-striped mt-3" id="tb_${table_id}">
+        <table class="table table-striped table-bordered display nowrap" id="tb_${table_id}" style="width: 100%;">
             <thead class="table-dark">
                 <tr>
     `;
