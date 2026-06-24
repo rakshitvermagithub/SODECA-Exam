@@ -194,9 +194,14 @@
                     </ul>
                 </div>
             </div>
-            <div class="row g-4 align-items-center">
-                
-                <div class="col-12 col-lg-7">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="mb-3 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#chartModal">
+                            <i class="bi bi-pie-chart-fill me-2"></i> Visual Report
+                        </button>
+                    </div>
+
                     <div class="table-responsive" id="dynamic_table">
                         <table class="table" id="tb_blood_donor" style="width: 100%;">
                             <thead>
@@ -238,15 +243,27 @@
                         </table>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-12 col-lg-5">
-                    <div class="chart-container">
-                        <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
-                            <canvas id="categoryPieChart"></canvas>
+            <div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="chartModalLabel">Category Breakdown</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="chart-container">
+                                <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
+                                    <canvas id="categoryPieChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <div class="modal fade" id="downloadData">
