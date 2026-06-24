@@ -2647,21 +2647,38 @@ def review_student():
         flash("Invalid Student ID", "danger")
         return redirect(url_for("faculty_dashboard"))
 
-    # 2. The Micro-Query: Fetch Name, Roll, Sem, Section, Batch.
     student_profile_data = db.execute(
         "SELECT * FROM student_details WHERE student_user_id = ?", 
         student_user_id
     )
-    
+
     if not student_profile_data:
         flash("Student not found in database.", "danger")
         return redirect(url_for("faculty_dashboard"))
         
     student_profile = student_profile_data[0]
+    faculty_assigned_batch = session["batch_details"]
+
     student_branch = student_profile['branch']
+    if (faculty_assigned_batch['branch'] != student_branch):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
     student_sem = student_profile['semester']
+    if (faculty_assigned_batch['semester'] != student_sem):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
     student_section = student_profile['section']
+    if (faculty_assigned_batch['section'] != student_section):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
     student_class_group = student_profile['class_group']
+    if (faculty_assigned_batch['class_group'] != student_class_group):
+        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
+        return redirect(url_for("faculty_dashboard"))
+
 
     batch_str = f"{student_branch}_{student_sem}_{student_section}_{student_class_group}"
 
