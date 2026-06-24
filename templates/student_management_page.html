@@ -1,0 +1,190 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Student Management Page
+{% endblock %}
+
+{% block css %}
+<style>
+    .page-wrapper {
+        min-height: calc(100vh - 140px); /* Adjust 140px based on header + footer height */
+        background-color: #f0f2f5;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+<link rel="stylesheet" href="/static/dataTable.css">
+<div class="page-wrapper">
+    <div class="container d-flex justify-content-center">
+        <button type="button" class="btn btn-success mt-2" data-bs-toggle="modal"
+            data-bs-target="#add_email" style="width: 117px;"><i
+                class="fa-solid fa-add mt-1"></i>Add Email</button>
+    </div>
+    <div class="container d-flex justify-content-center">
+        <script src="/static/dataTables.js"></script>
+        <script src="/static/dataTables.bootstrap5.js"></script>
+        <table class="table table-hover mt-3" id="student_directory1">
+        <thead class="table-dark">
+            <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Roll No.</th>
+                <th>Branch</th>
+                <th>Semester</th>
+                <th>Section</th>
+                <th>Batch Counselor</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for value in student_list %}
+            <tr>
+                <td>{% if value["email"] %}{{ value["email"] }}{% else %}To be updated{% endif %}</td>
+                {% for val in (value["val"] or [None]) %}
+                <td>{% if value["val"] %}{{ val["student_name"] }}{% else %}To be updated{% endif %}</td>
+                <td>{% if value["val"] %}{{ val["university_roll_no"] }}{% else %}To be updated{% endif %}</td>
+                <td>{% if value["val"] %}{{ val["branch"] }}{% else %}To be updated{% endif %}</td>
+                <td>{% if value["val"] %}{{ val["semester"] }}{% else %}To be updated{% endif %}</td>
+                <td>{% if value["val"] %}{{ val["section"] }}{% else %}To be updated{% endif %}</td>
+                <td>{% if value["val"] %}{{ val["batch_counselor"] }}{% else %}To be updated{% endif %}</td>
+                <td><a href = "#" data-bs-toggle="modal" data-bs-target="#deleteUser" 
+                    data-roll-id = "{{val['university_roll_no']}}" 
+                    data-stu-name = "{{val['student_name']}}" 
+                    data-stu-email = "{{value['email']}}" 
+                    style = "text-decoration: none; color: black;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </a></td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <form action="/student_management_page" method="POST" enctype="multipart/form-data">
+        <div class="modal fade" id="upload_file" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <!-- modal header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title custom-font">Upload Excel File</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <!-- modal body -->
+                    <div class="modal-body">
+                        <label for="excel_file" class="form-label">Upload Excel File</label>
+                        <div>
+                            <input type="file" id = "excel_file"  name="excel_file" class="m-3" accept=".xlsx,.xlsm" required>
+                            <button type="submit" class="btn btn-primary rounded-pill">Upload File</button>
+                        </div>
+                        <div>
+                            <a href="/static/student_dir_execl.png" target="_blank">Click here to view the excel
+                                format to upload</a>
+                        </div>
+                    </div>
+                    <!-- modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <form action="add_email" method="POST" enctype="multipart/form-data">
+        <div class="modal fade" id="add_email" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <!-- modal header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title custom-font">New Mail Entry</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <!-- modal body -->
+                    <div class="modal-body">
+                        <label for="new_email" class="form-label">Enter new Email</label>
+                        <div class="d-flex">
+                            <input type="text" class= "form-control w-50" id = "new_email" name="new_email" required>
+                            <button type="submit" class="btn btn-primary rounded-pill ms-auto" style = "width: 20%;">Add</button>
+                        </div>
+                    </div>
+                    <!-- modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- The Delete Modal -->
+    <div class="modal fade" id="deleteUser">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header bg-danger">
+                    <h4 class="modal-title text-white">Delete User Permanently</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+              <!-- Modal body -->
+                <div class="modal-body">
+                    Are you sure you want to delete the user permanently? After this User will have no more access to this website.
+                    <p class ="mt-2"><strong>University Roll No: <span id = "modal-stu-id"></span></strong></p>
+                    <p><strong>Student Name: <span id = "modal-name"></span></strong></p>
+                    <p><strong>Student Email: <span id = "modal-email"></span></strong></p>
+                </div>
+
+              <!-- Modal footer -->
+                <div class="modal-footer">
+                    <form action="/delete_user/student" method="POST">
+                        <div class="dflex justify-content-end">
+                            <input type = "hidden" id="college_email" name = "college_email" value = "">
+                            <button type="button" class = "btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger" data-bs-dismiss="modal">Delete User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Delete Model Ends -->
+    <div class="d-flex justify-content-center mb-3 mt-3">
+        <div class="dropdown">
+            <!-- <i class = "fa-solid fa-file-arrow-down dropdown-toggle" data-bs-toggle="dropdown"></i> -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#upload_file">Upload Excel
+                File</button>
+            <button class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">Download</button>
+            <ul class="dropdown-menu">
+                <li id="excel-download"><a class="dropdown-item" href="/download/excel_stu_dir">Excel</a></li>
+                <li id="csv-download"><a class="dropdown-item" href="/download/csv_stu_dir">CSV</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<script>
+    new DataTable('#student_directory1',{
+        paging: false,
+        scrollY: '360px',
+        scrollCollapse: true
+    });
+    $(document).ready(function() {
+        $('#deleteUser').on('show.bs.modal', function(event) {
+            var link =  $(event.relatedTarget);
+            var student_roll = link.data('rollId');
+            var student_name = link.data('stuName');
+            var email = link.data('stuEmail');
+            var modal = $(this);
+            modal.find('#modal-stu-id').text(student_roll);
+            modal.find('#modal-name').text(student_name);
+            modal.find('#modal-email').text(email);
+            modal.find('#college_email').val(email);
+        });
+    });
+</script>
+
+
+{% endblock %}

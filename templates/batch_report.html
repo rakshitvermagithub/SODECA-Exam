@@ -1,0 +1,366 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Faculty List
+{% endblock %}
+
+{% block css %}
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    /* --- General Layout --- */
+    .dashboard-wrapper {
+        background-color: #f8f9fa; 
+        font-family: 'Poppins', sans-serif;
+        padding: 3rem 0;
+        min-height: calc(100vh - 64px);
+    }
+
+    .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1c00a8;
+        margin: 0;
+    }
+
+    /* --- Compact Wrapped Ribbon Tabs --- */
+    .custom-tabs {
+        display: flex;         
+        flex-wrap: wrap;       
+        gap: 0.3rem;           
+        padding: 0;            
+        list-style: none;
+        margin-bottom: 0.5rem; 
+    }
+
+    .custom-tabs li {
+        display: inline-flex;  
+        flex: 0 1 auto;        
+    }
+
+    .custom-tabs .nav-link {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;        
+        padding: 0.37rem 0.75rem;      
+        color: #495057;
+        background-color: #ffffff;
+        font-weight: 400;
+        font-size: 0.9rem;          
+        transition: all 0.15s ease;
+        white-space: nowrap;          
+    }
+
+    .custom-tabs .nav-link:hover {
+        background-color: #e9ecef;
+        color: #1c00a8;
+    }
+
+    .custom-tabs .nav-link.active {
+        background-color: #1c00a8;
+        color: #ffffff;
+        border-color: #1c00a8;
+    }
+
+    /* --- Standard DataTables Layout Fixes --- */
+    .dataTables_wrapper {
+        margin-top: 1.5rem;
+    }
+
+    /* Container limits maximum height and lets standard DataTables scrolling handle it */
+    div.dataTables_scrollBody {
+        max-height: 500px; 
+    }
+
+    .table-responsive {
+        height: auto;
+        min-height: 0;
+    }
+
+    /* --- Chart Container Styling --- */
+    .chart-container {
+        background-color: #ffffff;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+    {% include "message.html" %}
+    
+    <div class="dashboard-wrapper">
+        <div class="container px-4 px-md-5" style="max-width: 1400px;">
+            
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <h2 class="section-title">Batch Report</h2>
+                
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#downloadData">
+                    <i class="bi bi-download me-2"></i>Download Data
+                </button>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-12">
+                    <ul class="custom-tabs" role="tablist">
+                        {% for form_id, form_name in form_dict.items() %}
+                            {% if loop.first %}
+                            <li><button class="nav-link active" id="{{ form_id }}" onclick="openTab(event, '{{ form_id }}')">{{ form_name }}</button></li>
+                            {% else %}
+                            <li><button class="nav-link" id="{{ form_id }}" onclick="openTab(event, '{{ form_id }}')">{{ form_name }}</button></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="mb-3 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#chartModal">
+                            <i class="bi bi-pie-chart-fill me-2"></i> Visual Report
+                        </button>
+                    </div>
+
+                    <div class="table-responsive" id="dynamic_table">
+                        <table class="table table-striped table-bordered display nowrap" id="tb_blood_donor" style="width: 100%;">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Entry ID</th>
+                                    <th>Univ. Roll Num.</th>
+                                    <th>Student Name</th>
+                                    <th>Batch Counselor</th>
+                                    <th>Event Title</th>
+                                    <th>From Date</th>
+                                    <th>To Date</th>
+                                    <th>Organizer</th>
+                                    <th>Venue</th>
+                                    <th>Certificate</th>
+                                    <th>Google_file_id</th>
+                                    <th>Status</th>
+                                    <th>Submitted At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row_val in rows %}
+                                <tr>
+                                    <td>{{ row_val['entry_id'] }}</td>
+                                    <td>{{ row_val['university_roll_no'] }}</td>
+                                    <td>{{ row_val['student_name'] }}</td>
+                                    <td>{{ row_val['batch_counselor'] }}</td>
+                                    <td>{{ row_val['event_title'] }}</td>
+                                    <td>{{ row_val['from_date'] }}</td>
+                                    <td>{{ row_val['to_date'] }}</td>
+                                    <td>{{ row_val['organizer'] }}</td>
+                                    <td>{{ row_val['venue'] }}</td>
+                                    <td>{{ row_val['certificate'] }}</td>
+                                    <td>{{ row_val['google_file_id'] }}</td>
+                                    <td>{{ row_val['status'] }}</td>
+                                    <td>{{ row_val['submitted_at'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="chartModalLabel">Category Breakdown</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="chart-container">
+                                <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
+                                    <canvas id="categoryPieChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="downloadData">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content" style="border: 2px solid #1a1a1a; border-radius: 1rem;">
+                        <form action="/download/downloadFormData" id="donwload-form" method="POST">
+                            
+                            <div class="modal-header" style="background-color: #f4f5f7; border-bottom: 1.5px solid #1a1a1a; padding: 1rem 1.5rem;">
+                                <h5 class="modal-title" style="color: #1a1a1a; font-weight: 600; font-family: 'Poppins', sans-serif;">
+                                    <i class="bi bi-cloud-download me-2 text-primary"></i>Download Form Data
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body p-3 px-4">
+                                <h6 class="mb-2" style="color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; font-size: 0.85rem;">Select categories to export</h6>
+                                
+                                <div class="form-check mb-2 pb-2 border-bottom">
+                                    <input type="checkbox" class="form-check-input group-required" id="radio" name="optradio-all" value="all" style="border-color: #1a1a1a;">
+                                    <label class="form-check-label fw-bold text-dark" for="radio">Select All Categories</label>
+                                </div>
+                                
+                                <div class="row g-2 mt-1">
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input group-required" id="radio1" name="optradio" value="blood_donor">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio1">Blood Donor</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio2" name="optradio" value="part_in_comp">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio2">Participation in Competition/Contest</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio3" name="optradio" value="part_in_work">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio3">Workshop/Seminar/Conference</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio4" name="optradio" value="expert_lecture">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio4">Expert Lecture Attended</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio5" name="optradio" value="event_organized">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio5">Organized an Event</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio6" name="optradio" value="winner_achievement">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio6">Winner/Award/Achievement</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio7" name="optradio" value="internship_stipend">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio7">Internship/Training (Stipend)</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio8" name="optradio" value="paper_presented">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio8">Paper Presented</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio9" name="optradio" value="financial_grant">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio9">Financial Grant Received</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="radio10" name="optradio" value="online_course">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio10">Coursera / edX Certification</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback mt-2">Please select at least one option.</div>
+                            </div>
+
+                            <div class="modal-footer" style="background-color: #f8f9fa; border-top: 1px solid #e9ecef; padding: 0.75rem 1.5rem;">
+                                <button type="button" class="btn btn-outline-danger fw-medium" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-success" data-bs-dismiss="modal">Generate Excel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <!-- Try to avoid this sending all ids and rendering all table at once. -->
+    <script id="my-table-ids" type="application/json">
+        {{ form_dict.keys()|list|tojson|safe }}
+    </script>
+    <script>
+        const selectAllUI = document.getElementById('radio');
+        const allChildCheckboxes = document.querySelectorAll('input[name="optradio"]');
+        selectAllUI.addEventListener('change', function () {
+            allChildCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllUI.checked;
+            });
+        });
+        allChildCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                if(!checkbox.checked) selectAllUI.checked = false;
+            })
+        })
+
+    </script>
+    <script src="/static/dynamic_form_rendering.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('categoryPieChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'pie', // Changed to standard Pie chart
+                data: {
+                    labels: [
+                        'Blood Donor', 
+                        'Participation in Comp.', 
+                        'Seminar/Workshop', 
+                        'Expert Lecture', 
+                        'Other'
+                    ],
+                    datasets: [{
+                        data: [15, 35, 25, 15, 10], // Dummy percentages
+                        backgroundColor: [
+                            '#1c00a8', // Primary blue
+                            '#3498db', // Light blue
+                            '#2ecc71', // Green
+                            '#f1c40f', // Yellow
+                            '#e74c3c'  // Red
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                plugins: {
+                        legend: {
+                            position: 'right', // Moves it to the right side of the pie
+                            labels: {
+                                font: {
+                                    family: "'Poppins', sans-serif",
+                                    size: 11 // Reduced from 13 for smaller text
+                                },
+                                color: '#1a1a1a',
+                                padding: 12, // Reduced padding to tighten the list
+                                boxWidth: 12 // Makes the colored squares smaller
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                    // cutout property removed so it fills the center
+                }
+            });
+        });
+    </script>
+{% endblock %}

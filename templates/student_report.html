@@ -64,6 +64,15 @@
         background-color: var(--bs-admin-purple);
         color: white;
     }
+    .btn-more-details {
+        background-color: var(--bs-admin-purple);
+        color: white;
+    }
+    .btn-more-details:hover {
+        color: black;
+        background-color: white;
+        border-color: var(--bs-admin-purple);
+    }
 
     /* Modal Styling */
     .modal-header-admin {
@@ -127,30 +136,84 @@
                                 <th>Batch</th>
                                 <th>Category</th>
                                 <th>Proof</th>
+                                <th>Proof(G-Drive)</th>
                                 <th>Submitted at</th>
                                 <th>Withdrawn at</th>
+                                <th>More Details</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for data in filtered_data %}
+                            {% set status = data['status'] %}
+                            {% set file_drive_link = data['certificate']%}
                             <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>{{ data["student_name"] }}</td>
                                 <td>{{ data["university_roll_no"] }}</td>
                                 <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
                                 <td>{{ data["category"] }}</td>
-                                <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">View Proof</a></td>
+                                <td>
+                                    <a href="{{ url_for('view_submission', filename=data['certificate']) }}" target="_blank">{{ data['certificate'] }}</a>
+                                </td>
+                                <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark-text"></i> G-Drive</td>
                                 <td>{{ data["submitted_at"] }}</td>
                                 <td>{{ data["withdrawn_at"] }}</td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-primary view-details-btn"
+                                    <button type="button" class="btn btn-sm btn-more-details"
                                             data-bs-toggle="modal"
                                             data-bs-target="#submissionDetailsModal"
-                                            data-entry-id="{{ data.entry_id }}"
-                                            data-form-name="{{ data.category }}">
-                                        View details
+                                            data-entry-id="{{ data['entry_id'] }}"
+                                            data-form-name="{{ data['category'] }}">
+                                        Open
                                     </button>
+                                </td>
+                                
+                                {% if status == 'accepted' %}
+                                <td>
+                                    <span class="badge rounded-pill text-bg-success">Accepted</span></td>
+                                </td>
+                                {% elif status == 'rejected' %}
+                                <td>
+                                    <span class="badge rounded-pill text-bg-danger">Rejected</span></td>
+                                </td>
+                                {% elif status == 'pending' %}
+                                <td>
+                                    <span class="badge rounded-pill text-bg-warning">Pending</span></td>
+                                </td>
+                                {% endif %}
+                        
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        {% if session.get('drive_auth_token')%}
+                                            <form action="{{ url_for('upload_to_drive') }}" method="post">
+                                                <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
+                                                <input type="hidden" name="semester" value="{{ data['semester'] }}">
+                                                <input type="hidden" name="branch" value="{{ data['branch'] }}">
+                                                <input type="hidden" name="section" value="{{ data['section'] }}">
+                                                <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
+                                                <input type="hidden" name="form_name" value="{{ data['category'] }}">
+                                                <input type="hidden" name="filename" value="{{ data['certificate'] }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-success"
+                                                {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                            </form>
+                                        {% else %}
+                                            <!-- Button opens a modal with a button to authorize drive -->
+                                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                            {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+
+                                        {% endif %}    
+                                        <form action="" method="POST">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" 
+                                                data-bs-target="#rejectionModal" data-entry-id = "{{ data['entry_id'] }}" 
+                                                data-form-name = "{{ data['category'] }}"
+                                                {% if status != 'pending'%}disabled{% endif %}>
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -299,6 +362,46 @@
   </div>
 </div>
 
+<!-- Modal to add a note when rejecting an entry -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 border-0 shadow">
+            
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white border-bottom-0">
+                <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form action="{{ url_for('reject_entry') }}" method="post" id="rejectionForm">
+                <div class="modal-body">
+                    <!-- Hidden Inputs for logic -->
+                    <input type="hidden" name="entry_id" id="reject_entry_id">
+                    <input type="hidden" name="form_name" id="reject_form_name">
+                    <input type="hidden" name="full_path" id="reject_full_path">
+                
+                    <!-- Standard Label (Simple/Official Style) -->
+                    <div class="mb-1">
+                        <label for="rejected_note" class="form-label text-secondary fw-bold small text-uppercase">Reason for Rejection</label>
+                        <input type="text" class="form-control bg-light" id="rejected_note" name="rejection_note" rows="4" placeholder="Type your note here...">
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-top-0 pt-0">
+                    <!-- Skip button rejects entry without a reason -->
+                    <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted">
+                        Skip (Reject without Note)
+                    </button>
+
+                    <!-- Submit Button: Aligned with design language (Primary Blue) -->
+                    <button type="submit" class="btn btn-primary px-4">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block script %}
@@ -399,7 +502,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('report-table')) {
         try { 
             $('#report-table').DataTable({
-                responsive: true,
                 layout: {
                     topStart: {
                         buttons: [
@@ -410,14 +512,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             { extend: 'print', className: 'btn-sm btn-outline-admin' }
                         ]
                     }
-                }
+                },
+                scrollX: true,
+                scrollCollapse: true, // Optional, collapses table height if data is small
+
             });
         } catch (e) {
             console.error("Error initializing DataTable:", e);
         }
     }
 
-        const detailsModal = document.getElementById('submissionDetailsModal');
+    const detailsModal = document.getElementById('submissionDetailsModal');
     if (!detailsModal) return;
     
     detailsModal.addEventListener('show.bs.modal', function(event) {
@@ -494,6 +599,33 @@ document.addEventListener('DOMContentLoaded', function() {
             modalBody.innerHTML = '<p class="text-danger">Could not load details. Please try again.</p>';
         });
     });
+
+    // Handle modal data population
+    const rejectedModal = document.getElementById('rejectionModal');
+    
+    rejectedModal.addEventListener('show.bs.modal', function(event) {
+        // Get the button that triggered the modal
+        const button = event.relatedTarget;
+        
+        // Extract data from data-* attributes
+        const entry_id = button.getAttribute('data-entry-id');
+        const form_name = button.getAttribute('data-form-name');
+        
+        // Update the modal's hidden input fields
+        rejectedModal.querySelector('#reject_entry_id').value = entry_id;
+        rejectedModal.querySelector('#reject_form_name').value = form_name;
+    });
+
+    const skipBtn = document.getElementById('skipAddNote');
+    if (skipBtn) {
+        skipBtn.addEventListener('click', function() {
+            // 1. Clear the text input
+            document.getElementById('rejected_note').value = '';
+            
+            // 2. Submit the form
+            document.getElementById('rejectionForm').submit();
+        });
+    }
 });
 </script>
 {% endblock %}
