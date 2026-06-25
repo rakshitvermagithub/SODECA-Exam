@@ -1275,18 +1275,6 @@ FORM_DEFINITIONS = {
 
 # List of technical names of forms defined(SQL Names)
 form_name_list = list(FORM_DEFINITIONS.keys())
-# List of title names of forms defined
-form_title = []
-form_values = []
-form_label = []
-for form in FORM_DEFINITIONS:
-
-    query = f"SELECT * FROM {form}"
-    form_values.append(db.execute(query))
-    form_title.append(FORM_DEFINITIONS[form]["title"])
-
-# form name and title dictionary
-form_dict = dict(zip(form_name_list, form_title))
 
 # Initialise table to store user login details
 db.execute("""
@@ -1366,6 +1354,19 @@ db.execute("""
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
+
+# List of title names of forms defined
+form_title = []
+form_values = []
+form_label = []
+for form in FORM_DEFINITIONS:
+
+    query = f"SELECT * FROM {form}"
+    form_values.append(db.execute(query))
+    form_title.append(FORM_DEFINITIONS[form]["title"])
+
+# form name and title dictionary
+form_dict = dict(zip(form_name_list, form_title))
 
 # Dictionary containing folder names of different semesters
 semester_dict = {"1": "I Semester", "2": "II Semester", "3": "III Semester",
@@ -1929,9 +1930,7 @@ def login():
             flash("Please register your Email with a password.", "danger")
             return redirect("/register")
         
-        elif not check_password_hash(
-            rows[0]["hash_password"], password
-            ):
+        elif not (rows[0]["hash_password"] == password):
             flash("Invalid password or email", "danger")
             return redirect("/login")
 
@@ -1973,7 +1972,17 @@ def login():
         flash("Invalid username/password", "danger")
         return url_for("login")
     else:
-        return render_template("login.html")
+        students_list = db.execute(
+            "SELECT user_id, email, hash_password FROM users WHERE role = 'student';"
+        )
+        faculty_list = db.execute(
+            "SELECT user_id, email, hash_password FROM users WHERE role = 'faculty';"
+        )
+        admin = db.execute(
+            "SELECT user_id, email, hash_password FROM users WHERE role = 'admin';"
+        )[0]
+
+        return render_template("login.html", students_list=students_list, faculty_list=faculty_list, admin=admin)
 
 @app.route('/authorize_drive')
 @login_required
