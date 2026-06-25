@@ -519,8 +519,8 @@
         <div class="mb-3">
             <button 
                 id="bulkAcceptBtn" 
-                class="btn btn-success d-none" 
-                onclick="startBulkUpload()">
+                class="btn btn-success" 
+                onclick="startBulkUpload()" disabled>
                 <i class="bi bi-check-all"></i> Accept Selected (<span id="selectedCount">0</span>)
             </button>
         </div>
@@ -569,7 +569,8 @@
                                     data-form-name="{{ form_name }}"
                                     data-filename="{{ submission['certificate'] }}"
                                     data-batch-str="{{ batch_str }}"
-                                    onchange="updateBulkButton()">
+                                    onchange="updateBulkButton()"
+                                    >
                             </td>
                             {% else %}
                             <td></td>
@@ -922,9 +923,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const count = document.getElementById('selectedCount');
         count.textContent = checked.length;
         if (checked.length > 0) {
-            btn.classList.remove('d-none');
+            btn.classList.remove('disabled');
+            btn.disabled = false;
         } else {
-            btn.classList.add('d-none');
+            btn.classList.add('disabled');
+            btn.disabled = true;
         }
     }
 
