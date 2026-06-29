@@ -33,11 +33,16 @@ A role-based web portal that eliminates redundant data entry, automates file man
 ### For Students
 - **Auto-renamed proof files** — files are automatically renamed with the student's roll number, full name, and event name upon upload, removing the manual renaming step entirely.
 - **Multi-step form** — students can submit multiple entries with any category of forms in a single session and their details automatically gets attached to those entries.
+![Alt text](assets/multi_select_form.png)
+![Alt text](assets/multi_step_form.png)
 - **Submission status tracking** — students can view the real-time status of their submitted entries.
+![Alt text](assets/submissions_status.png)
 
 ### For Faculty
 - **Organized batch dashboard** — a clean overview of all students in the assigned batch with their submission details.
+![Alt text](assets/faculty_dashboard.png)
 - **Auto-categorized Excel reports** — submission data is automatically sorted by category and ready to download as excels; custom-filtered exports are also supported.
+![Alt text](assets/excel_reports.png)
 - **Automated Drive folder organization** — upon acceptance of a submission, the associated proof file is automatically uploaded to the correct Google Drive folder, organized by category and batch.
 
 ### For Admin
