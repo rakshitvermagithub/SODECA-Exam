@@ -144,7 +144,7 @@
                                     <a href="/logout" class="btn btn-outline-danger">Logout</a>
                                 </li>
 
-                            {% elif session.get("user_role") == 'super_admin' %}
+                            {% elif session.get("user_role") == 'admin' %}
                                 <li class="nav-item">
                                     <a href="{{ url_for('student_report') }}" class="btn border-primary">SODECA Reports</a>
                                 </li>
