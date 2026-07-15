@@ -867,6 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const acceptButton = document.getElementById('btnAcceptEntry');
     const processingOverlay = document.getElementById('processingOverlay');
 
+    // Single entry upload
     if (acceptForm) {
         acceptForm.addEventListener('submit', function(e) {
             // Step 1: Prevent the browser from submitting immediately
@@ -917,6 +918,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === this) closeRejectionModal();
     });
 
+    function toggleSelectAll(master) {
+        document.querySelectorAll('.submission-checkbox').forEach(cb => {
+            cb.checked = master.checked;
+        });
+        updateBulkButton();
+    }
+
     function updateBulkButton() {
         const checked = document.querySelectorAll('.submission-checkbox:checked');
         const btn = document.getElementById('bulkAcceptBtn');
@@ -929,13 +937,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.classList.add('disabled');
             btn.disabled = true;
         }
-    }
-
-    function toggleSelectAll(master) {
-        document.querySelectorAll('.submission-checkbox').forEach(cb => {
-            cb.checked = master.checked;
-        });
-        updateBulkButton();
     }
 
     async function startBulkUpload() {
@@ -1004,6 +1005,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const { job_id } = await response.json();
 
+        // Keep getting status of jobs every 2 seconds until all done
         const interval = setInterval(async () => {
             const statusRes = await fetch(`/upload-status/${job_id}`);
             const job = await statusRes.json();
