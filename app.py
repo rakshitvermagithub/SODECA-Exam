@@ -1372,6 +1372,32 @@ semester_dict = {"1": "I Semester", "2": "II Semester", "3": "III Semester",
              "4": "IV Semester", "5": "V Semester", "6": "VI Semester",
              "7": "VII Semester", "8": "VIII Semester"}
 
+# Define the users to insert (using the @skit.ac.in domain)
+demoUsers = [
+    {
+        "email": "student@skit.ac.in",
+        "password": "student123",
+        "role": "student"
+    },
+    {
+        "email": "faculty@skit.ac.in",
+        "password": "faculty123",
+        "role": "faculty"
+    },
+    {
+        "email": "admin@skit.ac.in",
+        "password": "admin123",
+        "role": "admin"
+    }
+]
+
+# Generate and print the SQL insert statements
+# for user in demoUsers:
+#     hashed_pw = generate_password_hash(user["password"])
+#     sql = f"""INSERT INTO users (email, hash_password, role) 
+# VALUES ('{user["email"]}', '{hashed_pw}', '{user["role"]}');"""
+#     db.execute(sql)
+
 def get_or_create_folder(service, folder_name, parent_id):
     """
     Searches for a specific folder inside a parent folder.

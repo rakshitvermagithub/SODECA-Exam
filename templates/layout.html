@@ -105,28 +105,8 @@
                         {% endif %}
                         
                         {% if session.get("user_id") %}
-                            {% if session.get("user_role") == 'tester' %}
-                                <li class="nav-item">
-                                    <a href="{{ url_for('your_submissions') }}" class="btn border-primary">Your Submissions</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ url_for('faculty_dashboard') }}" class="btn border-primary">Batch Reports</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ url_for('student_report') }}" class="btn border-primary">SODECA Reports</a>
-                                </li>
-                                <li class="nav-item dropdown profile-dropdown"> 
-                                    <a class="btn border-primary dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Profile 
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                        <li><a class="dropdown-item" href="{{ url_for('student_details') }}"><i class="bi bi-person-lines-fill"></i> My Details</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-                                    </ul>
-                                </li>
 
-                            {% elif session.get("user_role") == 'student' or session.get("user_role") == 'dev' %}
+                            {% if session.get("user_role") == 'student' %}
                                 {% if request.path != '/sodeca_forms' %}
                                     <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="btn border-primary">SODECA Forms</a></li>
                                 {% endif %}
@@ -198,15 +178,7 @@
             {% endif %}
 
             {% if session.get("user_id") %}
-                {% if session.get("user_role") == 'tester' %}
-                    {% if request.path != '/sodeca_forms'%}
-                        <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="nav-link">SODECA Forms</a></li>
-                    {% endif %}
-                    <li class="nav-item"><a href="{{ url_for('your_submissions' )}}" class="nav-link">Your Submissions</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('student_details') }}">My Details</a></li>
-                    <li class="nav-item"><a class="nav-link text-danger" href="/logout">Logout</a></li>
-
-                {% elif session.get("user_role") != 'faculty' %}
+                {% if session.get("user_role") != 'faculty' %}
                     {% if request.path != '/sodeca_forms'%}
                         <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="nav-link">SODECA Forms</a></li>
                     {% endif %}
