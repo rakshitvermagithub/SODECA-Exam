@@ -1372,6 +1372,32 @@ semester_dict = {"1": "I Semester", "2": "II Semester", "3": "III Semester",
              "4": "IV Semester", "5": "V Semester", "6": "VI Semester",
              "7": "VII Semester", "8": "VIII Semester"}
 
+# Define the users to insert (using the @skit.ac.in domain)
+demoUsers = [
+    {
+        "email": "student@skit.ac.in",
+        "password": "student123",
+        "role": "student"
+    },
+    {
+        "email": "faculty@skit.ac.in",
+        "password": "faculty123",
+        "role": "faculty"
+    },
+    {
+        "email": "admin@skit.ac.in",
+        "password": "admin123",
+        "role": "admin"
+    }
+]
+
+# Generate and print the SQL insert statements
+# for user in demoUsers:
+#     hashed_pw = generate_password_hash(user["password"])
+#     sql = f"""INSERT INTO users (email, hash_password, role) 
+# VALUES ('{user["email"]}', '{hashed_pw}', '{user["role"]}');"""
+#     db.execute(sql)
+
 def get_or_create_folder(service, folder_name, parent_id):
     """
     Searches for a specific folder inside a parent folder.
@@ -2582,8 +2608,29 @@ def faculty_dashboard():
                                 students=None,
                                 )
         batch_details = batch[0]
-        session["batch_details"] = batch_details
-        batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
+        # Extract and sanitize details (defaulting to empty strings/None)
+        sem = batch_details.get('semester')
+        branch = batch_details.get('branch')
+        section = batch_details.get('section')
+        group = batch_details.get('class_group')
+
+        # Build components dynamically if they exist
+        parts = []
+
+        if sem or branch:
+            # Combine semester and branch directly (e.g., "3CS")
+            sem_branch = f"{sem or ''}{branch or ''}"
+            if sem_branch:
+                parts.append(sem_branch)
+
+        if section:
+            parts.append(str(section))
+
+        if group:
+            parts.append(str(group))
+
+        # Join the parts with a hyphen, or set to None if all are empty
+        batch_is = "-".join(parts) if parts else None
     
         # Submission requests stats of individual student in the batch
         students = student_submission_stats(batch_details)
