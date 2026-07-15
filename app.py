@@ -2608,8 +2608,29 @@ def faculty_dashboard():
                                 students=None,
                                 )
         batch_details = batch[0]
-        session["batch_details"] = batch_details
-        batch_is = f"{batch_details['semester']}{batch_details['branch']}-{batch_details['section']}-{batch_details['class_group']}"
+        # Extract and sanitize details (defaulting to empty strings/None)
+        sem = batch_details.get('semester')
+        branch = batch_details.get('branch')
+        section = batch_details.get('section')
+        group = batch_details.get('class_group')
+
+        # Build components dynamically if they exist
+        parts = []
+
+        if sem or branch:
+            # Combine semester and branch directly (e.g., "3CS")
+            sem_branch = f"{sem or ''}{branch or ''}"
+            if sem_branch:
+                parts.append(sem_branch)
+
+        if section:
+            parts.append(str(section))
+
+        if group:
+            parts.append(str(group))
+
+        # Join the parts with a hyphen, or set to None if all are empty
+        batch_is = "-".join(parts) if parts else None
     
         # Submission requests stats of individual student in the batch
         students = student_submission_stats(batch_details)
