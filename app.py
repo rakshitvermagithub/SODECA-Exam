@@ -1273,6 +1273,9 @@ FORM_DEFINITIONS = {
     }
 }
 
+# List of technical names of forms defined(SQL Names)
+form_name_list = list(FORM_DEFINITIONS.keys())
+
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
     # Check if table named the form exists
@@ -1310,8 +1313,43 @@ for form in form_name_list:
             )"""
         )
 
-# List of technical names of forms defined(SQL Names)
-form_name_list = list(FORM_DEFINITIONS.keys())
+# Create tables for all the forms in FORM_DEFINITIONS
+for form in form_name_list:
+    # Check if table named the form exists
+    table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
+
+    # If not exists
+    if not table_exists:
+
+        # List to store differnet fields definition
+        col_def_list = []
+        for field_col in FORM_DEFINITIONS[form]["fields"]:
+
+            field_col_name = field_col["field_name"]
+
+            # Defining form fields with dataype TEXT and is REQUIRED
+            col_def = f"{field_col_name} TEXT NOT NULL"
+            col_def_list.append(col_def)
+
+        # SQL string
+        field_cols_sql = ",".join(col_def_list)
+
+        # Dynamically create SQL tables for all forms
+        db.execute(
+            f"""CREATE TABLE IF NOT EXISTS {form}(
+            entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            student_id INTEGER NOT NULL,
+            {field_cols_sql},
+            full_path TEXT NOT NULL,
+            google_file_id TEXT NOT NULL DEFAULT 'pending',
+            status TEXT DEFAULT 'pending' NOT NULL,
+            submitted_at TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')),
+            withdrawn_at TIMESTAMP, rejection_note TEXT,
+            FOREIGN KEY (student_id) REFERENCES student_details(student_user_id),
+            CHECK (status IN ('pending', 'accepted', 'rejected'))
+            )"""
+        )
+
 # List of title names of forms defined
 form_title = []
 form_values = []
@@ -2632,6 +2670,8 @@ def faculty_dashboard():
 
         # Join the parts with a hyphen, or set to None if all are empty
         batch_is = "-".join(parts) if parts else None
+        if (batch_is != None):
+            session["batch_details"] = batch_details
     
         # Submission requests stats of individual student in the batch
         students = student_submission_stats(batch_details)
