@@ -1273,6 +1273,9 @@ FORM_DEFINITIONS = {
     }
 }
 
+# List of technical names of forms defined(SQL Names)
+form_name_list = list(FORM_DEFINITIONS.keys())
+
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
     # Check if table named the form exists
@@ -1309,9 +1312,6 @@ for form in form_name_list:
             CHECK (status IN ('pending', 'accepted', 'rejected'))
             )"""
         )
-
-# List of technical names of forms defined(SQL Names)
-form_name_list = list(FORM_DEFINITIONS.keys())
 
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
