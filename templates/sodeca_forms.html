@@ -187,14 +187,14 @@
 <div class="page-wrapper d-flex justify-content-center align-items-center">
     <div class="card card-minimalist p-3" style="max-width: 1200px; width: 85%;">
         <div class="card-body">
-            <p class="text-secondary-emphasis fs-4 mb-4">
+            <p class="text-secondary-emphasis fs-4 mb-2">
                 SODECA Form Categories <span class="fs-5 text-black text-opacity-75">(Ensure you have valid Proof/Certificate for your selections<span class="text-danger">*</span>)</span>
             </p>
-            <span>You may select multiple forms as required. Maximum 5 forms can be submitted at once.</span>
+            <small>You may select multiple forms as required. Maximum 5 forms can be submitted at once.</small>
 
             <form action="{{ url_for('sodeca_forms') }}" method="post" id="college-form">
                 
-                <div class="row row-cols-1 row-cols-lg-2 g-3 mt-1">
+                <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
                     {% for key, form in FORM_DEFINITIONS.items() %}
                     {% set form_style = namespace(css_class='', icon='') %}
                     {% if key == 'blood_donor' %}
@@ -232,7 +232,7 @@
                         <div class="form-item h-100 border-dark-subtle" id="form-item-{{ key }}">
                             
                             <div class="selection-area px-3 py-2 d-flex flex-column align-items-start flex-sm-row justify-content-sm-between align-items-sm-center gap-2">
-                                <label class="form-check-label fw-semibold" style="font-size: 1.3rem;">
+                                <label class="form-check-label fw-medium" style="font-size: 1rem;">
                                     <i class="bi {{ form_style.icon }} form-icon"></i>{{ form["title"] }}
                                 </label>
                                 
