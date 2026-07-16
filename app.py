@@ -2670,6 +2670,8 @@ def faculty_dashboard():
 
         # Join the parts with a hyphen, or set to None if all are empty
         batch_is = "-".join(parts) if parts else None
+        if (batch_is != None):
+            session["batch_details"] = batch_details
     
         # Submission requests stats of individual student in the batch
         students = student_submission_stats(batch_details)
