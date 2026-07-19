@@ -89,23 +89,16 @@
 
 {% block main %}
     {% include "message.html" %}
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <div class="dashboard-wrapper">
         <div class="container px-4 px-md-5" style="max-width: 1400px;">
             
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
                 <h2 class="section-title">Batch Report</h2>
-                <div class="mb-3 d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#chartModal" onclick="updateChart()">
-                        <i class="bi bi-pie-chart-fill me-2"></i> Visual Report
-                    </button>
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#downloadData">
-                        <i class="bi bi-download me-2"></i>Download Data
-                    </button>
-                </div>
+                
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#downloadData">
+                    <i class="bi bi-download me-2"></i>Download Data
+                </button>
             </div>
 
             <div class="row mb-2">
@@ -123,7 +116,11 @@
             </div>
             <div class="row g-4">
                 <div class="col-12">
-
+                    <div class="mb-3 d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#chartModal">
+                            <i class="bi bi-pie-chart-fill me-2"></i> Visual Report
+                        </button>
+                    </div>
 
                     <div class="table-responsive" id="dynamic_table">
                         <table class="table table-striped table-bordered display nowrap" id="tb_blood_donor" style="width: 100%;">
@@ -307,5 +304,63 @@
 
     </script>
     <script src="/static/dynamic_form_rendering.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('categoryPieChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'pie', // Changed to standard Pie chart
+                data: {
+                    labels: [
+                        'Blood Donor', 
+                        'Participation in Comp.', 
+                        'Seminar/Workshop', 
+                        'Expert Lecture', 
+                        'Other'
+                    ],
+                    datasets: [{
+                        data: [15, 35, 25, 15, 10], // Dummy percentages
+                        backgroundColor: [
+                            '#1c00a8', // Primary blue
+                            '#3498db', // Light blue
+                            '#2ecc71', // Green
+                            '#f1c40f', // Yellow
+                            '#e74c3c'  // Red
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                plugins: {
+                        legend: {
+                            position: 'right', // Moves it to the right side of the pie
+                            labels: {
+                                font: {
+                                    family: "'Poppins', sans-serif",
+                                    size: 11 // Reduced from 13 for smaller text
+                                },
+                                color: '#1a1a1a',
+                                padding: 12, // Reduced padding to tighten the list
+                                boxWidth: 12 // Makes the colored squares smaller
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                    // cutout property removed so it fills the center
+                }
+            });
+        });
+    </script>
 {% endblock %}
