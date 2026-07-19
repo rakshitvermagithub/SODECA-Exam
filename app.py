@@ -3780,40 +3780,6 @@ def remove_dev():
 
         return redirect(url_for("dev_management"))
 
-@app.route("/visual_report", methods=["POST"])
-def visual_report():
-
-    chartData = []
-    chartLabels = []
-
-    for form_name, form_title in form_dict.items():
-        val = None
-        if session.get('user_role') == 'admin':
-            query = f"SELECT COUNT(*) FROM {form_name}"
-            val = db.execute(query)
-        elif session.get('user_role') == 'faculty':
-            batch_details = session.get("batch_details")
-
-            query = f"""SELECT COUNT(*) FROM {form_name} as f
-                                    INNER JOIN student_details as s 
-                                    ON f.student_id = s.student_user_id
-                                    WHERE s.branch=? AND 
-                                    s.semester=? AND 
-                                    s.section=? AND 
-                                    class_group=?"""
-            val = db.execute(query,
-                             batch_details["branch"],
-                             batch_details["semester"],
-                             batch_details["section"],
-                             batch_details["class_group"])
-
-        if val and val[0]['COUNT(*)'] != 0:
-            chartData.append(val[0]['COUNT(*)'])
-            chartLabels.append(form_title)
-
-    return jsonify({"chartData" : chartData, "labelData": chartLabels})
-
-
 if __name__ == '__main__':
 
     if not os.path.exists(UPLOAD_FOLDER):

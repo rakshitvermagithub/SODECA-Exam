@@ -121,9 +121,6 @@
              <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
                 <i class="bi bi-funnel-fill me-2"></i> Apply Filters
             </button>
-            <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#chartModal" onclick="updateChart()">
-                <i class="bi bi-pie-chart-fill me-2"></i> Visual Report
-            </button>
         </div>
 
         <div class="card card-minimalist-admin">
@@ -405,28 +402,6 @@
     </div>
 </div>
 
-<div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="chartModalLabel">Category Breakdown</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="chart-container">
-                    <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
-                        <canvas id="categoryPieChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 {% endblock %}
 
 {% block script %}
@@ -440,8 +415,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const filterModalElement = document.getElementById('filterModal');
@@ -655,6 +628,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<script src="/static/dynamic_form_rendering.js"></script>
 {% endblock %}
 
