@@ -140,3 +140,81 @@ function openTab(evt, containerId) {
     // downloadButton.disabled = true;
     // downloadButton.id = 'download-button-'+containerId;
 }
+let myPieChart;
+Chart.register(ChartDataLabels);
+
+function updateChart() {
+    let dataChart = [];
+    let labelsChart = [];
+
+    fetch('/visual_report', {
+        method: 'POST',
+        headers: {
+            'Content-type': 'application/json',
+        }
+    })
+    .then(response=>response.json())
+    .then(responseData => {
+        dataChart = responseData.chartData;
+        labelsChart = responseData.labelData;
+        const ctx = document.getElementById('categoryPieChart').getContext('2d');
+        Chart.register(ChartDataLabels);
+
+        console.log("Chart Labels values are: ", labelsChart);
+        console.log("Chart data values are: ", dataChart);
+        myPieChart = new Chart(ctx, {
+            type: 'pie', // Changed to standard Pie chart
+            data: {
+                labels: labelsChart,
+                datasets: [{
+                    data: dataChart, // Dummy percentages
+                    backgroundColor: [
+                        'rgba(44, 127, 184, 0.7)', // Primary blue
+                        '#3498db', // Light blue
+                        '#2ecc71', // Green
+                        '#f1c40f', // Yellow
+                        '#e74c3c', // Red
+                        'rgba(255, 152, 150, 0.7)',
+                        'rgba(158, 218, 229, 0.7)',
+                        'rgba(140, 86, 75, 0.7)',
+                        'rgba(247, 182, 210, 0.7)',
+                        'rgba(255, 215, 0, 0.7)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4,
+                    datalabels: {
+                        color: 'black',
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+            plugins: {
+                    legend: {
+                        position: 'right', // Moves it to the right side of the pie
+                        labels: {
+                            font: {
+                                family: "'Poppins', sans-serif",
+                                size: 11 // Reduced from 13 for smaller text
+                            },
+                            color: '#1a1a1a',
+                            padding: 12, // Reduced padding to tighten the list
+                            boxWidth: 12 // Makes the colored squares smaller
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ' ' + context.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+                // cutout property removed so it fills the center
+            }
+        });
+    })
+    .catch(error => console.error('Error during fetching data: ', error));
+}
