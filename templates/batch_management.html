@@ -7,102 +7,194 @@
 {% block css %}
 <style>
     :root {
-        --bs-admin-purple: #4f46e5;
-        --bs-admin-purple-rgb: 79, 70, 229;
+        --admin-navy: #1e293b;
+        --admin-navy-light: #334155;
+        --admin-accent: #0284c7;
+        --admin-border: #e2e8f0;
+        --admin-bg-light: #f8fafc;
+        --admin-bg-subtle: #f1f5f9;
+        --admin-text-dark: #0f172a;
+        --admin-text-muted: #64748b;
     }
 
     .page-wrapper {
         min-height: calc(100vh - 140px);
-        background-color: #f0f2f5;
+        background-color: var(--admin-bg-subtle);
         padding-top: 2rem;
-        padding-bottom: 3rem;
+        padding-bottom: 2rem;
+        /* font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased; */
     }
 
     .form-title-admin {
-        position: relative;
-        padding-bottom: 0.75rem;
         font-weight: 700;
-        color: #1f2937;
-    }
-
-    .form-title-admin::after {
-        content: '';
-        position: absolute;
-        display: block;
-        width: 60px;
-        height: 4px;
-        background: var(--bs-admin-purple);
-        border-radius: 2px;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
+        color: var(--admin-navy);
+        text-transform: uppercase;
+        font-size: 1.5rem;
     }
 
     /* Admin Card Styles */
     .card-admin {
-        border: none;
-        border-top: 4px solid var(--bs-admin-purple);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-radius: 0.75rem;
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 0.5rem;
         background: white;
-        height: 100%; /* Ensure cards fill column height */
     }
 
     .card-header-admin {
-        background-color: #f9fafb;
+        background-color: var(--admin-bg-light);
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--admin-border);
         font-weight: 600;
-        color: #374151;
+        color: var(--admin-navy);
         display: flex;
         align-items: center;
     }
 
     .btn-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
         font-weight: 500;
+        border-radius: 0.375rem;
+        border: 1px solid var(--admin-navy);
+        transition: all 0.15s ease-in-out;
     }
     .btn-admin:hover {
-        background-color: #4338ca;
+        background-color: var(--admin-navy-light);
+        border-color: var(--admin-navy-light);
         color: white;
-        box-shadow: 0 4px 12px rgba(var(--bs-admin-purple-rgb), 0.2);
     }
 
-    /* Dynamic Section Row Styling */
-    .section-row {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
+    /* Row 1: Drive block */
+    .drive-row-block .form-control[readonly] {
+        background-color: var(--admin-bg-light);
+    }
+    
+    .btn-outline-secondary {
+        border-color: var(--admin-border);
+        color: var(--admin-navy-light);
+        border-radius: 0.375rem;
+    }
+    .btn-outline-secondary:hover:not(.disabled) {
+        background-color: var(--admin-bg-light);
+        color: var(--admin-navy);
+        border-color: var(--admin-text-muted);
+    }
+
+    /* Row 2: Base config block */
+    .base-config-block .form-label {
+        font-weight: 600;
+        color: var(--admin-navy-light);
+    }
+
+    /* Row 3+: Semester blocks */
+    #semesterBlocksContainer {
+        margin-top: 1.5rem;
+    }
+
+    .semester-block {
+        border: 1px solid var(--admin-border);
+        border-left: 4px solid var(--admin-navy);
         border-radius: 0.5rem;
-        padding: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    .semester-block-header {
+        font-weight: 700;
+        color: var(--admin-navy);
+        font-size: 1.1rem;
         margin-bottom: 1rem;
-        position: relative;
-        transition: border-color 0.2s;
+        display: flex;
+        align-items: center;
+        letter-spacing: -0.01em;
     }
-    .section-row:hover {
-        border-color: #d1d5db;
+
+    .branch-block {
+        background-color: var(--admin-bg-light);
+        border: 1px solid var(--admin-border);
+        border-radius: 0.375rem;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        height: 100%;
     }
+
+    .branch-block-header {
+        font-weight: 600;
+        color: var(--admin-navy-light);
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed var(--admin-border);
+        padding-bottom: 0.5rem;
+    }
+
+    .section-pair-row {
+        background-color: #ffffff;
+        border: 1px solid var(--admin-border);
+        border-radius: 0.25rem;
+        padding: 0rem 0.5rem 0.25rem 0.5rem;
+        margin: 0.5rem 0.5rem;
+    }
+    .section-pair-row label {
+        white-space: nowrap;
+    }
+
+    .remove-pair-btn i,
     .remove-row-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        color: #dc3545;
-        cursor: pointer;
-        font-size: 1.2rem;
-        opacity: 0.8;
-        transition: opacity 0.2s;
+        pointer-events: none;
     }
-    .remove-row-btn:hover {
-        opacity: 1;
+
+    .empty-state-msg {
+        color: var(--admin-text-muted);
+        font-style: italic;
+        text-align: center;
+        padding: 1rem;
+        border: 1px dashed var(--admin-border);
+        border-radius: 0.375rem;
+        background: var(--admin-bg-light);
+    }
+
+    .empty-state-msg.top-level {
+        padding: 2rem 1rem;
+        font-size: 0.95rem;
     }
 
     /* Modal Styling */
     .modal-header-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
+        border-bottom: none;
     }
     .modal-header-admin .btn-close {
         filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    .modal-content {
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .choice-btn {
+        border: 1px solid var(--admin-border);
+        border-radius: 0.375rem;
+        padding: 1rem;
+        text-align: left;
+        background: var(--admin-bg-light);
+        transition: all 0.15s ease-in-out;
+        width: 100%;
+        color: var(--admin-text-dark);
+    }
+    .choice-btn:hover {
+        border-color: var(--admin-navy-light);
+        background: var(--admin-bg-subtle);
+    }
+    .choice-btn i {
+        font-size: 1.25rem;
+        color: var(--admin-navy-light);
+        margin-right: 0.75rem;
     }
 </style>
 {% endblock %}
@@ -112,216 +204,623 @@
 
 <div class="page-wrapper">
     <div class="container">
-        <h3 class="text-center mb-5 form-title-admin">Manage Batch and Google Drive Structure</h3>
+        <div class="text-center mb-3">
+            <h3 class="form-title-admin">Batch Management</h3>
+        </div>
 
-        <!-- MAIN CONTENT GRID -->
-        <div class="row g-4">
-            
-            <!-- LEFT COLUMN: Structure Config (Larger) -->
-            <div class="col-12 col-lg-8">
+        <!-- ================= ROW 1: DRIVE BLOCK ================= -->
+        <div class="row g-4 drive-row-block mb-4">
+            <div class="col-12">
                 <div class="card card-admin">
-                    <div class="card-header-admin fw-bold">
-                        <i class="bi bi-diagram-3-fill me-2 text-info"></i> ACADEMIC BATCH STRUCTURE
-                    </div>
                     <div class="card-body p-4">
-                        <form action="/create_drive_structure" method="post" id="structureForm">
+                        {% set current_master_link = drive_settings.get("master_folder_link") if drive_settings else None %}
+                        <div class="row g-4 align-items-end">
                             
-                            <div class="row g-4">
-                                <!-- Level 1: Branches -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold" style="color: var(--bs-admin-purple);">Level 1: Academic Branches<span class="text-danger">*</span></label>
-                                    <textarea type="text" class="form-control" name="branches" 
-                                    placeholder="e.g. CSE, ECE, ME, IT (Comma separated)" required>{% if drive_settings.get('level_1') %}{{ drive_settings.get('level_1') }}{% endif %}</textarea>
-                                    <div class="form-text">Enter branches separated by commas.</div>
-                                </div>
-
-                                <!-- Level 2: Semesters -->
-                                {% set active_sems = drive_settings['level_2'].split(',') if drive_settings['level_2'] else [] %}
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold" style="color: var(--bs-admin-purple);">Level 2: Semesters<span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-3">
-                                        {% for i in range(1, 9) %}
-                                        <div class="form-check form-check-inline m-0">
-                                            <input class="form-check-input" type="checkbox" name="semesters" value="{{ i }}" id="sem_{{ i }}" {% if i|string in active_sems %}checked{% endif %}>
-                                            <label class="form-check-label" for="sem_{{ i }}">{{ i }}</label>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    <div class="form-text">Select atleast one applicable semester for the folder structure.</div>
-                                </div>
-                            </div>
-
-                            <hr class="my-4 text-muted opacity-25">
-
-                            <!-- Level 3: Sections & Groups -->
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label fw-bold" style="color: var(--bs-admin-purple);">Level 3: Sections & Groups<span class="text-danger">*</span></label>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addSectionBtn">
-                                        <i class="bi bi-plus-lg"></i> Add Section
-                                    </button>
-                                </div>
-                                
-                                <div id="sectionsContainer" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-                                    {% if level_3_rows %}
-                                        {% for row in level_3_rows %}
-                                        <div class="section-row">
-                                            <!-- Include the remove button so existing rows can be deleted too -->
-                                            <i class="bi bi-x-circle-fill remove-row-btn text-danger position-absolute end-0 top-0 m-2" 
-                                                style="cursor: pointer;" title="Remove Section"></i>
-                                            
-                                            <div class="row g-3 position-relative">
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold">Section Name<span class="text-danger">*</span></label>
-                                                    <input type="text" class="form-control" 
-                                                            name="section_names[]" 
-                                                            value="{{ row.section }}" 
-                                                            required>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold">Groups (Comma separated)<span class="text-danger">*</span></label>
-                                                    <input type="text" class="form-control" 
-                                                            name="group_lists[]" 
-                                                            value="{{ row.groups }}" 
-                                                            required>
-                                                </div>
-                                            </div>
-                                            <hr class="d-md-none my-2"> <!-- Mobile separator if needed -->
-                                        </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <!-- Default Row -->
-                                        <div class="section-row">
-                                            <div class="row g-3">
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold">Section Name</label>
-                                                    <input type="text" class="form-control" name="section_names[]" placeholder="e.g. A" required>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small fw-bold">Groups (Comma separated)</label>
-                                                    <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-admin px-4">
-                                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Update Batch Structure and Sync Drive
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT COLUMN: Update Link (Smaller) -->
-            <div class="col-12 col-lg-4">
-                <div class="card card-admin">
-                    <div class="card-header-admin fw-bold">
-                        <i class="bi bi-folder-fill me-2 text-warning"></i> DRIVE MANAGEMENT
-                    </div>
-                    <div class="card-body p-4">
-                        
-                        {% set current_master_link = drive_settings.get("master_folder_link")%}
-                        <!-- Open Drive Button Area -->
-                        <div class="mb-4">
-                             <div class="d-grid gap-2">
-                                <a href="{{ current_master_link }}" target="_blank" class="btn btn-outline-secondary fw-semibold {% if not current_master_link %}disabled{% endif %}">
+                            <!-- Current master folder button -->
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase tracking-wider text-muted d-block mb-2">Current Directory</label>
+                                <a href="{{ current_master_link }}" target="_blank"
+                                   class="btn btn-outline-secondary fw-semibold w-100 {% if not current_master_link %}disabled{% endif %} d-flex align-items-center justify-content-center gap-2 py-2">
                                     <img class="image" data-alt-override="false" alt="Google Drive" srcset="
-                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw 1x,
-                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s96-fcrop64=1,00000000ffffffff-rw 2x
-                        " width="25" height="25" loading="lazy" fetchpriority="" src="https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw"> Current Master Folder
+                                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw 1x,
+                                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s96-fcrop64=1,00000000ffffffff-rw 2x
+                                        " width="18" height="18" loading="lazy" src="https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw">
+                                    Open Master Folder
                                 </a>
-                                <div class="input-group">
-                                    <input type="text" class="form-control bg-light text-muted" value="{{ current_master_link | default('Not Configured') }}" readonly disabled>
+                            </div>
+
+                            <!-- Direct Form Submission Wrapper -->
+                            <form action="/update_master_folder" method="post" class="col-12 col-md-8">
+                                <div class="row g-3 align-items-end">
+                                    <!-- Update input -->
+                                    <div class="col-12 col-md-8">
+                                        <label for="new_master_link" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Update Master Folder Link</label>
+                                        <input type="url" class="form-control py-2" id="new_master_link" name="new_master_link"
+                                               placeholder="https://drive.google.com/drive/folders/..." required>
+                                    </div>
+                                    <!-- Trigger Button -->
+                                    <div class="col-12 col-md-4">
+                                        <button type="submit" class="btn btn-admin w-100 py-2">
+                                            <i class="bi bi-arrow-repeat me-1"></i> Update Link
+                                        </button>
+                                    </div>
                                 </div>
-                             </div>
+                            </form>
+
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        <hr class="my-4 text-muted opacity-25">
+        <!-- ================= MAIN STRUCTURE FORM ================= -->
+        <form action="/create_drive_structure" method="post" id="structureForm">
+            <input type="hidden" name="academic_session" id="academicSessionHidden">
+            <input type="hidden" name="structure_json" id="structureJsonInput">
 
-                        <!-- Update Form -->
-                        <form id="masterFolderForm" action="/update_master_folder" method="post">
-                            <div class="mb-3">
-                                <label for="new_master_link" class="form-label fw-medium">Update Master Folder Destination</label>
-                                <input type="url" class="form-control" id="new_master_link" name="new_master_link" placeholder="https://drive.google.com/drive/folders/..." required>
-                                <div class="form-text">Paste the full shareable link of the new Google Drive folder.</div>
+            <!-- ================= ROW 2: BASE CONFIG BLOCK ================= -->
+            <div class="row g-4 mb-4" id="structureCard">
+                <div class="col-12">
+                    <div class="card card-admin base-config-block">
+                        <div class="card-body p-4">
+
+                            <!-- Upper Config Layer: Academic Session Focus -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-2">Academic Session<span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-calendar-event"></i></span>
+                                        <input type="text" class="form-control border-start-0" id="academicSession" name="academic_session"
+                                            placeholder="e.g. 2025-26" value="{{ drive_settings.get('academic_session') if drive_settings else '' }}" required>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="d-grid">
-                                <button type="button" class="btn btn-admin" data-bs-toggle="modal" data-bs-target="#confirmMasterModal">
-                                    Update Folder
-                                </button>
+
+                            <hr class="text-muted opacity-25 my-4">
+
+                            <!-- Main Dynamic Matrices Layer -->
+                            <div class="row g-4">
+                                <!-- Semesters Control Matrix -->
+                                <div class="col-12 col-lg-6">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-0">Number of Semesters<span class="text-danger">*</span></label>
+                                        <span class="badge bg-light text-secondary border rounded px-2 py-1 small fw-normal">Select Multiple</span>
+                                    </div>
+                                    <div id="semesterCheckboxContainer" class="p-3 border rounded bg-light-subtle row g-2 m-0 align-content-start" style="height: 180px; overflow-y: auto;">
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="1" id="sem1"><label class="form-check-label fw-medium text-dark ms-1" for="sem1">Sem 1</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="2" id="sem2"><label class="form-check-label fw-medium text-dark ms-1" for="sem2">Sem 2</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="3" id="sem3"><label class="form-check-label fw-medium text-dark ms-1" for="sem3">Sem 3</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="4" id="sem4"><label class="form-check-label fw-medium text-dark ms-1" for="sem4">Sem 4</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="5" id="sem5"><label class="form-check-label fw-medium text-dark ms-1" for="sem5">Sem 5</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="6" id="sem6"><label class="form-check-label fw-medium text-dark ms-1" for="sem6">Sem 6</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="7" id="sem7"><label class="form-check-label fw-medium text-dark ms-1" for="sem7">Sem 7</label></div></div>
+                                        <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="8" id="sem8"><label class="form-check-label fw-medium text-dark ms-1" for="sem8">Sem 8</label></div></div>
+                                    </div>
+                                </div>
+
+                                <!-- Branches Control Matrix with Dynamic Inline Actions -->
+                                <div class="col-12 col-lg-6">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-0">Active Academic Branches<span class="text-danger">*</span></label>
+                                    </div>
+                                    
+                                    <div id="branchCheckboxContainer" class="p-3 border rounded bg-light-subtle row g-2 m-0 align-content-start" style="height: 180px; overflow-y: auto;">
+                                        <!-- Core Seed Values -->
+                                        <div class="col-6 col-sm-4 branch-item"><div class="form-check position-relative d-flex align-items-center justify-content-between"><div class="d-inline-block"><input class="form-check-input branch-checkbox" type="checkbox" value="CSE" id="cse"><label class="form-check-label fw-medium text-dark ms-1" for="cse">CSE</label></div></div></div>
+                                        <div class="col-6 col-sm-4 branch-item"><div class="form-check position-relative d-flex align-items-center justify-content-between"><div class="d-inline-block"><input class="form-check-input branch-checkbox" type="checkbox" value="CSE(AI)" id="cse(ai)"><label class="form-check-label fw-medium text-dark ms-1" for="cse(ai)">CSE(AI)</label></div></div></div>
+                                        <div class="col-6 col-sm-4 branch-item"><div class="form-check position-relative d-flex align-items-center justify-content-between"><div class="d-inline-block"><input class="form-check-input branch-checkbox" type="checkbox" value="CSE(DS)" id="cse(ds)"><label class="form-check-label fw-medium text-dark ms-1" for="cse(ds)">CSE(DS)</label></div></div></div>
+                                        <div class="col-6 col-sm-4 branch-item"><div class="form-check position-relative d-flex align-items-center justify-content-between"><div class="d-inline-block"><input class="form-check-input branch-checkbox" type="checkbox" value="CSE(IOT)" id="cse(iot)"><label class="form-check-label fw-medium text-dark ms-1" for="cse(iot)">CSE(IOT)</label></div></div></div>
+                                        <div class="col-6 col-sm-4 branch-item"><div class="form-check position-relative d-flex align-items-center justify-content-between"><div class="d-inline-block"><input class="form-check-input branch-checkbox" type="checkbox" value="ME" id="ME"><label class="form-check-label fw-medium text-dark ms-1" for="ME">ME</label></div></div></div>
+                                        <div class="col-6 col-sm-4 branch-item"><div class="form-check position-relative d-flex align-items-center justify-content-between"><div class="d-inline-block"><input class="form-check-input branch-checkbox" type="checkbox" value="CE" id="CE"><label class="form-check-label fw-medium text-dark ms-1" for="CE">CE</label></div></div></div>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Confirm Master Folder Update -->
-<div class="modal fade" id="confirmMasterModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header modal-header-admin">
-                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Update</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <p class="mb-2 fw-medium">Are you sure you want to change the Master Folder destination?</p>
-                <div class="alert alert-warning small d-inline-block text-start">
-                    Changing this will redirect all future uploads to the new folder. Ensure you have copied any necessary data from the old location.
+            <!-- Inline Small Modal Component for Appending Custom Branch Entries -->
+            <div class="modal fade" id="customBranchModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-light border-bottom py-2 px-3">
+                            <h6 class="modal-title fw-bold text-dark mb-0"><i class="bi bi-folder-plus text-secondary me-2"></i>New Branch</h6>
+                            <button type="button" class="btn-close small" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-3">
+                            <div class="form-group">
+                                <label for="customBranchNameInput" class="form-label small fw-bold text-muted">Branch Identifier</label>
+                                <input type="text" class="form-control form-control-sm text-uppercase" id="customBranchNameInput" placeholder="e.g. ME, ECE, IT" maxlength="15">
+                                <div class="form-text small text-danger d-none" id="branchModalErrorMsg">Branch name cannot be empty.</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 bg-light py-2 px-3 justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-secondary font-medium px-3" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-admin font-medium px-3" id="saveCustomBranchBtn">Add</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0 justify-content-center">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-admin" onclick="document.getElementById('masterFolderForm').submit()">Yes, Update It</button>
+
+            <!-- ================= ROW 3+: DYNAMIC SEMESTER BLOCKS ================= -->
+            <div id="semesterBlocksContainer"></div>
+
+            <div class="text-center mt-4 mb-5" id="submitStructureWrapper">
+                <button type="submit" class="btn btn-admin px-4 py-2 d-none" id="submitStructureBtn">
+                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Save Structure & Sync Drive
+                </button>
             </div>
-        </div>
+        </form>
+
     </div>
 </div>
 
+<!-- Sticky Notification Toast (Only renders if drive_auth_token is missing) -->
+{% if not session.get('drive_auth_token') %}
+<div id="driveAuthToast" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 z-3 d-none" style="min-width: 320px; max-width: 550px;">
+    <div class="d-flex align-items-center bg-white border border-secondary-subtle rounded-3 shadow-sm p-2">
+        
+        <!-- Fully Clickable Main Component Area -->
+        <a href="/authorize_drive" class="d-flex align-items-center text-dark text-decoration-none flex-grow-1 py-1 ps-2 pe-3">
+            <i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i>
+            <span class="small fw-light">
+                Authenticate with Google Drive before updating the structure.
+            </span>
+        </a>
+        
+        <!-- Dismiss Button -->
+        <button type="button" class="btn-close ms-auto me-1" aria-label="Close" id="closeAuthToastBtn" style="font-size: 0.7rem;"></button>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block script %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('sectionsContainer');
-    const addBtn = document.getElementById('addSectionBtn');
+document.addEventListener('DOMContentLoaded', function () {
 
-    addBtn.addEventListener('click', function() {
-        const div = document.createElement('div');
-        div.className = 'section-row fade-in';
-        div.innerHTML = `
-            <i class="bi bi-x-circle-fill remove-row-btn" title="Remove Section"></i>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold">Section Name</label>
-                    <input type="text" class="form-control" name="section_names[]" placeholder="e.g. B" required>
+    // Target the Toast Node safely
+    const authToast = document.getElementById('driveAuthToast');
+    const closeAuthToastBtn = document.getElementById('closeAuthToastBtn');
+
+    // Only run toggle logic if the Jinja conditional rendered the element
+    if (authToast && closeAuthToastBtn) {
+        if (!sessionStorage.getItem('drive_auth_warned')) {
+            authToast.classList.remove('d-none');
+        }
+
+        // Dismiss behavior
+        closeAuthToastBtn.addEventListener('click', function() {
+            authToast.classList.add('d-none');
+            sessionStorage.setItem('drive_auth_warned', 'true');
+        });
+    }
+   
+    // Target UI Nodes
+    const branchCheckboxContainer = document.getElementById('branchCheckboxContainer');
+    const inlineBranchInput = document.getElementById('inlineBranchInput');
+    const appendInlineBranchBtn = document.getElementById('appendInlineBranchBtn');
+
+    // Helper to escape HTML safely
+    function escapeHtml(str) {
+        return (str || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Handler function to generate the new UI elements
+    function appendBranchFromInput() {
+        const branchVal = inlineBranchInput.value.trim().toUpperCase();
+        
+        if (!branchVal) return;
+
+        // Guard constraint: Ensure duplicate options aren't created
+        const exists = Array.from(branchCheckboxContainer.querySelectorAll('.branch-checkbox'))
+                            .some(cb => cb.value === branchVal);
+
+        if (exists) {
+            alert('This branch option already exists.');
+            return;
+        }
+
+        // Standardize IDs for the labels
+        const normalizedId = 'custom_' + branchVal.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+        // Create container item layout dynamically
+        const colDiv = document.createElement('div');
+        colDiv.className = 'col-6 col-sm-4 branch-item target-custom';
+        colDiv.innerHTML = `
+            <div class="form-check position-relative d-flex align-items-center justify-content-between" style="padding-right: 20px;">
+                <div class="d-inline-block">
+                    <input class="form-check-input branch-checkbox" type="checkbox" value="${escapeHtml(branchVal)}" id="${normalizedId}" checked>
+                    <label class="form-check-label fw-medium text-dark ms-1" for="${normalizedId}">${escapeHtml(branchVal)}</label>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold">Groups (Comma separated)</label>
-                    <input type="text" class="form-control" name="group_lists[]" placeholder="e.g. G1, G2" required>
-                </div>
+                <button type="button" class="btn btn-sm p-0 border-0 text-danger position-absolute end-0 remove-custom-branch" style="background: none; line-height: 1;" title="Remove Option">
+                    <i class="bi bi-x-circle-fill" style="font-size: 0.9rem;"></i>
+                </button>
             </div>
         `;
-        container.appendChild(div);
-    });
 
-    container.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-row-btn')) {
-            if (container.querySelectorAll('.section-row').length > 1) {
-                e.target.closest('.section-row').remove();
-            } else {
-                alert("You must have at least one section configuration.");
+        // Append directly to layout & wipe input field clear
+        branchCheckboxContainer.appendChild(colDiv);
+        inlineBranchInput.value = '';
+
+        // Fire standard updates for rendering blocks and tracking localStorage drafts
+        if (typeof renderStructure === 'function') renderStructure();
+        if (typeof saveDraft === 'function') saveDraft();
+    }
+
+    // 1. Data Definitions & Initialization
+    const existingBatchRows = {{ batch_rows | tojson if batch_rows else '[]' }};
+
+    const container = document.getElementById('semesterBlocksContainer');
+    const submitBtn = document.getElementById('submitStructureBtn');
+    const academicSessionInput = document.getElementById('academicSession');
+    const checkboxContainer = document.getElementById('semesterCheckboxContainer');
+
+     // Capture click events inside the branches matrix to process inline text button options deletes via event delegation
+    branchCheckboxContainer.addEventListener('click', function(e) {
+        const deleteActionBtn = e.target.closest('.remove-custom-branch');
+        if (deleteActionBtn) {
+            const itemBlock = deleteActionBtn.closest('.branch-item');
+            if (itemBlock) {
+                itemBlock.remove();
+                renderStructure();
+                saveDraft();
             }
         }
     });
+
+    // LocalStorage Keys
+    const LATEST_DB_TIMESTAMP_KEY = 'batch_structure_db_timestamp';
+    const DRAFT_TIMESTAMP_KEY = 'batch_structure_draft_timestamp';
+    const DRAFT_DATA_KEY = 'batch_structure_draft';
+
+    // 2. Fundamental Utility Functions (Must come first)
+    function debounce(fn, delay) {
+        let timer = null;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(function () { fn.apply(null, args); }, delay);
+        };
+    }
+
+    function escapeHtml(str) {
+        return (str || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function getSelectedSemesters() {
+        return Array.from(checkboxContainer.querySelectorAll('.semester-checkbox:checked'))
+                    .map(cb => parseInt(cb.value, 10));
+    }
+
+    function getSelectedBranches() {
+        return Array.from(branchCheckboxContainer.querySelectorAll('.branch-checkbox:checked'))
+                    .map(cb => cb.value.trim());
+    }
+
+    function addSectionPairRow(pairsContainer, sectionVal, groupVal) {
+        if (!sectionVal) {
+            const existingRowsCount = pairsContainer.querySelectorAll('.section-pair-row').length;
+            sectionVal = String.fromCharCode(65 + existingRowsCount);
+        }
+
+        const row = document.createElement('div');
+        row.className = 'row g-2 align-items-end section-pair-row mx-0';
+        row.innerHTML = `
+            <div class="col-5">
+                <label class="form-label small mb-1 text-muted">Section<span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm section-input" placeholder="e.g. A" value="${escapeHtml(sectionVal)}" required>
+            </div>
+            <div class="col-5">
+                <label class="form-label small mb-1 text-muted">Class Group(s)<span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm group-input" placeholder="e.g. G1, G2" value="${escapeHtml(groupVal)}" required>
+            </div>
+            <div class="col-2 text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-pair-btn" title="Remove Section">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>`;
+        pairsContainer.appendChild(row);
+    }
+
+    function collectCurrentData() {
+        const data = {};
+        document.querySelectorAll('.branch-block').forEach(function (bb) {
+            const sem = bb.dataset.sem, branch = bb.dataset.branch;
+            data[sem] = data[sem] || {};
+            const rows = [];
+            bb.querySelectorAll('.section-pair-row').forEach(function (r) {
+                rows.push({
+                    section: r.querySelector('.section-input').value,
+                    group: r.querySelector('.group-input').value
+                });
+            });
+            data[sem][branch] = rows;
+        });
+        return data;
+    }
+
+    function buildDataFromExistingRows(rows) {
+        const data = {};
+        rows.forEach(function (row) {
+            const sem = String(row.sem);
+            const branch = row.branch;
+            const raw = row.section || '';
+            const idx = raw.lastIndexOf('-');
+            const section = idx > -1 ? raw.substring(0, idx) : raw;
+            const group = idx > -1 ? raw.substring(idx + 1) : '';
+            data[sem] = data[sem] || {};
+            data[sem][branch] = data[sem][branch] || [];
+            data[sem][branch].push({ section: section, group: group });
+        });
+        return data;
+    }
+
+    function refreshSubmitVisibility() {
+        const hasRows = container.querySelector('.section-pair-row') !== null;
+        submitBtn.classList.toggle('d-none', !hasRows);
+    }
+
+    function buildBranchBlock(sem, branch, priorRows) {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+
+        const branchBlock = document.createElement('div');
+        branchBlock.className = 'branch-block';
+        branchBlock.dataset.sem = sem;
+        branchBlock.dataset.branch = branch;
+
+        const bHeader = document.createElement('div');
+        bHeader.className = 'branch-block-header';
+        bHeader.innerHTML = '<span><i class="bi bi-diagram-2 me-1"></i>' + escapeHtml(branch) + '</span>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary add-pair-btn"><i class="bi bi-plus-lg"></i> Section</button>';
+        branchBlock.appendChild(bHeader);
+
+        const pairsContainer = document.createElement('div');
+        pairsContainer.className = 'section-pairs-container';
+        branchBlock.appendChild(pairsContainer);
+
+        const rows = (priorRows && priorRows.length) ? priorRows : [{ section: '', group: '' }];
+        rows.forEach(function (pr) { addSectionPairRow(pairsContainer, pr.section, pr.group); });
+
+        col.appendChild(branchBlock);
+        return col;
+    }
+
+    function renderStructure(externalData) {
+        const selectedSemesters = getSelectedSemesters();
+        // Gather active checked string arrays cleanly
+        const branches = getSelectedBranches();
+
+        const existing = externalData || collectCurrentData();
+        container.innerHTML = '';
+
+        if (selectedSemesters.length === 0) {
+            const msg = document.createElement('div');
+            msg.className = 'empty-state-msg top-level';
+            msg.innerHTML = '<i class="bi bi-bookshelf me-2"></i>No semesters checked yet. Choose semesters above to generate blocks.';
+            container.appendChild(msg);
+            refreshSubmitVisibility();
+            return;
+        }
+
+        selectedSemesters.forEach(function (s) {
+            const semDiv = document.createElement('div');
+            semDiv.className = 'semester-block';
+            semDiv.dataset.sem = s;
+
+            const header = document.createElement('div');
+            header.className = 'semester-block-header';
+            header.innerHTML = '<i class="bi bi-bookshelf me-2"></i> Semester ' + s;
+            semDiv.appendChild(header);
+
+            if (branches.length === 0) {
+                const msg = document.createElement('div');
+                msg.className = 'empty-state-msg';
+                msg.innerHTML = '<i class="bi bi-diagram-2 me-2"></i>No branches checked yet. Choose branches above to generate sections.';
+                semDiv.appendChild(msg);
+            } else {
+                const branchRow = document.createElement('div');
+                branchRow.className = 'row g-3';
+                branches.forEach(function (branch) {
+                    const priorRows = existing[s] && existing[s][branch] ? existing[s][branch] : null;
+                    branchRow.appendChild(buildBranchBlock(s, branch, priorRows));
+                });
+                semDiv.appendChild(branchRow);
+            }
+            container.appendChild(semDiv);
+        });
+
+        refreshSubmitVisibility();
+    }
+    
+    // 3. LocalStorage / Autosave Logic
+    function getDraftPayload() {
+        return {
+            academicSession: academicSessionInput.value.trim(),
+            semesterCount: getSelectedSemesters(),
+            branches: getSelectedBranches(), // Saves verified checked IDs as array
+            structureData: collectCurrentData()
+        };
+    }
+
+    function saveDraft() {
+        const draft = getDraftPayload();
+        localStorage.setItem(DRAFT_DATA_KEY, JSON.stringify(draft));
+        localStorage.setItem(DRAFT_TIMESTAMP_KEY, Date.now().toString());
+    }
+
+    const debouncedSaveDraft = debounce(saveDraft, 1000);
+
+    function handleFormInputChange() {
+        debouncedSaveDraft();
+    }
+
+    const debouncedRender = debounce(function () { 
+        renderStructure(); 
+        saveDraft();
+    }, 350);
+
+    // 4. Bound Event Listeners
+    checkboxContainer.addEventListener('change', handleFormInputChange);
+    checkboxContainer.addEventListener('change', debouncedRender);
+
+    branchCheckboxContainer.addEventListener('change', handleFormInputChange);
+    branchCheckboxContainer.addEventListener('change', debouncedRender);
+
+    academicSessionInput.addEventListener('input', handleFormInputChange);
+    container.addEventListener('input', handleFormInputChange);
+    
+    container.addEventListener('click', function (e) {
+        const addBtn = e.target.closest('.add-pair-btn');
+        if (addBtn) {
+            const branchBlock = addBtn.closest('.branch-block');
+            addSectionPairRow(branchBlock.querySelector('.section-pairs-container'), '', '');
+            saveDraft();
+            return;
+        }
+        const removeBtn = e.target.closest('.remove-pair-btn');
+        if (removeBtn) {
+            const branchBlock = removeBtn.closest('.branch-block');
+            const rows = branchBlock.querySelectorAll('.section-pair-row');
+            if (rows.length > 1) {
+                removeBtn.closest('.section-pair-row').remove();
+                
+                const remainingRows = branchBlock.querySelectorAll('.section-pair-row');
+                remainingRows.forEach((row, index) => {
+                    row.querySelector('.section-input').value = String.fromCharCode(65 + index);
+                });
+                
+                saveDraft();
+            } else {
+                alert('Each branch must have at least one section.');
+            }
+        }
+        refreshSubmitVisibility();
+    });
+
+    // ---------- Structure form submission ----------
+    document.getElementById('structureForm').addEventListener('submit', function (e) {
+        const session = document.getElementById('academicSession').value.trim();
+        if (!session) { e.preventDefault(); alert('Please enter the Academic Session.'); return; }
+
+        const rows = [];
+        let hasEmptyField = false;
+
+        document.querySelectorAll('.branch-block').forEach(function (bb) {
+            const sem = bb.dataset.sem, branch = bb.dataset.branch;
+            bb.querySelectorAll('.section-pair-row').forEach(function (r) {
+                const sec = r.querySelector('.section-input').value.trim();
+                const grpRaw = r.querySelector('.group-input').value.trim();
+
+                if (!sec || !grpRaw) { hasEmptyField = true; }
+
+                // Split the groups by comma, trim whitespace, and map them with the section prefix
+                const formattedSections = grpRaw.split(',')
+                    .map(function(g) { return g.trim(); })
+                    .filter(Boolean)
+                    .map(function(g) { return sec + '-' + g; })
+                    .join(','); // Joins them as "A-G1, A-G2"
+
+                rows.push({
+                    sem: parseInt(sem, 10),
+                    branch: branch,
+                    section: formattedSections,
+                });
+            });
+        });
+
+        if (rows.length === 0) {
+            e.preventDefault();
+            alert('Please generate the structure blocks and fill them in before submitting.');
+            return;
+        }
+        if (hasEmptyField) {
+            e.preventDefault();
+            alert('Please fill in every Section and Class Group field, or remove unused rows.');
+            return;
+        }
+
+        document.getElementById('academicSessionHidden').value = session;
+        document.getElementById('structureJsonInput').value = JSON.stringify(rows);
+
+        const pendingLink = document.getElementById('pendingMasterLinkForNewStructure').value;
+        if (pendingLink) {
+            document.getElementById('newMasterLinkHidden').value = pendingLink;
+        }
+
+        localStorage.removeItem(DRAFT_DATA_KEY);
+        localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+    });
+
+    // ---------- Hybrid State Recovery (Initialization) ----------
+    const hasDbData = existingBatchRows && existingBatchRows.length > 0;
+    
+    if (hasDbData) {
+        localStorage.setItem(LATEST_DB_TIMESTAMP_KEY, Date.now().toString());
+    }
+
+    const draftDataStr = localStorage.getItem(DRAFT_DATA_KEY);
+    const draftTimestampStr = localStorage.getItem(DRAFT_TIMESTAMP_KEY);
+    const latestDbTimestampStr = localStorage.getItem(LATEST_DB_TIMESTAMP_KEY);
+
+    let restored = false;
+
+    if (draftDataStr && draftTimestampStr) {
+        const draftTime = parseInt(draftTimestampStr, 10);
+        const dbTime = latestDbTimestampStr ? parseInt(latestDbTimestampStr, 10) : 0;
+
+        if (draftTime > dbTime) {
+            const confirmRestore = confirm("You have unsaved changes from your last session. Would you like to restore them?");
+            if (confirmRestore) {
+                try {
+                    const draft = JSON.parse(draftDataStr);
+                    academicSessionInput.value = draft.academicSession || '';
+                    
+                    if (draft.semesterCount && Array.isArray(draft.semesterCount)) {
+                        checkboxContainer.querySelectorAll('.semester-checkbox').forEach(cb => {
+                            cb.checked = draft.semesterCount.includes(parseInt(cb.value, 10));
+                        });
+                    }
+                    if (draft.branches && Array.isArray(draft.branches)) {
+                        branchCheckboxContainer.querySelectorAll('.branch-checkbox').forEach(cb => {
+                            cb.checked = draft.branches.includes(cb.value);
+                        });
+                    }
+
+                    renderStructure(draft.structureData);
+                    restored = true;
+                } catch (err) {
+                    console.error("Failed to recover batch draft structure details", err);
+                }
+            } else {
+                localStorage.removeItem(DRAFT_DATA_KEY);
+                localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+            }
+        }
+    }
+
+    if (!restored) {
+        if (hasDbData) {
+            const semesters = existingBatchRows.map(function (r) { return parseInt(r.sem, 10); });
+            
+            // Find unique branches returned from database records
+            const uniqueBranches = [...new Set(existingBatchRows.map(r => r.branch))];
+            
+            // Set checkboxes matching DB rows to true
+            branchCheckboxContainer.querySelectorAll('.branch-checkbox').forEach(cb => {
+                cb.checked = uniqueBranches.includes(cb.value);
+            });
+
+            const uniqueSemesters = [...new Set(existingBatchRows.map(r => parseInt(r.sem, 10)))];
+            checkboxContainer.querySelectorAll('.semester-checkbox').forEach(cb => {
+                cb.checked = uniqueSemesters.includes(parseInt(cb.value, 10));
+            });
+
+            const existingData = buildDataFromExistingRows(existingBatchRows);
+            renderStructure(existingData);
+        }
+    }
 });
 </script>
 {% endblock %}

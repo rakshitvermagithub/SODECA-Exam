@@ -32,6 +32,7 @@ import re
 import smtplib
 import sys
 import pandas as pd
+import json
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -1393,15 +1394,24 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
     drive_folder_id TEXT UNIQUE NOT NULL, branch TEXT NOT NULL, 
     semester TEXT NOT NULL, section TEXT NOT NULL, 
-    class_group TEXT NOT NULL, form_name TEXT NOT NULL) 
+    form_name TEXT NOT NULL) 
     """)
-# Create a table to store sodeca drive master folder link and subdirectory structure
-# level1 -> branch, level2 -> semester, level3 -> section-group
+# Create a table to store sodeca drive master folder link and academic session
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        level_1 TEXT, level_2 TEXT,
-        level_3 TEXT, master_folder_link TEXT, master_folder_id TEXT
+        master_folder_link TEXT, master_folder_id TEXT,
+        academic_session TEXT,
+        updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
+    ) 
+""")
+
+db.execute("""
+    CREATE TABLE IF NOT EXISTS batch_structure (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sem INTEGER, 
+        branch TEXT,
+        section TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
@@ -3479,38 +3489,15 @@ def student_report():
 def batch_management():
     user_role = role(session["user_id"])
 
-    if user_role != "admin" and user_role != "tester":
+    if user_role != "admin":
         return "Access denied"
     
     # get the current drive settings stored in db
     row = db.execute("SELECT * FROM drive_settings WHERE id=1")
     drive_settings = row[0] if row else {}
 
-    level_3_ui_data = []
-    
-    if drive_settings.get("level_3"):
-        # Helper dictionary to group items: {'A': ['G1', 'G2'], 'B': ['G1']}
-        temp_grouping = defaultdict(list)
-        
-        # Split "A-G1,A-G2" -> ['A-G1', 'A-G2']
-        folders = drive_settings["level_3"].split(",")
-        
-        for folder in folders:
-            folder = folder.strip()
-            if "-" in folder:
-                # Split only on the FIRST hyphen to separate Section from Group
-                # "A-G1" -> section="A", group="G1"
-                section, group = folder.split("-", 1)
-                temp_grouping[section].append(group)
-        
-        # Convert dictionary to List for Jinja
-        for section, groups_list in temp_grouping.items():
-            level_3_ui_data.append({
-                "section": section,
-                "groups": ", ".join(groups_list) # Joins ['G1','G2'] -> "G1, G2"
-            })
-
-    return render_template("batch_management.html", drive_settings=drive_settings, level_3_rows=level_3_ui_data)
+    batch_rows = db.execute("SELECT * FROM batch_structure")
+    return render_template("batch_management.html", drive_settings=drive_settings, batch_rows=batch_rows)
 
 # Handles student_management_page loading and excel file uploads
 @app.route("/student_management_page", methods=["GET", "POST"])
@@ -3589,60 +3576,37 @@ def create_drive_structure():
     if not token:
         flash("Please authorize Google Drive first.", "warning")
         return redirect(url_for('super_admin'))
-    
+
+    # Get the academic session value from user_input
+    academic_session = request.form.get("academic_session")
+    if not academic_session:
+        flash("Kindly provide the academic session before updating the structure", "error")
+        return redirect(url_for("batch_management"))
+
+    sys_config = db.execute("SELECT academic_session, master_folder_id FROM drive_settings WHERE id=1")[0]
+    curr_academic_session = sys_config["academic_session"]
+    master_folder_id = sys_config["master_folder_id"]
+    if not master_folder_id:
+        flash("Kindly submit the master folder drive link before updating the structure", "error")
+        return redirect(url_for("batch_management")) 
+
+    # If updated academic session too
+    if (academic_session != curr_academic_session):
+        db.execute("""
+                UPDATE drive_settings 
+                SET academic_session = ?, updated_on = datetime('now', '+5 hours', '+30 minutes') 
+                WHERE id = 1
+            """, (academic_session,))
+
     # Get drive structure inputs
-    # --- LEVEL 1: Branches ---
-    # Input: " CSE , ECE, ME "
-    # Logic: Split by comma -> strip spaces -> Join back to "CSE,ECE,ME"
-    raw_branches = request.form.get("branches")
-    if not raw_branches:
-        flash("Kindly fill the required branches", "warning")
-        return redirect(url_for("batch_management"))
-    level_1_str = ",".join([b.strip() for b in raw_branches.split(",") if b.strip()])
-    level_1 = level_1_str.split(",")
-
-    # --- LEVEL 2: Semesters ---
-    # Input: ['1', '3', '5'] (List from checkboxes)
-    level_2 = request.form.getlist("semesters")
-    if not level_2:
-        flash("Kindly select atleast one of the semester", "warning")
-        return redirect(url_for("batch_management"))
-
-    level_2_str = ",".join(level_2)
-
-    # --- LEVEL 3: Sections & Groups (Derived) ---
-    sections = request.form.getlist("section_names[]") # e.g., ['A', 'B']
-    if not sections:
-        flash("Kindly add atleast one section", "warning")
-    group_lists = request.form.getlist("group_lists[]") # e.g., ['G1, G2', 'G1']
-    if not group_lists:
-        flash("Kindly add atleast one class group for each section", "warning")
-
-    level_3 = [] # Level 3 or branch-section list
-
-    # 'zip' pairs them up: (A, "G1, G2"), (B, "G1")
-    for section, groups_raw in zip(sections, group_lists):
-        clean_section = section.strip()
-        
-        if clean_section:
-            # Split the group string "G1, G2" into a list ['G1', 'G2']
-            clean_groups = [g.strip() for g in groups_raw.split(",") if g.strip()]
-            
-            # Create combinations: "A-G1", "A-G2"
-            for group in clean_groups:
-                level_3.append(f"{clean_section}-{group}")
-
-    # Join the final list into one string: "A-G1,A-G2,B-G1"
-    level_3_str = ",".join(level_3)
-    
+    raw_batch_structure = request.form.get("structure_json")
     try:
-        drive_settings = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
-        master_folder_id = drive_settings[0]["master_folder_id"]
-        if not master_folder_id:
-            flash("Kindly submit the master folder drive link before updating the structure", "error")
-            return redirect(url_for("batch_management")) 
+        batch_structure = json.loads(raw_batch_structure)
+    except (json.JSONDecodeError, TypeError):
+        return "Malformed configuration layout JSON received", 400
 
-        # 2. Build the Drive Service using the token
+    try:
+        # 1. Build the Drive Service using the token
         # We assume the token in session has what we need
         creds = Credentials(
             token=token.get('access_token'),
@@ -3654,60 +3618,69 @@ def create_drive_structure():
         )
         
         service = build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        flash (f"Google Drive Service Error: {e}", "danger")
+        print(e)
+        return redirect("batch_management.html")
+    
+    try:
+        # 1. Open the transaction manually
+        db.execute("BEGIN TRANSACTION")
         
-        # LOOP 1: Departments (e.g., CSE, CSE(AI)) inside Master Folder
-        for branch in level_1:
+        # 2. Track what we insert so we don't clear the structure table prematurely
+        structures_to_insert = []
+        
+        for batch in batch_structure:
+            sem = batch["sem"]
+            sem_folder_id = get_or_create_folder(service, sem, master_folder_id)
             
-            # Check/Create the Dept Folder
-            branch_folder_id = get_or_create_folder(service, branch, master_folder_id)
+            if sem_folder_id:
+                branch = batch["branch"]
+                branch_folder_id = get_or_create_folder(service, branch, sem_folder_id)
+
+                if branch_folder_id:
+                    section_list = [s.strip() for s in batch["section"].split(',') if s.strip()]
+                    
+                    for section in section_list:
+                        section_folder_id = get_or_create_folder(service, section, branch_folder_id)
+
+                        if section_folder_id:
+                            structures_to_insert.append((sem, branch, section))
+
+                            for form_name, form_title in form_dict.items():
+                                form_folder_id = get_or_create_folder(service, form_title, section_folder_id)
+
+                                if form_folder_id:
+                                    folder_map_id = f"{sem}_{branch}_{section}_{form_name}"
+
+                                    db.execute("""
+                                            INSERT INTO drive_folder_map (id, drive_folder_id, semester, branch, section, form_name) 
+                                            VALUES (?, ?, ?, ?, ?, ?) 
+                                            ON CONFLICT (id) DO UPDATE SET
+                                                drive_folder_id = excluded.drive_folder_id 
+                                        """, folder_map_id, form_folder_id, sem, branch, section, form_name)
+
+        # 3. Apply the layout changes at the very end
+        if structures_to_insert:
+            db.execute("DELETE FROM batch_structure")
             
-            if branch_folder_id:
-                # LOOP 2: Create semester folders
-                for sem in level_2:
-                        
-                    # Check/Create the Category Folder
-                    sem_folder_id = get_or_create_folder(service, semester_dict[sem], branch_folder_id)
+            # Note: cs50.SQL does not have an efficient executemany() method. 
+            # However, because we are inside a single transaction, looping individual executions is incredibly fast!
+            for item in structures_to_insert:
+                db.execute("""
+                    INSERT INTO batch_structure (sem, branch, section)
+                    VALUES (?, ?, ?)
+                """, item[0], item[1], item[2])
 
-                    if sem_folder_id:
-                        # LOOP 3: Create section-group folders 
-                        for section_grp in level_3:
-
-                            section_grp_folder_id = get_or_create_folder(service, section_grp, sem_folder_id)
-
-                            if section_grp_folder_id:
-                                section, group = section_grp.split('-')
-                                # LOOP 4: Create form categories folders using form_title list
-                                for form_name, form_title in form_dict.items():
-                                    print(f"{form_name}: {form_title}")
-                                    form_folder_id = get_or_create_folder(service, form_title, section_grp_folder_id)
-
-                                    if form_folder_id:
-                                        id = f"{branch}_{sem}_{section}_{group}_{form_name}"
-
-                                        db.execute("""
-                                            INSERT INTO drive_folder_map (id, drive_folder_id, branch, semester, section,
-                                            class_group, form_name) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET
-                                            drive_folder_id = excluded.drive_folder_id 
-                                        """, id, form_folder_id, branch, sem, section, group, form_name)
-
-        flash(f"Drive structure sync complete!", "success")
+        # 4. Commit everything if loops completed flawlessly
+        db.execute("COMMIT")
+        flash("Drive structure sync complete!", "success")
 
     except Exception as e:
+        # Roll back all changes instantly if an unhandled error/crash happens inside the transaction
+        db.execute("ROLLBACK")
         print(f"Structure creation failed: {e}")
         flash(f"An error occurred: {e}", "danger")
-
-    # --- DATABASE UPDATE ---
-    # Storing pure TEXT strings. No JSON.
-    try:
-        db.execute("""
-            UPDATE drive_settings 
-            SET level_1 = ?, level_2 = ?, level_3 = ? 
-            WHERE id = 1
-        """, level_1_str, level_2_str, level_3_str)
-        
-        flash("Drive structure updated successfully!", "success")
-    except Exception as e:
-        flash(f"Error updating database: {e}", "danger")
 
     return redirect(url_for('super_admin'))
 
@@ -3716,7 +3689,7 @@ def create_drive_structure():
 def update_master_folder():
     user_role = role(session["user_id"])
 
-    if user_role != "admin" and user_role != "tester":
+    if user_role != "admin":
         return "Access denied"
 
     folder_link = request.form.get("new_master_link")
