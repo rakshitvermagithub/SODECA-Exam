@@ -7,76 +7,84 @@
 {% block css %}
 <style>
     :root {
-        --bs-admin-purple: #4f46e5;
-        --bs-admin-purple-rgb: 79, 70, 229;
+        --admin-navy: #1e293b;
+        --admin-navy-light: #334155;
+        --admin-accent: #0284c7;
+        --admin-border: #e2e8f0;
+        --admin-bg-light: #f8fafc;
+        --admin-bg-subtle: #f1f5f9;
+        --admin-text-dark: #0f172a;
+        --admin-text-muted: #64748b;
     }
 
     .page-wrapper {
         min-height: calc(100vh - 140px);
-        background-color: #f0f2f5;
+        background-color: var(--admin-bg-subtle);
         padding-top: 2rem;
-        padding-bottom: 3rem;
+        padding-bottom: 2rem;
+        /* font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased; */
     }
 
     .form-title-admin {
-        position: relative;
-        padding-bottom: 0.75rem;
         font-weight: 700;
-        color: #1f2937;
-    }
-
-    .form-title-admin::after {
-        content: '';
-        position: absolute;
-        display: block;
-        width: 60px;
-        height: 4px;
-        background: var(--bs-admin-purple);
-        border-radius: 2px;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
+        color: var(--admin-navy);
+        text-transform: uppercase;
+        font-size: 1.5rem;
     }
 
     /* Admin Card Styles */
     .card-admin {
-        border: none;
-        border-top: 4px solid var(--bs-admin-purple);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-radius: 0.75rem;
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 0.5rem;
         background: white;
     }
 
     .card-header-admin {
-        background-color: #f9fafb;
+        background-color: var(--admin-bg-light);
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--admin-border);
         font-weight: 600;
-        color: #374151;
+        color: var(--admin-navy);
         display: flex;
         align-items: center;
     }
 
     .btn-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
         font-weight: 500;
+        border-radius: 0.375rem;
+        border: 1px solid var(--admin-navy);
+        transition: all 0.15s ease-in-out;
     }
     .btn-admin:hover {
-        background-color: #4338ca;
+        background-color: var(--admin-navy-light);
+        border-color: var(--admin-navy-light);
         color: white;
-        box-shadow: 0 4px 12px rgba(var(--bs-admin-purple-rgb), 0.2);
     }
 
     /* Row 1: Drive block */
     .drive-row-block .form-control[readonly] {
-        background-color: #f3f4f6;
+        background-color: var(--admin-bg-light);
+    }
+    
+    .btn-outline-secondary {
+        border-color: var(--admin-border);
+        color: var(--admin-navy-light);
+        border-radius: 0.375rem;
+    }
+    .btn-outline-secondary:hover:not(.disabled) {
+        background-color: var(--admin-bg-light);
+        color: var(--admin-navy);
+        border-color: var(--admin-text-muted);
     }
 
     /* Row 2: Base config block */
     .base-config-block .form-label {
-        font-weight: 700;
-        color: var(--bs-admin-purple);
+        font-weight: 600;
+        color: var(--admin-navy-light);
     }
 
     /* Row 3+: Semester blocks */
@@ -85,49 +93,54 @@
     }
 
     .semester-block {
-        border: 1px solid #e5e7eb;
-        border-left: 4px solid var(--bs-admin-purple);
-        border-radius: 0.75rem;
-        padding: 1.25rem;
+        border: 1px solid var(--admin-border);
+        border-left: 4px solid var(--admin-navy);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
         margin-bottom: 1.5rem;
         background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     .semester-block-header {
         font-weight: 700;
-        color: #1f2937;
+        color: var(--admin-navy);
         font-size: 1.1rem;
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
+        letter-spacing: -0.01em;
     }
 
     .branch-block {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 0.5rem;
-        padding: 1rem;
+        background-color: var(--admin-bg-light);
+        border: 1px solid var(--admin-border);
+        border-radius: 0.375rem;
+        padding: 1.25rem;
         margin-bottom: 1rem;
         height: 100%;
     }
 
     .branch-block-header {
         font-weight: 600;
-        color: #4338ca;
+        color: var(--admin-navy-light);
         margin-bottom: 0.75rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px dashed #d1d5db;
+        border-bottom: 1px dashed var(--admin-border);
         padding-bottom: 0.5rem;
     }
 
     .section-pair-row {
         background-color: #ffffff;
-        border: 1px solid #e9ecef;
-        border-radius: 0.4rem;
-        padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-        margin-bottom: 0.5rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 0.25rem;
+        padding: 0rem 0.5rem 0.25rem 0.5rem;
+        margin: 0.5rem 0.5rem;
+    }
+    .section-pair-row label {
+        white-space: nowrap;
     }
 
     .remove-pair-btn i,
@@ -136,13 +149,13 @@
     }
 
     .empty-state-msg {
-        color: #6b7280;
+        color: var(--admin-text-muted);
         font-style: italic;
         text-align: center;
         padding: 1rem;
-        border: 1px dashed #d1d5db;
-        border-radius: 0.5rem;
-        background: #fafafa;
+        border: 1px dashed var(--admin-border);
+        border-radius: 0.375rem;
+        background: var(--admin-bg-light);
     }
 
     .empty-state-msg.top-level {
@@ -152,29 +165,35 @@
 
     /* Modal Styling */
     .modal-header-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
+        border-bottom: none;
     }
     .modal-header-admin .btn-close {
         filter: invert(1) grayscale(100%) brightness(200%);
     }
+    .modal-content {
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
 
     .choice-btn {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.6rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 0.375rem;
         padding: 1rem;
         text-align: left;
-        background: #f9fafb;
-        transition: 0.15s;
+        background: var(--admin-bg-light);
+        transition: all 0.15s ease-in-out;
         width: 100%;
+        color: var(--admin-text-dark);
     }
     .choice-btn:hover {
-        border-color: var(--bs-admin-purple);
-        background: #eef2ff;
+        border-color: var(--admin-navy-light);
+        background: var(--admin-bg-subtle);
     }
     .choice-btn i {
-        font-size: 1.4rem;
-        color: var(--bs-admin-purple);
+        font-size: 1.25rem;
+        color: var(--admin-navy-light);
         margin-right: 0.75rem;
     }
 </style>
@@ -185,7 +204,9 @@
 
 <div class="page-wrapper">
     <div class="container">
-        <h3 class="text-center mb-5 form-title-admin">Manage Batch and Google Drive Structure</h3>
+        <div class="text-center mb-3">
+            <h3 class="form-title-admin">Batch Management</h3>
+        </div>
 
         <!-- ================= ROW 1: DRIVE BLOCK ================= -->
         <div class="row g-4 drive-row-block mb-4">
@@ -197,13 +218,13 @@
                             
                             <!-- Current master folder button -->
                             <div class="col-12 col-md-4">
-                                <label class="form-label fw-medium d-block">Current Master Folder</label>
+                                <label class="form-label fw-semibold small text-uppercase tracking-wider text-muted d-block mb-2">Current Directory</label>
                                 <a href="{{ current_master_link }}" target="_blank"
-                                   class="btn btn-outline-secondary fw-semibold w-100 {% if not current_master_link %}disabled{% endif %}">
+                                   class="btn btn-outline-secondary fw-semibold w-100 {% if not current_master_link %}disabled{% endif %} d-flex align-items-center justify-content-center gap-2 py-2">
                                     <img class="image" data-alt-override="false" alt="Google Drive" srcset="
                                           https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw 1x,
                                           https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s96-fcrop64=1,00000000ffffffff-rw 2x
-                                        " width="20" height="20" loading="lazy" src="https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw">
+                                        " width="18" height="18" loading="lazy" src="https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw">
                                     Open Master Folder
                                 </a>
                             </div>
@@ -213,14 +234,14 @@
                                 <div class="row g-3 align-items-end">
                                     <!-- Update input -->
                                     <div class="col-12 col-md-8">
-                                        <label for="new_master_link" class="form-label fw-medium">Update Master Folder Link</label>
-                                        <input type="url" class="form-control" id="new_master_link" name="new_master_link"
+                                        <label for="new_master_link" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Update Master Folder Link</label>
+                                        <input type="url" class="form-control py-2" id="new_master_link" name="new_master_link"
                                                placeholder="https://drive.google.com/drive/folders/..." required>
                                     </div>
                                     <!-- Trigger Button -->
                                     <div class="col-12 col-md-4">
-                                        <button type="submit" class="btn btn-admin w-100">
-                                            <i class="bi bi-arrow-repeat me-1"></i> Update Drive Link
+                                        <button type="submit" class="btn btn-admin w-100 py-2">
+                                            <i class="bi bi-arrow-repeat me-1"></i> Update Link
                                         </button>
                                     </div>
                                 </div>
@@ -237,19 +258,19 @@
             <input type="hidden" name="academic_session" id="academicSessionHidden">
             <input type="hidden" name="structure_json" id="structureJsonInput">
 
-        <!-- ================= ROW 2: BASE CONFIG BLOCK ================= -->
+            <!-- ================= ROW 2: BASE CONFIG BLOCK ================= -->
             <div class="row g-4 mb-4" id="structureCard">
                 <div class="col-12">
-                    <div class="card card-admin base-config-block shadow-sm">
+                    <div class="card card-admin base-config-block">
                         <div class="card-body p-4">
 
                             <!-- Upper Config Layer: Academic Session Focus -->
                             <div class="row g-3 mb-4">
                                 <div class="col-12 col-md-6 col-lg-4">
-                                    <label class="form-label fw-bold small text-uppercase tracking-wider text-muted">Academic Session<span class="text-danger">*</span></label>
+                                    <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-2">Academic Session<span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light text-secondary"><i class="bi bi-calendar-event"></i></span>
-                                        <input type="text" class="form-control" id="academicSession" name="academic_session"
+                                        <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-calendar-event"></i></span>
+                                        <input type="text" class="form-control border-start-0" id="academicSession" name="academic_session"
                                             placeholder="e.g. 2025-26" value="{{ drive_settings.get('academic_session') if drive_settings else '' }}" required>
                                     </div>
                                 </div>
@@ -263,7 +284,7 @@
                                 <div class="col-12 col-lg-6">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
                                         <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-0">Number of Semesters<span class="text-danger">*</span></label>
-                                        <span class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 small">Select Multi</span>
+                                        <span class="badge bg-light text-secondary border rounded px-2 py-1 small fw-normal">Select Multiple</span>
                                     </div>
                                     <div id="semesterCheckboxContainer" class="p-3 border rounded bg-light-subtle row g-2 m-0 align-content-start" style="height: 180px; overflow-y: auto;">
                                         <div class="col-6 col-sm-4"><div class="form-check"><input class="form-check-input semester-checkbox" type="checkbox" value="1" id="sem1"><label class="form-check-label fw-medium text-dark ms-1" for="sem1">Sem 1</label></div></div>
@@ -280,7 +301,7 @@
                                 <!-- Branches Control Matrix with Dynamic Inline Actions -->
                                 <div class="col-12 col-lg-6">
                                     <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-0">Active Branches<span class="text-danger">*</span></label>
+                                        <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-0">Active Academic Branches<span class="text-danger">*</span></label>
                                     </div>
                                     
                                     <div id="branchCheckboxContainer" class="p-3 border rounded bg-light-subtle row g-2 m-0 align-content-start" style="height: 180px; overflow-y: auto;">
@@ -304,7 +325,7 @@
                 <div class="modal-dialog modal-dialog-centered modal-sm">
                     <div class="modal-content border-0 shadow">
                         <div class="modal-header bg-light border-bottom py-2 px-3">
-                            <h6 class="modal-title fw-bold text-dark mb-0"><i class="bi bi-folder-plus text-primary me-2"></i>New Branch</h6>
+                            <h6 class="modal-title fw-bold text-dark mb-0"><i class="bi bi-folder-plus text-secondary me-2"></i>New Branch</h6>
                             <button type="button" class="btn-close small" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-3">
@@ -316,7 +337,7 @@
                         </div>
                         <div class="modal-footer border-0 bg-light py-2 px-3 justify-content-end gap-2">
                             <button type="button" class="btn btn-sm btn-secondary font-medium px-3" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-sm btn-primary font-medium px-3" id="saveCustomBranchBtn">Add</button>
+                            <button type="button" class="btn btn-sm btn-admin font-medium px-3" id="saveCustomBranchBtn">Add</button>
                         </div>
                     </div>
                 </div>
@@ -326,8 +347,8 @@
             <div id="semesterBlocksContainer"></div>
 
             <div class="text-center mt-4 mb-5" id="submitStructureWrapper">
-                <button type="submit" class="btn btn-admin px-4 d-none" id="submitStructureBtn">
-                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Save Batch Structure and Sync Drive
+                <button type="submit" class="btn btn-admin px-4 py-2 d-none" id="submitStructureBtn">
+                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Save Structure & Sync Drive
                 </button>
             </div>
         </form>
@@ -338,11 +359,11 @@
 <!-- Sticky Notification Toast (Only renders if drive_auth_token is missing) -->
 {% if not session.get('drive_auth_token') %}
 <div id="driveAuthToast" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 z-3 d-none" style="min-width: 320px; max-width: 550px;">
-    <div class="d-flex align-items-center bg-white border border-secondary-subtle rounded-3 shadow p-2">
+    <div class="d-flex align-items-center bg-white border border-secondary-subtle rounded-3 shadow-sm p-2">
         
         <!-- Fully Clickable Main Component Area -->
         <a href="/authorize_drive" class="d-flex align-items-center text-dark text-decoration-none flex-grow-1 py-1 ps-2 pe-3">
-            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+            <i class="bi bi-exclamation-triangle-fill text-secondary me-2"></i>
             <span class="small fw-light">
                 Authenticate with Google Drive before updating the structure.
             </span>
@@ -353,7 +374,6 @@
     </div>
 </div>
 {% endif %}
-
 {% endblock %}
 
 {% block script %}
