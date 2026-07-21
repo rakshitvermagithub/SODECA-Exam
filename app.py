@@ -2121,21 +2121,16 @@ def student_details():
         if not selected_semester:
             return redirect("/student_details")
 
-        # Get Section
+        # Get Section Group
         selected_section = request.form.get("section_option")
         if not selected_section:
             return redirect("/student_details")
 
-        # Get Group
-        selected_group = request.form.get("group_option")
-        if not selected_group:
-            return redirect("/student_details")
-
         # Get Batch Counselor name
         batch_counselor = db.execute("""SELECT full_name FROM faculty_details WHERE semester=? AND
-                    branch=? AND section=? AND class_group=?""",
+                    branch=? AND section=?""",
                     selected_semester, selected_branch,
-                    selected_section, selected_group)
+                    selected_section)
         if batch_counselor:
             batch_counselor_name = batch_counselor[0]["full_name"]
         else:
@@ -2149,20 +2144,19 @@ def student_details():
                 """
                 INSERT INTO student_details (
                     student_user_id, university_roll_no, student_name, branch,
-                    semester, section, class_group, batch_counselor
+                    semester, section, batch_counselor
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(student_user_id) DO UPDATE SET
                     university_roll_no = excluded.university_roll_no,
                     student_name = excluded.student_name,
                     branch = excluded.branch,
                     semester = excluded.semester,
                     section = excluded.section,
-                    class_group = excluded.class_group,
                     batch_counselor = excluded.batch_counselor
                 """,
                 session["user_id"], university_roll_no, student_name, selected_branch,
-                selected_semester, selected_section, selected_group, batch_counselor_name
+                selected_semester, selected_section, batch_counselor_name
             )
         except Exception as e:
             flash(f"Database error: {e}")
@@ -2188,20 +2182,9 @@ def student_details():
             "SELECT * FROM student_details WHERE student_user_id = ?", session["user_id"]
         )
 
-        # Branch, Semester, Batches and Class Group data
-        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings') 
-        if len(data_to_load):
-            branch_list = data_to_load[0]['level_1'].split(',')
-            semester = data_to_load[0]['level_2'].split(',')
-            section_grp_str = data_to_load[0]['level_3']
-            items = [item.split('-') for item in section_grp_str.split(',')]
-            section_set = sorted({b for b, g in items})
-            class_group_set = sorted({g for b, g in items})
-        else:
-            branch_list = [None]
-            semester = [None]
-            section_set = [None]
-            class_group_set = [None]
+        branch_list = [None]
+        semester = [None]
+        section_set = [None]
 
         # If details are already available
         if student_details_row:
@@ -2209,9 +2192,9 @@ def student_details():
 
             # Get faculty name assigned to the student's batch
             batch_counselor = db.execute("""SELECT full_name FROM faculty_details WHERE semester=? AND
-                                branch=? AND section=? AND class_group=?""",
+                                branch=? AND section=?""",
                                 filled_details["semester"], filled_details["branch"],
-                                filled_details["section"], filled_details["class_group"])
+                                filled_details["section"])
             if batch_counselor:
                 batch_counselor_name = batch_counselor[0]["full_name"]
             else:
@@ -2221,16 +2204,54 @@ def student_details():
             return render_template(
                 "student_details.html", details=filled_details, 
                 branches=branch_list, semester=semester, 
-                batch_list=section_set, group_list=class_group_set, 
+                batch_list=section_set, 
                 batch_counselor_name=batch_counselor_name
                 )
         else:
+            # Branch, Semester, Batches and Class Group data
+            semester = db.execute("SELECT DISTINCT sem FROM batch_structure ORDER BY sem ASC")
+            branch_list = db.execute("SELECT DISTINCT branch FROM batch_structure ORDER BY branch ASC")            
+
             return render_template(
                 "student_details.html", branches=branch_list, 
-                semester=semester, batch_list=section_set, 
-                group_list=class_group_set, details=None, 
+                semester=semester, batch_list=section_set, details=None, 
                 faculty_name=None
                 )
+
+@app.route('/api/sections', methods=['GET'])
+def get_sections():
+    # 1. Extract query parameters
+    sem_raw = request.args.get('sem')
+    branch = request.args.get('branch')
+
+    # 2. Presence Check
+    if not sem_raw or not branch:
+        return jsonify({"error": "Missing parameters. Both 'sem' and 'branch' are required."}), 400
+
+    # 3. Explicit Type Sanitization
+    try:
+        sem = int(sem_raw)  # Safely forces the semester to be an integer
+    except ValueError:
+        return jsonify({"error": "Invalid parameter type. 'sem' must be a valid integer."}), 400
+
+    # Strip any accidental leading/trailing whitespace from text inputs
+    branch = branch.strip()
+
+    try:        
+        # 4. Parameterized Query execution remains secure
+        query = """
+            SELECT section 
+            FROM batch_structure 
+            WHERE sem = ? AND branch = ?
+            ORDER BY section ASC;
+        """
+        rows = db.execute(query, sem, branch)
+        sections_list = [row['section'] for row in rows]
+        return jsonify(sections_list), 200
+        
+    except Exception as e:
+        # Avoid exposing detailed system errors in production environments
+        return jsonify({"error": "An internal database error occurred."}), 500
 
 @app.route("/sodeca_forms", methods=["GET", "POST"])
 def sodeca_forms():
