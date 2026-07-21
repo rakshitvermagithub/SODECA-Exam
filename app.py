@@ -1377,14 +1377,14 @@ db.execute("""
 db.execute("""
     CREATE TABLE IF NOT EXISTS student_details(student_user_id INTEGER PRIMARY KEY NOT NULL,
     university_roll_no TEXT NOT NULL, student_name TEXT NOT NULL, branch TEXT NOT NULL,
-    semester INTEGER NOT NULL, section TEXT NOT NULL, class_group TEXT NOT NULL,
-    batch_counselor TEXT, FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
+    semester INTEGER NOT NULL, section TEXT NOT NULL, batch_counselor TEXT, 
+    FOREIGN KEY (student_user_id) REFERENCES users(user_id) ON DELETE CASCADE)
 """)
 # Initialise table to store faculty details
 db.execute("""
     CREATE TABLE IF NOT EXISTS faculty_details(college_email TEXT PRIMARY KEY NOT NULL,
     faculty_user_id INTEGER UNIQUE, full_name TEXT NOT NULL, designation TEXT NOT NULL,
-    department TEXT NOT NULL, semester INTEGER, branch TEXT, section TEXT, class_group TEXT, 
+    department TEXT NOT NULL, semester INTEGER, branch TEXT, section TEXT, 
     contact TEXT NOT NULL DEFAULT 'to be updated',
     FOREIGN KEY (faculty_user_id) REFERENCES users(user_id))
     """)
@@ -2625,7 +2625,6 @@ def student_submission_stats(batch_details):
         WHERE s.semester = ? 
           AND s.branch = ? 
           AND s.section = ? 
-          AND s.class_group = ?
         ORDER BY 
             CASE WHEN COALESCE(c.pending_count, 0) > 0 THEN 0 ELSE 1 END ASC,
             c.latest_pending_date DESC,
@@ -2637,7 +2636,6 @@ def student_submission_stats(batch_details):
         batch_details["semester"], 
         batch_details["branch"], 
         batch_details["section"], 
-        batch_details["class_group"]
     ]
 
     try:
@@ -2668,7 +2666,7 @@ def faculty_dashboard():
         }
         
         # Get batch details, assigned to faculty
-        batch = db.execute("SELECT semester, branch, section, class_group FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
+        batch = db.execute("SELECT semester, branch, section FROM faculty_details WHERE faculty_user_id = ?", session["user_id"])
         
         # If batch is not assigned by admin
         if not batch:
@@ -2682,7 +2680,6 @@ def faculty_dashboard():
         sem = batch_details.get('semester')
         branch = batch_details.get('branch')
         section = batch_details.get('section')
-        group = batch_details.get('class_group')
 
         # Build components dynamically if they exist
         parts = []
@@ -2732,9 +2729,9 @@ def batch_report():
         result = db.execute(f"""SELECT * FROM {form_id} as f
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
-                            WHERE s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
+                            WHERE s.branch=? AND s.semester=? AND s.section=?""",
                             batch_details["branch"], batch_details["semester"],
-                            batch_details["section"], batch_details["class_group"])
+                            batch_details["section"])
 
         col_labels = ['Entry ID', 'Univ. Roll Num.', 'Student Name', 'Batch Counselor']
         sql_cols = ['entry_id', 'university_roll_no', 'student_name', 'batch_counselor']
@@ -2757,9 +2754,9 @@ def batch_report():
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
                             WHERE f.withdrawn_at IS NULL 
-                            AND s.branch=? AND s.semester=? AND s.section=? AND class_group=?""",
+                            AND s.branch=? AND s.semester=? AND s.section=?""",
                             batch_details["branch"], batch_details["semester"],
-                            batch_details["section"], batch_details["class_group"])
+                            batch_details["section"])
                 
         return render_template("batch_report.html", form_dict=form_dict, rows=result)
 
@@ -2799,13 +2796,7 @@ def review_student():
         flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
         return redirect(url_for("faculty_dashboard"))
 
-    student_class_group = student_profile['class_group']
-    if (faculty_assigned_batch['class_group'] != student_class_group):
-        flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
-        return redirect(url_for("faculty_dashboard"))
-
-
-    batch_str = f"{student_branch}_{student_sem}_{student_section}_{student_class_group}"
+    batch_str = f"{student_branch}_{student_sem}_{student_section}"
 
     # Fetch all form submissions without any JOINs
     submissions = []
@@ -3363,12 +3354,11 @@ def assign_batch():
         semester = request.form.get("semester_option")
         branch = request.form.get("branch_option")
         section = request.form.get("section_option")
-        group = request.form.get("group_option")
 
         try:
             # Update batch in database
-            db.execute("UPDATE faculty_details SET semester=?, branch=?, section=?, class_group=? WHERE college_email=?",
-                    semester, branch, section, group, college_email)
+            db.execute("UPDATE faculty_details SET semester=?, branch=?, section=? WHERE college_email=?",
+                    semester, branch, section, college_email)
             flash("Batch updated!", "success")
 
         except Exception as e:
@@ -3382,7 +3372,7 @@ def assign_batch():
             show_modal = True
         else:
             show_modal = False
-        faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section, class_group FROM faculty_details")
+        faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section FROM faculty_details")
         data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
         if len(data_to_load):
             branch_list = data_to_load[0]['level_1'].split(',')
@@ -3404,7 +3394,7 @@ def discharge_faculty():
     faculty_email = request.form.get("college_email")
     try:
         db.execute(
-            "UPDATE faculty_details SET semester=NULL, branch=NULL, section=NULL, class_group=NULL WHERE college_email=?",
+            "UPDATE faculty_details SET semester=NULL, branch=NULL, section=NULL WHERE college_email=?",
             faculty_email
             )
         flash(f"Faculty with email {faculty_email} was discharged.", "success")
@@ -3453,19 +3443,13 @@ def student_report():
             joined_sections = ",".join(quoted_sections)
             where_params.append(f"s.section IN ({joined_sections})")
 
-        class_groups = request.form.getlist("class_groups[]")
-        if class_groups:
-            quoted_class_groups = [f"'{section}'" for section in sections]
-            joined_class_groups = ",".join(quoted_class_groups)
-            where_params.append(f"s.class_group IN ({joined_class_groups})")
-
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
         forms = request.form.getlist("forms[]")
         for form in forms:
             base_queries.append(
-                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group,
+                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section,
                 '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at, f.status, f.certificate
                 FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
                 )
@@ -3495,7 +3479,7 @@ def student_report():
     # Without filter
     for form in form_name_list:
         base_queries.append(
-            f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section, s.class_group, 
+            f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section,
             '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate
             FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
             )
@@ -3793,13 +3777,11 @@ def visual_report():
                                     ON f.student_id = s.student_user_id
                                     WHERE s.branch=? AND 
                                     s.semester=? AND 
-                                    s.section=? AND 
-                                    class_group=?"""
+                                    s.section=?"""
             val = db.execute(query,
                              batch_details["branch"],
                              batch_details["semester"],
-                             batch_details["section"],
-                             batch_details["class_group"])
+                             batch_details["section"])
 
         if val and val[0]['COUNT(*)'] != 0:
             chartData.append(val[0]['COUNT(*)'])
