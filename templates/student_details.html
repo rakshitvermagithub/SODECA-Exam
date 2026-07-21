@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const validOptions = {
         branch: ["CSE", "CSE(AI)", "CSE(DS)", "CSE(IOT)"],
         semester: ["1", "2", "3", "4", "5", "6", "7", "8"],
-        section: ["A", "B", "C", "D", "E", "F"],
-        group: ["G1", "G2", "B1", "E1", "E2"],
+        section: ["A-G1", "B-G1", "E-G1", "E-G2", "B-G2", "A-G2"],
+
         // This array is dynamically created by Jinja to validate against
         batchCounselor: [
             {% for faculty in faculty_list %}
