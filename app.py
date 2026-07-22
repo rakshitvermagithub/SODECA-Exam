@@ -2186,6 +2186,10 @@ def student_details():
         semester = [None]
         section_set = [None]
 
+        # Branch, Semester, Batches and Class Group data
+        semester = db.execute("SELECT DISTINCT sem FROM batch_structure ORDER BY sem ASC")
+        branch_list = db.execute("SELECT DISTINCT branch FROM batch_structure ORDER BY branch ASC")         
+
         # If details are already available
         if student_details_row:
             filled_details = student_details_row[0]
@@ -2208,10 +2212,6 @@ def student_details():
                 batch_counselor_name=batch_counselor_name
                 )
         else:
-            # Branch, Semester, Batches and Class Group data
-            semester = db.execute("SELECT DISTINCT sem FROM batch_structure ORDER BY sem ASC")
-            branch_list = db.execute("SELECT DISTINCT branch FROM batch_structure ORDER BY branch ASC")            
-
             return render_template(
                 "student_details.html", branches=branch_list, 
                 semester=semester, batch_list=section_set, details=None, 
@@ -2692,9 +2692,6 @@ def faculty_dashboard():
 
         if section:
             parts.append(str(section))
-
-        if group:
-            parts.append(str(group))
 
         # Join the parts with a hyphen, or set to None if all are empty
         batch_is = "-".join(parts) if parts else None

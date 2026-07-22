@@ -77,7 +77,7 @@
                                 <option value="" {% if not details %}selected{% endif %}>Choose...</option>
                                 {% for sem_dict in semester %}
                                 {% set sem = sem_dict["sem"] %}
-                                <option value="{{sem}}" {% if details and details.semester|string == sem[]|string %}selected{% endif %}>{{sem}}</option>
+                                <option value="{{sem}}" {% if details and details.semester|string == sem|string %}selected{% endif %}>{{sem}}</option>
                                 {% endfor %}
                             </select>
                             <label for="semester">Semester</label>
