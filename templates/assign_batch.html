@@ -115,12 +115,12 @@
                         </thead>
                         <tbody>
                             {% for faculty in faculty_data %}
-                                {% if faculty.branch and faculty.semester and faculty.section and faculty.class_group %}
+                                {% if faculty.branch and faculty.semester and faculty.section %}
                                 <tr>
                                     <th scope="row">{{ loop.index }}</th>
                                     <td>{{ faculty["full_name"] }}</td>
                                     <td>{{ faculty["college_email"] }}</td>
-                                    <td>{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}-{{ faculty["class_group"] }}</td>
+                                    <td>{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</td>
                                     
                                     <td>
                                         <form action="{{ url_for('discharge_faculty') }}" method="post">
@@ -206,17 +206,6 @@
                                     {% endfor %}
                                 </select>
                                 <label>Section</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                             <div class="form-floating">
-                                <select class="form-select" name="group_option" required>
-                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                    {% for group in group_list %}
-                                    <option value="{{group}}" {% if details and details.group == group %}selected{% endif %}>{{group}}</option>
-                                    {% endfor %}
-                                </select>
-                                <label>Group</label>
                             </div>
                         </div>
                     </div>
