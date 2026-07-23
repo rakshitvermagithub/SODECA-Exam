@@ -100,9 +100,10 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
-                            <select class="form-select" id="section" name="section_option" required>
-                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                <option value="{{batch}}" {% if details and details.section == batch %}selected{% endif %}>{{ batch }}</option>
+                            <select class="form-select" id="section" name="section_option" 
+                            data-initial-value="{{ details.section if details and details.section else '' }}" 
+                            required>
+                                <option value="">Choose...</option>
                             </select>
                             <label for="section">Section</label>
                             <div class="invalid-feedback"></div>
@@ -211,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!sectionSelect) return;
 
         // 1. Save the currently selected value (useful for initial page load edits)
-        const currentValue = sectionSelect.value;
+        const currentValue = sectionSelect.value || sectionSelect.dataset.initialValue || '';
 
         // 2. Clear all existing options except the first "Choose..." placeholder
         // We keep index 0 intact to preserve the layout structure

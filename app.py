@@ -2208,13 +2208,12 @@ def student_details():
             return render_template(
                 "student_details.html", details=filled_details, 
                 branches=branch_list, semester=semester, 
-                batch_list=section_set, 
                 batch_counselor_name=batch_counselor_name
                 )
         else:
             return render_template(
                 "student_details.html", branches=branch_list, 
-                semester=semester, batch_list=section_set, details=None, 
+                semester=semester, details=None, 
                 faculty_name=None
                 )
 
