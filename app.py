@@ -3369,21 +3369,16 @@ def assign_batch():
         else:
             show_modal = False
         faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section FROM faculty_details")
-        data_to_load = db.execute('SELECT level_1,level_2,level_3 FROM drive_settings')
-        if len(data_to_load):
-            branch_list = data_to_load[0]['level_1'].split(',')
-            semester = data_to_load[0]['level_2'].split(',')
-            batch_group_str = data_to_load[0]['level_3']
-            items = [item.split('-') for item in batch_group_str.split(',')]
-            batch_set = sorted({b for b, g in items})
-            group_set = sorted({g for b, g in items})
-        else:
-            branch_list = [None]
-            semester = [None]
-            batch_set = [None]
-            group_set = [None]
 
-        return render_template("assign_batch.html", branches=branch_list, semester=semester, batch_list=batch_set, group_list=group_set, faculty_data=faculty_data, show_modal=show_modal)
+        branch_list = [None]
+        semester = [None]
+        section_set = [None]
+
+        # Branch, Semester, Batches and Class Group data
+        semester = db.execute("SELECT DISTINCT sem FROM batch_structure ORDER BY sem ASC")
+        branch_list = db.execute("SELECT DISTINCT branch FROM batch_structure ORDER BY branch ASC")         
+
+        return render_template("assign_batch.html", branches=branch_list, semester=semester, batch_list=section_set, faculty_data=faculty_data, show_modal=show_modal)
     
 @app.route("/discharge_faculty", methods=["POST"])
 def discharge_faculty():
