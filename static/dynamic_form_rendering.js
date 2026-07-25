@@ -193,7 +193,7 @@ function updateChart() {
                 maintainAspectRatio: true,
             plugins: {
                     legend: {
-                        position: 'right', // Moves it to the right side of the pie
+                        position: 'top', // Moves it to the right side of the pie
                         labels: {
                             font: {
                                 family: "'Poppins', sans-serif",
