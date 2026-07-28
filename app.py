@@ -3619,17 +3619,23 @@ def update_drive_master_folder():
     folder_name = request.form.get("folder_name")
     # Create a new master folder or just return the existing folder's id
     new_folder_id = get_or_create_folder(service, folder_name)
+    if (new_folder_id):
+        new_folder_link = f"https://drive.google.com/drive/folders/{new_folder_id}"
+    else:
+        flash("Error: Creating/Updating Master drive folder", "danger")
+        return redirect(url_for("batch_management"))
 
     try: 
         db.execute("""
-                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, updated_on) 
-                VALUES (1, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
+                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, master_folder_id, updated_on) 
+                VALUES (1, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
                 ON CONFLICT (id) DO UPDATE SET
                     academic_session = excluded.academic_session,
                     academic_term = excluded.academic_term,
                     master_folder_link = excluded.master_folder_link,
+                    master_folder_id = excluded.master_folder_id,
                     updated_on = datetime('now', '+5 hours', '+30 minutes')
-            """, academic_session, academic_term, new_folder_id)
+            """, academic_session, academic_term, new_folder_link, new_folder_id)
         print("System settings and Master folder updated")
         flash("System settings and Master folder updated!", "success")
 
