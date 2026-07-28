@@ -214,40 +214,55 @@
                 <div class="card card-admin">
                     <div class="card-body p-4">
                         {% set current_master_link = drive_settings.get("master_folder_link") if drive_settings else None %}
-                        <div class="row g-4 align-items-end">
-                            
-                            <!-- Current master folder button -->
-                            <div class="col-12 col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase tracking-wider text-muted d-block mb-2">Current Directory</label>
-                                <a href="{{ current_master_link }}" target="_blank"
-                                   class="btn btn-outline-secondary fw-semibold w-100 {% if not current_master_link %}disabled{% endif %} d-flex align-items-center justify-content-center gap-2 py-2">
-                                    <img class="image" data-alt-override="false" alt="Google Drive" srcset="
-                                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw 1x,
-                                          https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s96-fcrop64=1,00000000ffffffff-rw 2x
-                                        " width="18" height="18" loading="lazy" src="https://www.gstatic.com/marketing-cms/assets/images/e8/4f/69d708b2455397d7b88b0312f7c5/google-drive.webp=s48-fcrop64=1,00000000ffffffff-rw">
-                                    Open Master Folder
-                                </a>
-                            </div>
-
-                            <!-- Direct Form Submission Wrapper -->
-                            <form action="/update_master_folder" method="post" class="col-12 col-md-8">
-                                <div class="row g-3 align-items-end">
-                                    <!-- Update input -->
-                                    <div class="col-12 col-md-8">
-                                        <label for="new_master_link" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Update Master Folder Link</label>
-                                        <input type="url" class="form-control py-2" id="new_master_link" name="new_master_link"
-                                               placeholder="https://drive.google.com/drive/folders/..." required>
-                                    </div>
-                                    <!-- Trigger Button -->
-                                    <div class="col-12 col-md-4">
-                                        <button type="submit" class="btn btn-admin w-100 py-2">
-                                            <i class="bi bi-arrow-repeat me-1"></i> Update Link
-                                        </button>
-                                    </div>
+                        {% set academic_term = drive_settings.get("academic_term") if drive_settings else None %}
+                        {% set academic_session = drive_settings.get("academic_session") if drive_settings else None %}
+                        
+                        <form action="/update_drive_settings" method="post">
+                            <div class="row g-3 align-items-end">
+                                
+                                <!-- 1. Session Select -->
+                                <div class="col-12 col-md-3">
+                                    <label for="academicSession" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Academic Session</label>
+                                    <select class="form-select py-2" id="academicSession" name="academic_session" required>
+                                        <option value="" {% if not academic_session %} selected {% endif %} disabled>Select Session</option>
+                                        {% for session_opt in session_options %}
+                                        <option value="{{ session_opt }}" {% if academic_session and academic_session == session_opt %}selected{% endif %}>{{ session_opt }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
-                            </form>
 
-                        </div>
+                                <!-- 2. Academic Term Select -->
+                                <div class="col-12 col-md-3">
+                                    <label for="academicTerm" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Term</label>
+                                    <select class="form-select py-2" id="academicTerm" name="academic_term" required>
+                                        <option value="" disabled {% if not academic_term %}selected{% endif %}>Select Term</option>
+                                        <option value="Odd" {% if academic_term and academic_term == "Odd" %}selected{% endif %}>Odd</option>
+                                        <option value="Even" {% if academic_term and academic_term == "Even" %}selected{% endif %}>Even</option>
+                                    </select>
+                                </div>
+
+                                <!-- 3. Folder Name (Read-Only Input / Preview Display) -->
+                                <div class="col-12 col-md-3">
+                                    <label for="folder_name_preview" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Folder Name</label>
+                                    <input type="text" class="form-control py-2 font-monospace bg-light" id="folder_name_preview" name="folder_name" readonly placeholder="Session Term">
+                                </div>
+
+                                <!-- 4. + New Master Folder Button -->
+                                <div class="col-12 col-md-3">
+                                    <button type="submit" class="btn btn-admin w-100 py-2 d-flex align-items-center justify-content-center gap-1">
+                                        <i class="bi bi-plus-lg"></i> New Master Folder
+                                    </button>
+                                    {% if current_master_link %}
+                                    <a href="{{ current_master_link }}">
+                                        <button type="button">
+                                            Current Master Folder
+                                        </button>
+                                    </a>
+                                    {% endif %}
+                                </div>
+
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -255,7 +270,8 @@
 
         <!-- ================= MAIN STRUCTURE FORM ================= -->
         <form action="/create_drive_structure" method="post" id="structureForm">
-            <input type="hidden" name="academic_session" id="academicSessionHidden">
+            <input type="hidden" name="drive_academic_session" id="driveSessionHidden">
+            <input type="hidden" name="drive_academic_term" id="driveTermHidden">            
             <input type="hidden" name="structure_json" id="structureJsonInput">
 
             <!-- ================= ROW 2: BASE CONFIG BLOCK ================= -->
@@ -263,20 +279,6 @@
                 <div class="col-12">
                     <div class="card card-admin base-config-block">
                         <div class="card-body p-4">
-
-                            <!-- Upper Config Layer: Academic Session Focus -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-12 col-md-6 col-lg-4">
-                                    <label class="form-label fw-bold small text-uppercase tracking-wider text-muted mb-2">Academic Session<span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light text-secondary border-end-0"><i class="bi bi-calendar-event"></i></span>
-                                        <input type="text" class="form-control border-start-0" id="academicSession" name="academic_session"
-                                            placeholder="e.g. 2025-26" value="{{ drive_settings.get('academic_session') if drive_settings else '' }}" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr class="text-muted opacity-25 my-4">
 
                             <!-- Main Dynamic Matrices Layer -->
                             <div class="row g-4">
@@ -484,10 +486,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    function escapeHtml(str) {
-        return (str || '').toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
     function getSelectedSemesters() {
         return Array.from(checkboxContainer.querySelectorAll('.semester-checkbox:checked'))
                     .map(cb => parseInt(cb.value, 10));
@@ -638,6 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function getDraftPayload() {
         return {
             academicSession: academicSessionInput.value.trim(),
+            academicTerm: document.getElementById('academicTerm').value,
             semesterCount: getSelectedSemesters(),
             branches: getSelectedBranches(), // Saves verified checked IDs as array
             structureData: collectCurrentData()
@@ -670,6 +669,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
     academicSessionInput.addEventListener('input', handleFormInputChange);
     container.addEventListener('input', handleFormInputChange);
+    document.getElementById('academicTerm').addEventListener('change', handleFormInputChange);
+    academicSessionInput.addEventListener('change', handleFormInputChange);
+
+    function syncDriveHiddenFields() {
+        const sessionVal = document.getElementById('academicSession').value;
+        const termVal = document.getElementById('academicTerm').value;
+
+        const driveSessionHidden = document.getElementById('driveSessionHidden');
+        const driveTermHidden = document.getElementById('driveTermHidden');
+
+        if (driveSessionHidden) driveSessionHidden.value = sessionVal || '';
+        if (driveTermHidden) driveTermHidden.value = termVal || '';
+    }
+
+    function updateFolderNamePreview() {
+        const sessionVal = document.getElementById('academicSession').value;
+        const termVal = document.getElementById('academicTerm').value;
+        const folderInput = document.getElementById('folder_name_preview');
+
+        if (sessionVal && termVal) {
+            folderInput.value = `${sessionVal} ${termVal}`;
+        } else if (sessionVal) {
+            folderInput.value = `${sessionVal}`;
+        } else {
+            folderInput.value = '';
+        }
+
+        syncDriveHiddenFields();
+    }
+
+    function autoSelectSemesters(term) {
+        const checkboxContainer = document.getElementById('semesterCheckboxContainer');
+        if (!checkboxContainer) return;
+
+        const checkboxes = checkboxContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            // Reads semester number from value attribute or dataset
+            const semNum = parseInt(cb.value || cb.getAttribute('data-sem'), 10);
+            if (!isNaN(semNum)) {
+                if (term === 'Odd') {
+                    cb.checked = (semNum % 2 !== 0);
+                } else if (term === 'Even') {
+                    cb.checked = (semNum % 2 === 0);
+                }
+            }
+        });
+    }
+
+    function handleTermChange(term) {
+        updateFolderNamePreview();
+        autoSelectSemesters(term);
+    }
+
+    document.getElementById('academicSession').addEventListener('change', updateFolderNamePreview);
+    const termSelect = document.getElementById('academicTerm');
+    termSelect.addEventListener('change', function () {
+        handleTermChange(this.value);
+    });
+
+    if (termSelect.value) {
+        handleTermChange(termSelect.value);
+    }
+
+    // Initialize folder name preview on load
+    document.addEventListener("DOMContentLoaded", updateFolderNamePreview);
     
     container.addEventListener('click', function (e) {
         const addBtn = e.target.closest('.add-pair-btn');
@@ -701,6 +765,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---------- Structure form submission ----------
     document.getElementById('structureForm').addEventListener('submit', function (e) {
+        syncDriveHiddenFields();
+
         const session = document.getElementById('academicSession').value.trim();
         if (!session) { e.preventDefault(); alert('Please enter the Academic Session.'); return; }
 
@@ -775,8 +841,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (confirmRestore) {
                 try {
                     const draft = JSON.parse(draftDataStr);
-                    academicSessionInput.value = draft.academicSession || '';
                     
+                    // Restore Session & Term
+                    if (draft.academicSession) academicSessionInput.value = draft.academicSession;
+                    if (draft.academicTerm) document.getElementById('academicTerm').value = draft.academicTerm;
+                    
+                    // Update dependent displays (Folder Name & auto-selected semesters if needed)
+                    updateFolderNamePreview();
+
                     if (draft.semesterCount && Array.isArray(draft.semesterCount)) {
                         checkboxContainer.querySelectorAll('.semester-checkbox').forEach(cb => {
                             cb.checked = draft.semesterCount.includes(parseInt(cb.value, 10));
