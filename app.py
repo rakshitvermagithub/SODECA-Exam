@@ -1591,6 +1591,7 @@ def send_otp(to_mail):
 
     session['otp_email'] = to_mail
     session['otp_secret'] = otp
+    print(otp)
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
@@ -2712,6 +2713,7 @@ def faculty_dashboard():
     
         # Submission requests stats of individual student in the batch
         students = student_submission_stats(batch_details)
+        print(students)
         for student in students:
             submission_counts["pending"] += student["pending_count"]
             submission_counts["accepted"] += student["accepted_count"]
@@ -3574,7 +3576,9 @@ def addEmail():
         if emails["email"] == email:
             flash("Email already exists!","danger")
             return redirect(url_for('student_management_page'))
-
+        elif not str(email).lower().endswith('@skit.ac.in'):
+            flash("Only institutional mails are allowed!", "danger")
+            return redirect(url_for('student_management_page'))
     db.execute("""
         INSERT INTO users (
             email, auth_provider

@@ -290,7 +290,9 @@
                     {% set student_name = student['student_name'] %}
                     {% set roll_no = student['university_roll_no'] %}
                     <a href="/review_student?id={{ student['student_user_id'] }}" 
-                    class="student-card" data-name="{{ student['student_name'] }}" data-roll="{{ student['university_roll_no'] }}">
+                        class="student-card" data-name="{{ student['student_name'] }}"
+                       data-roll="{{ student['university_roll_no'] }}"
+                       style={% if student['pending_count'] + student['accepted_count'] + student['rejected_count'] < 1 %} "background: radial-gradient(circle, #FF6B6C 50%, #FF0f00 100%);" {% endif %}>
                         
                         <div class="student-info">
                             <div class="student-name">{{ student_name }}</div>
