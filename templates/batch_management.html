@@ -247,20 +247,24 @@
                                     <input type="text" class="form-control py-2 font-monospace bg-light" id="folder_name_preview" name="folder_name" readonly placeholder="Session Term">
                                 </div>
 
-                                <!-- 4. + New Master Folder Button -->
+                                <!-- 4. + New Master Folder & Current Master Folder Buttons (Stacked) -->
                                 <div class="col-12 col-md-3">
-                                    <button type="submit" class="btn btn-admin w-100 py-2 d-flex align-items-center justify-content-center gap-1">
-                                        <i class="bi bi-plus-lg"></i> New Master Folder
-                                    </button>
-                                    {% if current_master_link %}
-                                    <a href="{{ current_master_link }}">
-                                        <button type="button">
-                                            Current Master Folder
+                                    <div class="d-flex flex-column gap-2">
+                                        <!-- Current Master Folder Link -->
+                                        {% if current_master_link %}
+                                        <a href="{{ current_master_link }}" target="_blank" class="w-100 text-decoration-none">
+                                            <button type="button" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                                                <img src="https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" alt="Drive" width="20" height="20">
+                                                Current Master Folder
+                                            </button>
+                                        </a>
+                                        {% endif %}
+                                        <!-- New Master Folder Button -->
+                                        <button type="submit" class="btn btn-admin w-100 py-2 d-flex align-items-center justify-content-center gap-1">
+                                            <i class="bi bi-plus-lg"></i> New Master Folder
                                         </button>
-                                    </a>
-                                    {% endif %}
-                                </div>
-
+                                    </div>
+                                </div>                            
                             </div>
                         </form>
                     </div>
@@ -270,8 +274,6 @@
 
         <!-- ================= MAIN STRUCTURE FORM ================= -->
         <form action="/create_drive_structure" method="post" id="structureForm">
-            <input type="hidden" name="drive_academic_session" id="driveSessionHidden">
-            <input type="hidden" name="drive_academic_term" id="driveTermHidden">            
             <input type="hidden" name="structure_json" id="structureJsonInput">
 
             <!-- ================= ROW 2: BASE CONFIG BLOCK ================= -->
@@ -672,17 +674,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('academicTerm').addEventListener('change', handleFormInputChange);
     academicSessionInput.addEventListener('change', handleFormInputChange);
 
-    function syncDriveHiddenFields() {
-        const sessionVal = document.getElementById('academicSession').value;
-        const termVal = document.getElementById('academicTerm').value;
-
-        const driveSessionHidden = document.getElementById('driveSessionHidden');
-        const driveTermHidden = document.getElementById('driveTermHidden');
-
-        if (driveSessionHidden) driveSessionHidden.value = sessionVal || '';
-        if (driveTermHidden) driveTermHidden.value = termVal || '';
-    }
-
     function updateFolderNamePreview() {
         const sessionVal = document.getElementById('academicSession').value;
         const termVal = document.getElementById('academicTerm').value;
@@ -695,8 +686,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             folderInput.value = '';
         }
-
-        syncDriveHiddenFields();
     }
 
     function autoSelectSemesters(term) {
@@ -765,10 +754,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ---------- Structure form submission ----------
     document.getElementById('structureForm').addEventListener('submit', function (e) {
-        syncDriveHiddenFields();
-
-        const session = document.getElementById('academicSession').value.trim();
-        if (!session) { e.preventDefault(); alert('Please enter the Academic Session.'); return; }
 
         const rows = [];
         let hasEmptyField = false;
@@ -807,8 +792,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        document.getElementById('academicSessionHidden').value = session;
-        document.getElementById('structureJsonInput').value = JSON.stringify(rows);
+        document.getElementById'structureJsonInput').value = JSON.stringify(rows);
 
         const pendingLink = document.getElementById('pendingMasterLinkForNewStructure').value;
         if (pendingLink) {

@@ -3655,46 +3655,20 @@ def create_drive_structure():
     if not token:
         flash("Please authorize Google Drive first.", "warning")
         return redirect(url_for('batch_management'))
-
-    # Get the academic session value from user_input
-    academic_session = request.form.get("drive_academic_session")
-    if not academic_session:
-        flash("Kindly provide the academic session before updating the structure", "warning")
-        return redirect(url_for("batch_management"))
     
-    # Get the term value from user_input
-    academic_term = request.form.get("drive_academic_term")
-    if not academic_term:
-        flash("Kindly provide the academic term before updating the structure", "warning")
-        return redirect(url_for("batch_management"))
-
-    sys_config_dict = db.execute("SELECT academic_session, academic_term, master_folder_id FROM drive_settings WHERE id=1")
+    sys_config_dict = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
     if sys_config_dict:
         sys_config = sys_config_dict[0]
         master_folder_id = sys_config["master_folder_id"]
         if not master_folder_id:
-            flash("Kindly submit create a drive master folder before updating the structure", "danger")
+            flash("Kindly create a drive master folder before updating the structure", "warning")
             return redirect(url_for("batch_management")) 
-
-    try:
-        # Upsert in drive_settings
-        db.execute("""
-                INSERT INTO drive_settings (id, academic_session, academic_term, updated_on) 
-                VALUES (?, ?, ?, ?) 
-                ON CONFLICT (id) DO UPDATE SET
-                    academic_session = excluded.drive_folder_id
-                    academic_term = excluded.academic_term
-                    updated_on = excluded.updated_on
-            """, 1, academic_session, academic_term, datetime('now', '+5 hours', '+30 minutes'))
-        print(f"Updated drive settings with academic_session: {academic_session} and academic_term: {academic_term}")
-
-    except Exception as e:
-        print(f"Drive settings error: {e}")
-        flash(f"Database error: {e}", "danger")
-        return redirect(url_for("batch_management"))
 
     # Get drive structure inputs
     raw_batch_structure = request.form.get("structure_json")
+    # Guard against None or empty string before parsing
+    if not raw_batch_structure:
+        return "Missing structure configuration payload", 400
     try:
         batch_structure = json.loads(raw_batch_structure)
     except (json.JSONDecodeError, TypeError):
