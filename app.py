@@ -1401,7 +1401,7 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         master_folder_link TEXT, master_folder_id TEXT,
-        academic_session TEXT,
+        academic_session TEXT, academic_term TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
@@ -1447,15 +1447,24 @@ demoUsers = [
 # VALUES ('{user["email"]}', '{hashed_pw}', '{user["role"]}');"""
 #     db.execute(sql)
 
-def get_or_create_folder(service, folder_name, parent_id):
+def get_or_create_folder(service, folder_name, parent_id=None):
     """
     Searches for a specific folder inside a parent folder.
     If it exists, returns its ID. If not, creates it and returns the new ID.
     """
     try:
         # 1. Search Query: Find folders with this specific name inside the parent
-        query = f"mimeType = 'application/vnd.google-apps.folder' and name = '{folder_name}' and '{parent_id}' in parents and trashed = false"
+        query_parts = [
+                    "mimeType = 'application/vnd.google-apps.folder'",
+                    f"name = '{folder_name}'",
+                    "trashed = false"
+                ]
+                
+        if parent_id:
+            query_parts.append(f"'{parent_id}' in parents")
         
+        query = " and ".join(query_parts)    
+
         results = service.files().list(
             q=query, 
             spaces='drive', 
@@ -1467,14 +1476,18 @@ def get_or_create_folder(service, folder_name, parent_id):
         if files:
             # Found it! Return the existing ID
             print(f"Found existing folder: {folder_name} ({files[0]['id']})")
+            flash(f"Found existing folder: {folder_name}")
             return files[0]['id']
         else:
             # Not found. Create it!
             file_metadata = {
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder',
-                'parents': [parent_id]
             }
+
+            if parent_id:
+                file_metadata['parents'] = [parent_id]
+
             folder = service.files().create(
                 body=file_metadata, 
                 fields='id'
@@ -3495,7 +3508,17 @@ def batch_management():
     drive_settings = row[0] if row else {}
 
     batch_rows = db.execute("SELECT * FROM batch_structure")
-    return render_template("batch_management.html", drive_settings=drive_settings, batch_rows=batch_rows)
+
+    current_year = datetime.now().year
+
+    session_options = [f"{current_year-1}-{(current_year)%100}", 
+    f"{current_year}-{(current_year+1)%100}", 
+    f"{current_year+1}-{(current_year-1)%100}"]
+
+    return render_template("batch_management.html", 
+    drive_settings=drive_settings,
+    batch_rows=batch_rows,
+    session_options=session_options)
 
 # Handles student_management_page loading and excel file uploads
 @app.route("/student_management_page", methods=["GET", "POST"])
@@ -3566,6 +3589,66 @@ def addEmail():
 
     return redirect(url_for('student_management_page'))
 
+@app.route('/update_drive_settings', methods=["POST"])
+@login_required
+@drive_auth_required
+def update_drive_master_folder():
+
+    # 1. Check if we have the drive token
+    token = session.get('drive_auth_token')
+    if not token:
+        flash("Please authorize google drive", "warning")
+        return redirect(url_for("batch_management"))
+
+    try:
+        # Build the Drive Service using the token
+        creds = Credentials(
+            token=token.get('access_token'),
+            refresh_token=token.get('refresh_token'),
+            token_uri=app.config.get('GOOGLE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
+            client_id=app.config['DRIVE_CLIENT_ID'],
+            client_secret=app.config['DRIVE_CLIENT_SECRET'],
+            scopes=token.get('scope', [])
+        )
+        
+        service = build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"Error building drive service: {e}")
+        flash("Google drive error", "danger")
+        return redirect(url_for("batch_management"))
+
+
+    academic_session = request.form.get("academic_session")
+    academic_term = request.form.get("academic_term")
+    folder_name = request.form.get("folder_name")
+    # Create a new master folder or just return the existing folder's id
+    new_folder_id = get_or_create_folder(service, folder_name)
+    if (new_folder_id):
+        new_folder_link = f"https://drive.google.com/drive/folders/{new_folder_id}"
+    else:
+        flash("Error: Creating/Updating Master drive folder", "danger")
+        return redirect(url_for("batch_management"))
+
+    try: 
+        db.execute("""
+                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, master_folder_id, updated_on) 
+                VALUES (1, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
+                ON CONFLICT (id) DO UPDATE SET
+                    academic_session = excluded.academic_session,
+                    academic_term = excluded.academic_term,
+                    master_folder_link = excluded.master_folder_link,
+                    master_folder_id = excluded.master_folder_id,
+                    updated_on = datetime('now', '+5 hours', '+30 minutes')
+            """, academic_session, academic_term, new_folder_link, new_folder_id)
+        print("System settings and Master folder updated")
+        flash("System settings and Master folder updated!", "success")
+
+    except Exception as e:
+        print(f"db erorr: {e}")        
+        flash(f"Database error: {e}", "danger")
+
+    return redirect(url_for("batch_management"))
+
 @app.route('/create_drive_structure', methods=["POST"])
 @login_required
 @drive_auth_required 
@@ -3575,31 +3658,21 @@ def create_drive_structure():
     token = session.get('drive_auth_token')
     if not token:
         flash("Please authorize Google Drive first.", "warning")
-        return redirect(url_for('super_admin'))
-
-    # Get the academic session value from user_input
-    academic_session = request.form.get("academic_session")
-    if not academic_session:
-        flash("Kindly provide the academic session before updating the structure", "error")
-        return redirect(url_for("batch_management"))
-
-    sys_config = db.execute("SELECT academic_session, master_folder_id FROM drive_settings WHERE id=1")[0]
-    curr_academic_session = sys_config["academic_session"]
-    master_folder_id = sys_config["master_folder_id"]
-    if not master_folder_id:
-        flash("Kindly submit the master folder drive link before updating the structure", "error")
-        return redirect(url_for("batch_management")) 
-
-    # If updated academic session too
-    if (academic_session != curr_academic_session):
-        db.execute("""
-                UPDATE drive_settings 
-                SET academic_session = ?, updated_on = datetime('now', '+5 hours', '+30 minutes') 
-                WHERE id = 1
-            """, (academic_session,))
+        return redirect(url_for('batch_management'))
+    
+    sys_config_dict = db.execute("SELECT master_folder_id FROM drive_settings WHERE id=1")
+    if sys_config_dict:
+        sys_config = sys_config_dict[0]
+        master_folder_id = sys_config["master_folder_id"]
+        if not master_folder_id:
+            flash("Kindly create a drive master folder before updating the structure", "warning")
+            return redirect(url_for("batch_management")) 
 
     # Get drive structure inputs
     raw_batch_structure = request.form.get("structure_json")
+    # Guard against None or empty string before parsing
+    if not raw_batch_structure:
+        return "Missing structure configuration payload", 400
     try:
         batch_structure = json.loads(raw_batch_structure)
     except (json.JSONDecodeError, TypeError):
