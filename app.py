@@ -1401,6 +1401,8 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         master_folder_link TEXT, master_folder_id TEXT,
+        participation_folder_link TEXT, participation_folder_id TEXT,
+        achievement_folder_link TEXT, achievement_folder_id TEXT,
         academic_session TEXT, academic_term TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
@@ -3622,24 +3624,44 @@ def update_drive_master_folder():
     academic_term = request.form.get("academic_term")
     folder_name = request.form.get("folder_name")
     # Create a new master folder or just return the existing folder's id
-    new_folder_id = get_or_create_folder(service, folder_name)
-    if (new_folder_id):
-        new_folder_link = f"https://drive.google.com/drive/folders/{new_folder_id}"
+    master_folder_id = get_or_create_folder(service, folder_name)
+    if (master_folder_id):
+        master_folder_link = f"https://drive.google.com/drive/folders/{master_folder_id}"
     else:
         flash("Error: Creating/Updating Master drive folder", "danger")
         return redirect(url_for("batch_management"))
 
+    # Create folders named participations and achievement
+    participation_folder_id = get_or_create_folder(service, "participation", master_folder_id)
+    if (participation_folder_id):
+        participation_folder_link = f"https://drive.google.com/drive/folders/{participation_folder_id}"
+    else:
+        flash("Error: Creating participation drive folder, please create again", "danger")
+        return redirect(url_for("batch_management"))
+    achievement_folder_id = get_or_create_folder(service, "achievement", master_folder_id)
+    if (achievement_folder_id):
+        achievement_folder_link = f"https://drive.google.com/drive/folders/{achievement_folder_id}"
+    else:
+        flash("Error: Creating achievement drive folder, please create again", "danger")
+        return redirect(url_for("batch_management"))
+
     try: 
         db.execute("""
-                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, master_folder_id, updated_on) 
-                VALUES (1, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
+                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, master_folder_id, 
+                participation_folder_link, participation_folder_id, achievement_folder_link, achievement_folder_id, updated_on) 
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
                 ON CONFLICT (id) DO UPDATE SET
                     academic_session = excluded.academic_session,
                     academic_term = excluded.academic_term,
                     master_folder_link = excluded.master_folder_link,
                     master_folder_id = excluded.master_folder_id,
+                    participation_folder_link = excluded.participation_folder_link,
+                    participation_folder_id = excluded.participation_folder_id,
+                    achievement_folder_link = excluded.achievement_folder_link,
+                    achievement_folder_id = excluded.achievement_folder_id,
                     updated_on = datetime('now', '+5 hours', '+30 minutes')
-            """, academic_session, academic_term, new_folder_link, new_folder_id)
+            """, academic_session, academic_term, master_folder_link, master_folder_id, 
+            participation_folder_link, participation_folder_id, achievement_folder_link, achievement_folder_id)
         print("System settings and Master folder updated")
         flash("System settings and Master folder updated!", "success")
 
