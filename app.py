@@ -1934,6 +1934,7 @@ for form in form_name_list:
             entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             student_id INTEGER NOT NULL,
             academic_session TEXT,
+            academic_term TEXT,
             {field_cols_sql},
             full_path TEXT NOT NULL,
             google_file_id TEXT NOT NULL DEFAULT 'pending',
@@ -2889,6 +2890,15 @@ def verify_student_details():
         verified_details = request.form.get("verified_details")
         session["verified_details"] = verified_details
 
+        academic_session_row = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+        if not academic_session_row:
+            print("System for this acadmeic session and term not configured, please contact admin")
+            flash("System for this acadmeic session and term not configured, please contact admin", "danger")
+            return redirect(url_for('sodeca_forms'))
+        
+        session["academic_session"] = academic_session_row[0].get("academic_session")
+        session["academic_term"] = academic_session_row[0].get("academic_term")
+
         print(f"Verified: {verified_details}")
         return redirect(url_for('fill_form'))
     else:
@@ -2914,12 +2924,7 @@ def fill_form():
     if session.get("verified_details") == None:
         flash("Kindly confirm details by checking the checkbox", "warning")
         return redirect("/verify_student_details")
-    
-    # if session.get("finished_all_forms"):
-    #     flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
-    #     session.pop("finished_all_forms")
-    #     return redirect(url_for("sodeca_forms"))
-    
+        
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
         flash("Please select atleast one form to submit", "danger")
@@ -3083,9 +3088,9 @@ def fill_form():
             try:
                 # Dynamically store form entries in respective tables in database
                 db.execute(f"""
-                    INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
-                    VALUES(?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
-                """, session["user_id"], *values_list, # *values_list gives a string eg. "Value1", "Value2"...
+                    INSERT INTO {current_form} (student_id, academic_session, academic_term, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
+                    VALUES(?, ?, ?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
+                """, session["user_id"], session.get("academic_session"), session.get("academic_term"), *values_list, # *values_list gives a string eg. "Value1", "Value2"...
                 save_path, "pending", "pending", )
 
             except Exception as e:
