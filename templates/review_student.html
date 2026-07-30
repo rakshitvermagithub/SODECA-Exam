@@ -613,6 +613,7 @@
                                         <input type="hidden" name="batch_str" value="{{ batch_str }}">
                                         <input type="hidden" name="form_name" value="{{ form_name }}">
                                         <input type="hidden" name="filename" value="{{ submission['certificate'] }}">
+                                        <input type="hidden" name="submission_category" value="{{ submission['submission_category'] }}">
                                         <button type="submit" class="btn-action-accept" id="btnAcceptEntry" title="Accept"><i class="bi bi-check-lg"></i></button>
                                     </form>
                                     <button type="button" 
@@ -669,6 +670,7 @@
                         <input type="hidden" name="batch_str" value="{{ batch_str }}"> 
                         <input type="hidden" name="form_name" id="acceptHiddenFormName" value="">
                         <input type="hidden" name="filename" id="acceptHiddenFilename" value="">
+                        <input type="hidden" name="submission_category" id="submissionCategory" value="">
                         
                         <button type="submit" id="btnAcceptEntry" class="btn btn-modal-accept">
                             <i class="bi bi-check-lg me-1"></i> Accept
@@ -850,6 +852,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fill the hidden inputs for the Accept form
             document.getElementById('acceptHiddenEntryId').value = detailsObj.entry_id;
             document.getElementById('acceptHiddenFilename').value = detailsObj.certificate;
+            document.getElementById('submissionCategory').value = detailsObj.submission_category;
             
             // If form_name is inside the submission dict, use it. 
             // Otherwise, grab it from the button's data-category attribute.

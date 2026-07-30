@@ -1279,43 +1279,7 @@ form_name_list = list(FORM_DEFINITIONS.keys())
 
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
-    # Check if table named the form exists
-    table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
 
-    # If not exists
-    if not table_exists:
-
-        # List to store differnet fields definition
-        col_def_list = []
-        for field_col in FORM_DEFINITIONS[form]["fields"]:
-
-            field_col_name = field_col["field_name"]
-
-            # Defining form fields with dataype TEXT and is REQUIRED
-            col_def = f"{field_col_name} TEXT NOT NULL"
-            col_def_list.append(col_def)
-
-        # SQL string
-        field_cols_sql = ",".join(col_def_list)
-
-        # Dynamically create SQL tables for all forms
-        db.execute(
-            f"""CREATE TABLE IF NOT EXISTS {form}(
-            entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            student_id INTEGER NOT NULL,
-            {field_cols_sql},
-            full_path TEXT NOT NULL,
-            google_file_id TEXT NOT NULL DEFAULT 'pending',
-            status TEXT DEFAULT 'pending' NOT NULL,
-            submitted_at TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')),
-            withdrawn_at TIMESTAMP, rejection_note TEXT,
-            FOREIGN KEY (student_id) REFERENCES student_details(student_user_id),
-            CHECK (status IN ('pending', 'accepted', 'rejected'))
-            )"""
-        )
-
-# Create tables for all the forms in FORM_DEFINITIONS
-for form in form_name_list:
     # Check if table named the form exists
     table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
 
@@ -2809,7 +2773,7 @@ def review_student():
         flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
         return redirect(url_for("faculty_dashboard"))
 
-    batch_str = f"{student_branch}_{student_sem}_{student_section}"
+    batch_str = f"{student_sem}_{student_branch}_{student_section}"
 
     # Fetch all form submissions without any JOINs
     submissions = []
@@ -2964,6 +2928,7 @@ def upload_to_drive():
         return redirect(request.referrer)
 
     batch_str = request.form.get("batch_str")
+    print(batch_str)
 
     to_search_id = f"{batch_str}_{form_name}"
     drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
@@ -2977,6 +2942,28 @@ def upload_to_drive():
         flash("Destination folder not found in Drive map. Please contact Admin.", "danger")
         return redirect(request.referrer)
 
+    # Get participation and achievement folder ids
+    submission_category = request.form.get('submission_category')
+    if not submission_category:
+        flash("Error: Submission category is null", "danger")
+        return redirect(request.referrer)
+
+    submission_folder_id = None
+
+    if (submission_category == "achievement"):
+        achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
+        if (achievement_folder_list):
+            submission_folder_id = achievement_folder_list[0].get("achievement_folder_id")
+
+    elif (submission_category == "participation"):
+        participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
+        if (participation_folder_list):
+            submission_folder_id = participation_folder_list[0].get("participation_folder_id")
+
+    if (not submission_folder_id):
+        flash("Error: Submission category is NULL", "danger")
+        return redirect(request.referrer)
+    
     try:
         # 1. Safely extract the tokens from your session dictionary
         access_token = token.get('access_token') or token.get('token')
@@ -2988,10 +2975,6 @@ def upload_to_drive():
         client_id = current_app.config.get("GOOGLE_CLIENT_ID")
         client_secret = current_app.config.get("GOOGLE_CLIENT_SECRET")
         
-        # Quick debug print to ensure they aren't blank
-        print(f"DEBUG: Client ID loaded: {bool(client_id)}")
-        print(f"DEBUG: Client Secret loaded: {bool(client_secret)}")
-
         # 3. Build the Credentials object
         credentials = Credentials(
             token=access_token,
@@ -3007,15 +2990,36 @@ def upload_to_drive():
         drive_service = build('drive', 'v3', credentials=credentials)
 
         file_metadata = {'name': filename, 'parents': [drive_folder_id]}
+        file_metadata_submission_category = {'name': filename, 'parents': [submission_folder_id]}
         
-        # Resumable=False fixes the timeouts
-        media = MediaFileUpload(full_path, resumable=False)
+        media_batch = MediaFileUpload(full_path, resumable=False)
 
+        # upload file to respective batch folder
         uploaded_file = drive_service.files().create(
-            body=file_metadata, media_body=media, fields='id,name'
+            body=file_metadata, media_body=media_batch, fields='id,name'
         ).execute()
 
         google_file_id = uploaded_file.get('id')
+
+        # Upload file to either achievement or participation folder
+        media_submission_category = MediaFileUpload(full_path, resumable=False)
+        try:
+            submission_category_file = drive_service.files().create(
+                body=file_metadata_submission_category, media_body=media_category, fields='id,name'
+            ).execute()
+
+            if not submission_category_file.get('id'):
+                raise Exception("Category folder upload returned no file ID")
+
+        except Exception as category_upload_error:
+            # First upload succeeded but second failed - clean up to avoid an orphaned file
+            try:
+                drive_service.files().delete(fileId=google_file_id).execute()
+            except Exception as cleanup_error:
+                print(
+                    f"Failed to clean up orphaned file {google_file_id} after category upload failure: {cleanup_error}"
+                )
+            raise
 
         sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
         db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
