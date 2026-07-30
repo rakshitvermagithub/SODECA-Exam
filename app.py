@@ -152,6 +152,76 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
             {
+                'field_label': 'Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
                 'field_label': 'Event Title',
                 'field_type': 'text',
                 'field_name': 'event_title',
@@ -234,6 +304,76 @@ FORM_DEFINITIONS = {
             ],
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
+            {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
             {
                 'field_label': 'Name of the Competition/Event/Activity',
                 'field_type': 'text',
@@ -381,6 +521,76 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',  # Important for file uploads
         'fields': [
             {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
                 'field_label': 'Event Name',
                 'field_type': 'text',
                 'field_name': 'event_title',
@@ -492,6 +702,76 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',
         'fields': [
             {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
                 'field_label': 'Expert Speaker',
                 'field_type': 'text',
                 'field_name': 'expert_name',
@@ -596,6 +876,76 @@ FORM_DEFINITIONS = {
             ],
         'enctype': 'multipart/form-data',
         'fields': [
+            {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
             {
                 'field_label': 'Name of the Event/Activity Organized',
                 'field_type': 'text',
@@ -998,6 +1348,76 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',
         'fields': [
             {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
                 'field_label': 'Name of the Company',
                 'field_type': 'text',
                 'field_name': 'company_name',
@@ -1079,6 +1499,76 @@ FORM_DEFINITIONS = {
         ],
         'enctype': 'multipart/form-data',
         'fields': [
+            {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
             {
                 'field_label': 'Name of Conference',
                 'field_type': 'text',
@@ -1175,6 +1665,76 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',
         'fields': [
             {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
                 'field_label': 'Funding Agency Name',
                 'field_type': 'text',
                 'field_name': 'agency_name',
@@ -1237,6 +1797,76 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',
         'fields': [
             {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
                 'field_label': 'Name of the Course',
                 'field_type': 'text',
                 'field_name': 'course_name',
@@ -1279,7 +1909,6 @@ form_name_list = list(FORM_DEFINITIONS.keys())
 
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
-
     # Check if table named the form exists
     table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
 
@@ -1304,6 +1933,7 @@ for form in form_name_list:
             f"""CREATE TABLE IF NOT EXISTS {form}(
             entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             student_id INTEGER NOT NULL,
+            academic_session TEXT,
             {field_cols_sql},
             full_path TEXT NOT NULL,
             google_file_id TEXT NOT NULL DEFAULT 'pending',
@@ -3005,7 +3635,7 @@ def upload_to_drive():
         media_submission_category = MediaFileUpload(full_path, resumable=False)
         try:
             submission_category_file = drive_service.files().create(
-                body=file_metadata_submission_category, media_body=media_category, fields='id,name'
+                body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
             ).execute()
 
             if not submission_category_file.get('id'):
