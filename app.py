@@ -1910,7 +1910,6 @@ form_name_list = list(FORM_DEFINITIONS.keys())
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
     # Check if table named the form exists
-    # db.execute(f"DROP TABLE {form}")
     table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
 
     # If not exists
@@ -1935,6 +1934,7 @@ for form in form_name_list:
             entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             student_id INTEGER NOT NULL,
             academic_session TEXT,
+            academic_term TEXT,
             {field_cols_sql},
             full_path TEXT NOT NULL,
             google_file_id TEXT NOT NULL DEFAULT 'pending',
@@ -1996,6 +1996,8 @@ db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         master_folder_link TEXT, master_folder_id TEXT,
+        participation_folder_link TEXT, participation_folder_id TEXT,
+        achievement_folder_link TEXT, achievement_folder_id TEXT,
         academic_session TEXT, academic_term TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
@@ -2888,6 +2890,15 @@ def verify_student_details():
         verified_details = request.form.get("verified_details")
         session["verified_details"] = verified_details
 
+        academic_session_row = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+        if not academic_session_row:
+            print("System for this acadmeic session and term not configured, please contact admin")
+            flash("System for this acadmeic session and term not configured, please contact admin", "danger")
+            return redirect(url_for('sodeca_forms'))
+        
+        session["academic_session"] = academic_session_row[0].get("academic_session")
+        session["academic_term"] = academic_session_row[0].get("academic_term")
+
         print(f"Verified: {verified_details}")
         return redirect(url_for('fill_form'))
     else:
@@ -2913,12 +2924,7 @@ def fill_form():
     if session.get("verified_details") == None:
         flash("Kindly confirm details by checking the checkbox", "warning")
         return redirect("/verify_student_details")
-    
-    # if session.get("finished_all_forms"):
-    #     flash("Submission successfull! Kindly check your submissions on your submissions page", "success")
-    #     session.pop("finished_all_forms")
-    #     return redirect(url_for("sodeca_forms"))
-    
+        
     # If not selected any forms, first go and select
     if not session.get("selected_forms"):
         flash("Please select atleast one form to submit", "danger")
@@ -3082,9 +3088,9 @@ def fill_form():
             try:
                 # Dynamically store form entries in respective tables in database
                 db.execute(f"""
-                    INSERT INTO {current_form} (student_id, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
-                    VALUES(?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
-                """, session["user_id"], *values_list, # *values_list gives a string eg. "Value1", "Value2"...
+                    INSERT INTO {current_form} (student_id, academic_session, academic_term, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
+                    VALUES(?, ?, ?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
+                """, session["user_id"], session.get("academic_session"), session.get("academic_term"), *values_list, # *values_list gives a string eg. "Value1", "Value2"...
                 save_path, "pending", "pending", )
 
             except Exception as e:
@@ -3402,7 +3408,7 @@ def review_student():
         flash("Student's batch is out of your assigned scope. To access data of other batch students, contact Admin.", "danger")
         return redirect(url_for("faculty_dashboard"))
 
-    batch_str = f"{student_branch}_{student_sem}_{student_section}"
+    batch_str = f"{student_sem}_{student_branch}_{student_section}"
 
     # Fetch all form submissions without any JOINs
     submissions = []
@@ -3557,6 +3563,7 @@ def upload_to_drive():
         return redirect(request.referrer)
 
     batch_str = request.form.get("batch_str")
+    print(batch_str)
 
     to_search_id = f"{batch_str}_{form_name}"
     drive_folder = db.execute("SELECT drive_folder_id FROM drive_folder_map WHERE id=?", to_search_id)
@@ -3570,6 +3577,28 @@ def upload_to_drive():
         flash("Destination folder not found in Drive map. Please contact Admin.", "danger")
         return redirect(request.referrer)
 
+    # Get participation and achievement folder ids
+    submission_category = request.form.get('submission_category')
+    if not submission_category:
+        flash("Error: Submission category is null", "danger")
+        return redirect(request.referrer)
+
+    submission_folder_id = None
+
+    if (submission_category == "achievement"):
+        achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
+        if (achievement_folder_list):
+            submission_folder_id = achievement_folder_list[0].get("achievement_folder_id")
+
+    elif (submission_category == "participation"):
+        participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
+        if (participation_folder_list):
+            submission_folder_id = participation_folder_list[0].get("participation_folder_id")
+
+    if (not submission_folder_id):
+        flash("Error: Submission category is NULL", "danger")
+        return redirect(request.referrer)
+    
     try:
         # 1. Safely extract the tokens from your session dictionary
         access_token = token.get('access_token') or token.get('token')
@@ -3581,10 +3610,6 @@ def upload_to_drive():
         client_id = current_app.config.get("GOOGLE_CLIENT_ID")
         client_secret = current_app.config.get("GOOGLE_CLIENT_SECRET")
         
-        # Quick debug print to ensure they aren't blank
-        print(f"DEBUG: Client ID loaded: {bool(client_id)}")
-        print(f"DEBUG: Client Secret loaded: {bool(client_secret)}")
-
         # 3. Build the Credentials object
         credentials = Credentials(
             token=access_token,
@@ -3600,15 +3625,36 @@ def upload_to_drive():
         drive_service = build('drive', 'v3', credentials=credentials)
 
         file_metadata = {'name': filename, 'parents': [drive_folder_id]}
+        file_metadata_submission_category = {'name': filename, 'parents': [submission_folder_id]}
         
-        # Resumable=False fixes the timeouts
-        media = MediaFileUpload(full_path, resumable=False)
+        media_batch = MediaFileUpload(full_path, resumable=False)
 
+        # upload file to respective batch folder
         uploaded_file = drive_service.files().create(
-            body=file_metadata, media_body=media, fields='id,name'
+            body=file_metadata, media_body=media_batch, fields='id,name'
         ).execute()
 
         google_file_id = uploaded_file.get('id')
+
+        # Upload file to either achievement or participation folder
+        media_submission_category = MediaFileUpload(full_path, resumable=False)
+        try:
+            submission_category_file = drive_service.files().create(
+                body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
+            ).execute()
+
+            if not submission_category_file.get('id'):
+                raise Exception("Category folder upload returned no file ID")
+
+        except Exception as category_upload_error:
+            # First upload succeeded but second failed - clean up to avoid an orphaned file
+            try:
+                drive_service.files().delete(fileId=google_file_id).execute()
+            except Exception as cleanup_error:
+                print(
+                    f"Failed to clean up orphaned file {google_file_id} after category upload failure: {cleanup_error}"
+                )
+            raise
 
         sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
         db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
@@ -4217,24 +4263,44 @@ def update_drive_master_folder():
     academic_term = request.form.get("academic_term")
     folder_name = request.form.get("folder_name")
     # Create a new master folder or just return the existing folder's id
-    new_folder_id = get_or_create_folder(service, folder_name)
-    if (new_folder_id):
-        new_folder_link = f"https://drive.google.com/drive/folders/{new_folder_id}"
+    master_folder_id = get_or_create_folder(service, folder_name)
+    if (master_folder_id):
+        master_folder_link = f"https://drive.google.com/drive/folders/{master_folder_id}"
     else:
         flash("Error: Creating/Updating Master drive folder", "danger")
         return redirect(url_for("batch_management"))
 
+    # Create folders named participations and achievement
+    participation_folder_id = get_or_create_folder(service, "participation", master_folder_id)
+    if (participation_folder_id):
+        participation_folder_link = f"https://drive.google.com/drive/folders/{participation_folder_id}"
+    else:
+        flash("Error: Creating participation drive folder, please create again", "danger")
+        return redirect(url_for("batch_management"))
+    achievement_folder_id = get_or_create_folder(service, "achievement", master_folder_id)
+    if (achievement_folder_id):
+        achievement_folder_link = f"https://drive.google.com/drive/folders/{achievement_folder_id}"
+    else:
+        flash("Error: Creating achievement drive folder, please create again", "danger")
+        return redirect(url_for("batch_management"))
+
     try: 
         db.execute("""
-                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, master_folder_id, updated_on) 
-                VALUES (1, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
+                INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_link, master_folder_id, 
+                participation_folder_link, participation_folder_id, achievement_folder_link, achievement_folder_id, updated_on) 
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
                 ON CONFLICT (id) DO UPDATE SET
                     academic_session = excluded.academic_session,
                     academic_term = excluded.academic_term,
                     master_folder_link = excluded.master_folder_link,
                     master_folder_id = excluded.master_folder_id,
+                    participation_folder_link = excluded.participation_folder_link,
+                    participation_folder_id = excluded.participation_folder_id,
+                    achievement_folder_link = excluded.achievement_folder_link,
+                    achievement_folder_id = excluded.achievement_folder_id,
                     updated_on = datetime('now', '+5 hours', '+30 minutes')
-            """, academic_session, academic_term, new_folder_link, new_folder_id)
+            """, academic_session, academic_term, master_folder_link, master_folder_id, 
+            participation_folder_link, participation_folder_id, achievement_folder_link, achievement_folder_id)
         print("System settings and Master folder updated")
         flash("System settings and Master folder updated!", "success")
 
