@@ -437,6 +437,11 @@
         font-size: 0.95rem; 
         font-family: 'Poppins', sans-serif;
     }
+    /* Increase dimness of the Bootstrap backdrop */
+    .modal-backdrop.show {
+        opacity: 0.85; /* Default is usually 0.5 */
+        background-color: #000;
+    }
 </style>
 {% endblock %}
 
@@ -578,18 +583,7 @@
                             <td>{{ submission["submitted_at"] }}</td>
                             <td>{{ form_dict[form_name] }}</td>
                             <td>
-                                <a href="{{ url_for('view_submission', filename=submission['certificate']) }}" 
-                                target="_blank" 
-                                class="text-primary d-inline-flex align-items-center"
-                                title="{{ submission['certificate'] }}">
-                                    
-                                    <i class="bi bi-file-earmark-pdf me-2 flex-shrink-0"></i>
-                                    
-                                    <span class="d-inline-block text-truncate" style="max-width: 150px;">
-                                        {{ submission['certificate'] }}
-                                    </span>
-                                    
-                                </a>
+                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=submission['certificate']) }}>Click Here</a>
                             </td>
                             <td><span class="status-pill" 
                             {% if status == 'accepted' %}
@@ -619,6 +613,7 @@
                                         <input type="hidden" name="batch_str" value="{{ batch_str }}">
                                         <input type="hidden" name="form_name" value="{{ form_name }}">
                                         <input type="hidden" name="filename" value="{{ submission['certificate'] }}">
+                                        <input type="hidden" name="submission_category" value="{{ submission['submission_category'] }}">
                                         <button type="submit" class="btn-action-accept" id="btnAcceptEntry" title="Accept"><i class="bi bi-check-lg"></i></button>
                                     </form>
                                     <button type="button" 
@@ -675,6 +670,7 @@
                         <input type="hidden" name="batch_str" value="{{ batch_str }}"> 
                         <input type="hidden" name="form_name" id="acceptHiddenFormName" value="">
                         <input type="hidden" name="filename" id="acceptHiddenFilename" value="">
+                        <input type="hidden" name="submission_category" id="submissionCategory" value="">
                         
                         <button type="submit" id="btnAcceptEntry" class="btn btn-modal-accept">
                             <i class="bi bi-check-lg me-1"></i> Accept
@@ -721,6 +717,19 @@
         <div class="custom-spinner"></div>
         <h4 class="processing-title">Uploading to Drive</h4>
         <p class="processing-text">Securely transferring files. Please wait...</p>
+    </div>
+</div>
+
+<!-- File Preview Modal Begins -->
+<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
+
+            <div class="modal-body p-0" id="pdfPreviewModalBody" style="height: 92vh;">
+                <embed id="bsPdfEmbed" src="" type="application/pdf" style="width: 100%; height: 100%;">
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -843,6 +852,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fill the hidden inputs for the Accept form
             document.getElementById('acceptHiddenEntryId').value = detailsObj.entry_id;
             document.getElementById('acceptHiddenFilename').value = detailsObj.certificate;
+            document.getElementById('submissionCategory').value = detailsObj.submission_category;
             
             // If form_name is inside the submission dict, use it. 
             // Otherwise, grab it from the button's data-category attribute.
@@ -1032,5 +1042,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 2000);
     }
+    // PDF Preview script
+    const bsModal = document.getElementById('pdfPreviewModal');
+    const bsPdfPreview = document.getElementById('bsPdfEmbed');
+    bsModal.addEventListener('show.bs.modal', function(event){
+        const trigger = event.relatedTarget;
+        const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+        bsPdfPreview.setAttribute('src', pdfPath);
+    });
+    // Triggered when modal is fully hidden
+    bsModal.addEventListener('hidden.bs.modal', function () {
+        bsPdfPreview.setAttribute('src', '');
+    });
 </script>
 {% endblock %}

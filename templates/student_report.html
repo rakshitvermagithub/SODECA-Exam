@@ -107,6 +107,12 @@
         overflow-wrap: break-word;
         word-wrap: break-word; /* Fallback for older browsers */
     }
+    /* Increase dimness of the Bootstrap backdrop */
+    .modal-backdrop.show {
+        opacity: 0.85; /* Default is usually 0.5 */
+        background-color: #000;
+    }
+
 </style>
 {% endblock %}
 
@@ -115,110 +121,122 @@
 
 <div class="page-wrapper">
     <div class="container">
-        <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
-        
-        <div class="text-center mb-4">
-             <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-funnel-fill me-2"></i> Apply Filters
-            </button>
-        </div>
 
-        <div class="card card-minimalist-admin">
-             <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-bordered border-secondary-subtle table-hover align-middle table-admin" id="report-table" style="width:100%">
-                        <caption class="caption-top p-3">List of Student's SODECA Records</caption>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Student's Name</th>
-                                <th>Roll Number</th>
-                                <th>Batch</th>
-                                <th>Category</th>
-                                <th>Proof</th>
-                                <th>Proof(G-Drive)</th>
-                                <th>Submitted at</th>
-                                <th>Withdrawn at</th>
-                                <th>More Details</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for data in filtered_data %}
-                            {% set status = data['status'] %}
-                            {% set file_drive_link = data['certificate']%}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ data["student_name"] }}</td>
-                                <td>{{ data["university_roll_no"] }}</td>
-                                <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
-                                <td>{{ data["category"] }}</td>
-                                <td>
-                                    <a href="{{ url_for('view_submission', filename=data['certificate']) }}" target="_blank">{{ data['certificate'] }}</a>
-                                </td>
-                                <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-file-earmark-text"></i> G-Drive</td>
-                                <td>{{ data["submitted_at"] }}</td>
-                                <td>{{ data["withdrawn_at"] }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-more-details"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#submissionDetailsModal"
-                                            data-entry-id="{{ data['entry_id'] }}"
-                                            data-form-name="{{ data['category'] }}">
-                                        Open
-                                    </button>
-                                </td>
-                                
-                                {% if status == 'accepted' %}
-                                <td>
-                                    <span class="badge rounded-pill text-bg-success">Accepted</span></td>
-                                </td>
-                                {% elif status == 'rejected' %}
-                                <td>
-                                    <span class="badge rounded-pill text-bg-danger">Rejected</span></td>
-                                </td>
-                                {% elif status == 'pending' %}
-                                <td>
-                                    <span class="badge rounded-pill text-bg-warning">Pending</span></td>
-                                </td>
-                                {% endif %}
-                        
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        {% if session.get('drive_auth_token')%}
-                                            <form action="{{ url_for('upload_to_drive') }}" method="post">
-                                                <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
-                                                <input type="hidden" name="semester" value="{{ data['semester'] }}">
-                                                <input type="hidden" name="branch" value="{{ data['branch'] }}">
-                                                <input type="hidden" name="section" value="{{ data['section'] }}">
-                                                <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
-                                                <input type="hidden" name="form_name" value="{{ data['category'] }}">
-                                                <input type="hidden" name="filename" value="{{ data['certificate'] }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-success"
-                                                {% if status != 'pending'%}disabled{% endif %}>Accept</button>
-                                            </form>
-                                        {% else %}
-                                            <!-- Button opens a modal with a button to authorize drive -->
-                                            <button type="submit" class="btn btn-sm btn-outline-success"
-                                            {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+        <div class="d-flex justfy-content-center">
+            <div class="col-8">
+                <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
+                <div class="text-center mb-4">
+                     <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="bi bi-funnel-fill me-2"></i> Apply Filters
+                    </button>
+        {#            <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#chartModal" onclick="updateChart()">#}
+        {#                <i class="bi bi-pie-chart-fill me-2"></i> Visual Report#}
+        {#            </button>#}
+                </div>
 
-                                        {% endif %}    
-                                        <form action="" method="POST">
-                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" 
-                                                data-bs-target="#rejectionModal" data-entry-id = "{{ data['entry_id'] }}" 
-                                                data-form-name = "{{ data['category'] }}"
-                                                {% if status != 'pending'%}disabled{% endif %}>
-                                                Reject
+                <div class="card card-minimalist-admin">
+                     <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered border-secondary-subtle table-hover align-middle table-admin" id="report-table" style="width:100%">
+                                <caption class="caption-top p-3">List of Student's SODECA Records</caption>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Student's Name</th>
+                                        <th>Roll Number</th>
+                                        <th>Batch</th>
+                                        <th>Category</th>
+                                        <th>Proof</th>
+                                        <th>Proof(G-Drive)</th>
+                                        <th>Submitted at</th>
+                                        <th>Withdrawn at</th>
+                                        <th>More Details</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in filtered_data %}
+                                    {% set status = data['status'] %}
+                                    {% set file_drive_link = data['certificate']%}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ data["student_name"] }}</td>
+                                        <td>{{ data["university_roll_no"] }}</td>
+                                        <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
+                                        <td>{{ data["category"] }}</td>
+                                        <td>
+                                            <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=data['certificate']) }}>Click Here</a>
+                                        </td>
+                                        <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-file-earmark-text"></i> G-Drive </a></td>
+                                        <td>{{ data["submitted_at"] }}</td>
+                                        <td>{{ data["withdrawn_at"] }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-more-details"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#submissionDetailsModal"
+                                                    data-entry-id="{{ data['entry_id'] }}"
+                                                    data-form-name="{{ data['category'] }}">
+                                                Open
                                             </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                        </td>
+
+                                        {% if status == 'accepted' %}
+                                        <td>
+                                            <span class="badge rounded-pill text-bg-success">Accepted</span></td>
+                                        </td>
+                                        {% elif status == 'rejected' %}
+                                        <td>
+                                            <span class="badge rounded-pill text-bg-danger">Rejected</span></td>
+                                        </td>
+                                        {% elif status == 'pending' %}
+                                        <td>
+                                            <span class="badge rounded-pill text-bg-warning">Pending</span></td>
+                                        </td>
+                                        {% endif %}
+
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                {% if session.get('drive_auth_token')%}
+                                                    <form action="{{ url_for('upload_to_drive') }}" method="post">
+                                                        <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
+                                                        <input type="hidden" name="semester" value="{{ data['semester'] }}">
+                                                        <input type="hidden" name="branch" value="{{ data['branch'] }}">
+                                                        <input type="hidden" name="section" value="{{ data['section'] }}">
+                                                        <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
+                                                        <input type="hidden" name="form_name" value="{{ data['category'] }}">
+                                                        <input type="hidden" name="filename" value="{{ data['certificate'] }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-success"
+                                                        {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                                    </form>
+                                                {% else %}
+                                                    <!-- Button opens a modal with a button to authorize drive -->
+                                                    <button type="submit" class="btn btn-sm btn-outline-success"
+                                                    {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+
+                                                {% endif %}
+                                                <form action="" method="POST">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                                        data-bs-target="#rejectionModal" data-entry-id = "{{ data['entry_id'] }}"
+                                                        data-form-name = "{{ data['category'] }}"
+                                                        {% if status != 'pending'%}disabled{% endif %}>
+                                                        Reject
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-3 ms-5 mt-5 d-flex flex-wrap align-items-start justify-content-center">
+                <div class="chart-container" style="background-color: #f8f9fa; margin-top: 92px; border-radius: 10px;">
+                    <canvas id="categoryPieChart" style="width: 400px; height: 440px;"></canvas>
                 </div>
             </div>
         </div>
@@ -362,6 +380,19 @@
   </div>
 </div>
 
+<!-- File Preview Modal Begins -->
+<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+
+    <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
+
+      <div class="modal-body p-0" id="pdfPreviewModalBody" style="height: 92vh;">
+          <embed id="bsPdfEmbed" src="" type="application/pdf" style="width: 100%; height: 100%;">
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal to add a note when rejecting an entry -->
 <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -402,6 +433,28 @@
     </div>
 </div>
 
+<div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chartModalLabel">Category Breakdown</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="chart-container">
+                    <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
+                        <canvas id="categoryPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}
 
 {% block script %}
@@ -415,8 +468,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    updateChart();
     const filterModalElement = document.getElementById('filterModal');
     let filterModal;
     if (filterModalElement) {
@@ -627,6 +683,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// PDF Preview script
+    const bsModal = document.getElementById('pdfPreviewModal');
+    const bsPdfPreview = document.getElementById('bsPdfEmbed');
+    bsModal.addEventListener('show.bs.modal', function(event){
+        const trigger = event.relatedTarget;
+        const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+        bsPdfPreview.setAttribute('src', pdfPath);
+    });
+    // Triggered when modal is fully hidden
+    bsModal.addEventListener('hidden.bs.modal', function () {
+        bsPdfPreview.setAttribute('src', '');
+    });
 </script>
+<script src="/static/dynamic_form_rendering.js"></script>
 {% endblock %}
 
