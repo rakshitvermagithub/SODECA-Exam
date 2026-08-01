@@ -288,12 +288,14 @@
                                             </div>
                                         </div>
                                         <div class="modal-body p-3">
-                                            {% for session_yr in ['2023-24', '2024-25', '2025-26', '2026-27'] %}
+                                            {% if academic_session_list %}
+                                            {% for academic_session in academic_session_list %}
                                             <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="academic_sessions[]" value="{{ session_yr }}" id="sess_{{ loop.index }}">
-                                                <label class="form-check-label" for="sess_{{ loop.index }}">{{ session_yr }}</label>
+                                                <input class="form-check-input" type="checkbox" name="academic_sessions[]" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}">
+                                                <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
                                             </div>
                                             {% endfor %}
+                                            {% endif %}
                                         </div>
                                         <div class="modal-footer py-1">
                                             <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>

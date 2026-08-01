@@ -4134,18 +4134,24 @@ def student_report():
 
         return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
 
-    # Without filter
-    for form in form_name_list:
-        base_queries.append(
-            f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section,
-            '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate
-            FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
-            )
-    complete_query = " UNION ALL ".join(base_queries) 
-    final_query = f"{complete_query} ORDER BY submitted_at DESC"
-    print(final_query)            
-    universal_report = db.execute(final_query)
-    return render_template("student_report.html", filtered_data=universal_report, FORM_DEFINITIONS=FORM_DEFINITIONS)
+    else:
+        # Without filter
+        for form in form_name_list:
+            base_queries.append(
+                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section,
+                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
+                )
+        complete_query = " UNION ALL ".join(base_queries) 
+        final_query = f"{complete_query} ORDER BY submitted_at DESC"
+        universal_report = db.execute(final_query)
+
+        academic_session_list = db.execute("SELECT DISTINCT academic_session FROM batch_structure")
+
+        return render_template("student_report.html", 
+        filtered_data=universal_report, 
+        FORM_DEFINITIONS=FORM_DEFINITIONS,
+        academic_session_list=academic_session_list)
 
 @app.route("/batch_management", methods=["GET"])
 @login_required
