@@ -2013,6 +2013,15 @@ db.execute("""
     ) 
 """)
 
+db.execute("""
+    CREATE TABLE IF NOT EXISTS batch_structure_summary (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        sem_list TEXT,
+        branch_list TEXT,
+        updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes'))
+    )
+""")
+
 # Dictionary containing folder names of different semesters
 semester_dict = {"1": "I Semester", "2": "II Semester", "3": "III Semester",
              "4": "IV Semester", "5": "V Semester", "6": "VI Semester",
@@ -4363,6 +4372,8 @@ def create_drive_structure():
         
         # 2. Track what we insert so we don't clear the structure table prematurely
         structures_to_insert = []
+        sem_list = set()
+        branch_list = set()
         
         for batch in batch_structure:
             sem = batch["sem"]
@@ -4380,6 +4391,8 @@ def create_drive_structure():
 
                         if section_folder_id:
                             structures_to_insert.append((sem, branch, section))
+                            sem_list.add(sem)
+                            branch_list.add(branch)
 
                             for form_name, form_title in form_dict.items():
                                 form_folder_id = get_or_create_folder(service, form_title, section_folder_id)
@@ -4398,7 +4411,6 @@ def create_drive_structure():
         if structures_to_insert:
             db.execute("DELETE FROM batch_structure")
             
-            # Note: cs50.SQL does not have an efficient executemany() method. 
             # However, because we are inside a single transaction, looping individual executions is incredibly fast!
             for item in structures_to_insert:
                 db.execute("""
@@ -4406,15 +4418,29 @@ def create_drive_structure():
                     VALUES (?, ?, ?)
                 """, item[0], item[1], item[2])
 
+        if sem_list and branch_list:
+            db.execute("DELETE FROM batch_structure_summary")
+            sem_list_str = ",".join(str(s) for s in sorted(sem_list))
+            branch_list_str = ",".join(sorted(branch_list))
+
+            db.execute("""
+                    INSERT INTO batch_structure_summary (id, sem_list, branch_list, updated_on)
+                    VALUES (1, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
+                    ON CONFLICT (id) DO UPDATE SET
+                        sem_list = excluded.sem_list,
+                        branch_list = excluded.branch_list,
+                        updated_on = excluded.updated_on
+                """, sem_list_str, branch_list_str)
+
         # 4. Commit everything if loops completed flawlessly
         db.execute("COMMIT")
         flash("Drive structure sync complete!", "success")
 
     except Exception as e:
         # Roll back all changes instantly if an unhandled error/crash happens inside the transaction
-        db.execute("ROLLBACK")
         print(f"Structure creation failed: {e}")
         flash(f"An error occurred: {e}", "danger")
+        db.execute("ROLLBACK")
 
     return redirect(url_for('super_admin'))
 
