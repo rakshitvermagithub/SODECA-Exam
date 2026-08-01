@@ -38,13 +38,6 @@
         left: 50%;
         transform: translateX(-50%);
     }
-
-    .card-minimalist-admin {
-        border: none;
-        border-top: 5px solid var(--bs-admin-purple);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-        border-radius: 0.5rem;
-    }
     
     .btn-admin {
         background-color: var(--bs-admin-purple);
@@ -74,23 +67,6 @@
         border-color: var(--bs-admin-purple);
     }
 
-    /* Modal Styling */
-    .modal-header-admin {
-        background-color: var(--bs-admin-purple);
-        color: white;
-    }
-    .modal-header-admin .btn-close {
-        filter: invert(1) grayscale(100%) brightness(200%);
-    }
-    .filter-step { display: none; } 
-    .filter-step.active { display: block; } 
-
-    /* Ensure modal body scrolls */
-    #filterModal .modal-body {
-        overflow-y: auto; 
-        max-height: 65vh; /* Ensure a max height to trigger scroll */
-    }
-
     /* Custom Green Style for Download Excel Button */
     .btn-excel-green {
         background-color: #198754 !important;
@@ -109,6 +85,44 @@
         overflow: auto;
     }
 
+    /* Filter bar trigger buttons - wrap evenly across all screen sizes */
+    .filter-trigger-btn {
+        flex: 1 1 150px;
+        white-space: nowrap;
+    }
+    @media (max-width: 575.98px) {
+        .filter-trigger-btn {
+            flex: 1 1 100%;
+        }
+    }
+
+    /* Fluid pie-chart sizing so the fixed-pixel canvas never overflows small screens */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 440px;
+    }
+
+    /* Responsive tweaks for small screens */
+    @media (max-width: 767.98px) {
+        .page-wrapper {
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+        .chart-container {
+            margin-top: 1.5rem !important;
+        }
+        .dropdown-menu.w-100 {
+            min-width: 100%;
+        }
+    }
+
 </style>
 {% endblock %}
 
@@ -116,19 +130,285 @@
 {% include "message.html" %}
 
 <div class="page-wrapper">
-    <div class="container">
+    <div class="container-fluid px-3 px-lg-4">
 
-        <div class="d-flex justfy-content-center">
-            <div class="col-8">
+        <div class="row justify-content-center g-4">
+            <div class="col-12 col-xl-9">
                 <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
-                <div class="text-center mb-4">
-                     <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
-                        <i class="bi bi-funnel-fill me-2"></i> Apply Filters
-                    </button>
-                </div>
+                <!-- Filter Bar Above Table -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-body p-2 bg-light rounded-3">
+                        <form id="globalFilterForm" action="{{ url_for('student_report') }}" method="POST">
+                            <div class="row g-2 align-items-end flex-wrap">
+                                
+                                <!-- 1. Form (modal) -->
+                                <div class="col-auto" style="min-width:140px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Form</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#formModal">
+                                        Select Form
+                                    </button>
+                                </div>
 
-                <table id="report-table" class="stripe hover border">
-                    <thead class="bg-dark text-white">
+                                <!-- 2. Academic Session (modal) -->
+                                <div class="col-auto" style="min-width:160px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Academic Session</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sessionModal">
+                                        Select Session
+                                    </button>
+                                </div>
+
+                                <!-- 3. Academic Term (dropdown) -->
+                                <div class="col-auto" style="min-width:140px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Academic Term</label>
+                                    <div class="dropdown">
+                                        <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                            <span>Select Term</span>
+                                        </button>
+                                        <ul class="dropdown-menu p-2 shadow-sm">
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="odd" id="termOdd">
+                                                    <label class="form-check-label small" for="termOdd">Odd</label>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="even" id="termEven">
+                                                    <label class="form-check-label small" for="termEven">Even</label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Semester (modal) -->
+                                <div class="col-auto" style="min-width:130px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Semester</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#semesterModal">
+                                        Select Sem
+                                    </button>
+                                </div>
+
+                                <!-- 5. Branch (modal) -->
+                                <div class="col-auto" style="min-width:150px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Branch</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#branchModal">
+                                        Select Branch
+                                    </button>
+                                </div>
+
+                                <!-- 6. Section (modal) -->
+                                <div class="col-auto" style="min-width:130px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Section</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sectionModal">
+                                        Select Section
+                                    </button>
+                                </div>
+
+                                <!-- 7. Participation / Achievement (dropdown) -->
+                                <div class="col-auto" style="min-width:170px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation / Achievement</label>
+                                    <div class="dropdown">
+                                        <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                            <span>Select Type</span>
+                                        </button>
+                                        <ul class="dropdown-menu p-2 shadow-sm">
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="record_types[]" value="participation" id="typePart">
+                                                    <label class="form-check-label small" for="typePart">Participation</label>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="record_types[]" value="achievement" id="typeAch">
+                                                    <label class="form-check-label small" for="typeAch">Achievement</label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="col-auto" style="min-width:130px;">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                                        <i class="bi bi-funnel-fill me-1"></i> Apply Filter
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <!-- ================= DEDICATED FILTER MODALS ================= -->
+
+                            <!-- 1. Form Name Modal -->
+                            <div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-md">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Form Types</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_formModal" data-target-name="forms[]">
+                                                <label class="form-check-label small" for="checkAll_formModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="row row-cols-1 row-cols-md-2 g-2">
+                                                {% for key, form in FORM_DEFINITIONS.items() %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
+                                                        <label class="form-check-label small" for="form_{{ key }}">{{ form["title"] }}</label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Academic Session Modal -->
+                            <div class="modal fade" id="sessionModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Academic Session</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_sessionModal" data-target-name="academic_sessions[]">
+                                                <label class="form-check-label small" for="checkAll_sessionModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            {% for session_yr in ['2023-24', '2024-25', '2025-26', '2026-27'] %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="academic_sessions[]" value="{{ session_yr }}" id="sess_{{ loop.index }}">
+                                                <label class="form-check-label" for="sess_{{ loop.index }}">{{ session_yr }}</label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Semester Modal -->
+                            <div class="modal fade" id="semesterModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Semesters</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_semesterModal" data-target-name="semesters[]">
+                                                <label class="form-check-label small" for="checkAll_semesterModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="row row-cols-2 g-2">
+                                                {% for i in range(1, 9) %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem_{{ i }}">
+                                                        <label class="form-check-label" for="sem_{{ i }}">Sem {{ i }}</label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 5. Branch Modal -->
+                            <div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Branches</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_branchModal" data-target-name="branches[]">
+                                                <label class="form-check-label small" for="checkAll_branchModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            {% set branches = ['CSE', 'CSE(AI)', 'CSE(DS)', 'CSE(IOT)'] %}
+                                            {% for branch in branches %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
+                                                <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 6. Section Modal -->
+                            <div class="modal fade" id="sectionModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Sections</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_sectionModal" data-target-name="sections[]">
+                                                <label class="form-check-label small" for="checkAll_sectionModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="row row-cols-2 g-2">
+                                                {% for sec in ['A', 'B', 'C', 'D', 'E', 'F', 'G'] %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="sections[]" value="{{ sec }}" id="sec_{{ sec }}">
+                                                        <label class="form-check-label" for="sec_{{ sec }}">Section {{ sec }}</label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>                
+            <!-- <div class="text-center mb-4">
+                     <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="bi bi-funnel-fill me-2"></i> Advanced filter
+                    </button>
+                </div> -->
+
+                <table id="report-table" class="stripe hover nowrap border">
+                    <thead class="bg-dark text-white ">
                         <tr>
                             <th>#</th>
                             <th>Student's Name</th>
@@ -215,118 +495,11 @@
                     </tbody>
                 </table>
             </div>
-            <div class="col-12 col-md-3 ms-5 mt-5 d-flex flex-wrap align-items-start justify-content-center">
+            <div class="col-12 col-xl-3 mt-4 mt-xl-5 d-flex flex-wrap align-items-start justify-content-center">
                 <div class="chart-container" style="background-color: #f8f9fa; margin-top: 92px; border-radius: 10px;">
-                    <canvas id="categoryPieChart" style="width: 400px; height: 440px;"></canvas>
+                    <canvas id="categoryPieChart"></canvas>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    {# Ensures the entire modal dialog allows scrolling of the body #}
-    <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
-        <div class="modal-content">
-            <div class="modal-header modal-header-admin">
-                <h1 class="modal-title fs-5" id="filterModalLabel">Apply Report Filters</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{url_for('student_report')}}" id="filterForm">
-                <div class="modal-body p-4">
-                    
-                    <!-- Step 1: Student Filters -->
-                    <div class="filter-step active" id="filterStep1">
-                        <h5 class="fw-semibold mb-4"><i class="bi bi-people me-2"></i>Filter by Student Criteria</h5>
-                        
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label for="roll_number" class="form-label">University Roll Number</label>
-                                <input type="text" class="form-control" name="university_roll_number" id="roll_number" placeholder="e.g., 21ESKCS123">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Semester</label>
-                                    <div>
-                                        {% for i in range(3, 9) %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem{{ i }}"><label class="form-check-label" for="sem{{ i }}">{{ i }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Branch</label>
-                                    <div>
-                                        {% set branches = ['CSE', 'CSE(AI)', 'CSE(DS)', 'CSE(IOT)'] %}
-                                        {% for branch in branches %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branch{{ branch }}"><label class="form-check-label" for="branch{{ branch }}">{{ branch }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Section</label>
-                                    <div>
-                                        {% set sections = ['A', 'B', 'C', 'D', 'E', 'F'] %}
-                                        {% for section in sections %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="section{{ section }}"><label class="form-check-label" for="section{{ section }}">{{ section }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6"> 
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Group</label>
-                                    <div>
-                                        {% set groups = ['G1', 'G2'] %}
-                                        {% for group in groups %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="class_groups[]" value="{{ group }}" id="group{{ group }}"><label class="form-check-label" for="group{{ group }}">{{ group }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Step 2: Form Filters -->
-                    <div class="filter-step" id="filterStep2">
-                         <h5 class="fw-semibold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Filter by Form Type</h5>
-                         <div class="d-flex justify-content-end mb-3">
-                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="selectAllForms">
-                                <label class="form-check-label" for="selectAllForms">Select All</label>
-                            </div>
-                         </div>
-                         <div class="row row-cols-1 row-cols-md-3 g-2"> 
-                            {% for key, form in FORM_DEFINITIONS.items() %}
-                            <div class="col">
-                                <div class="form-check fs-6 mb-1 rounded-2">
-                                    <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form-{{ key }}">
-                                    <label class="form-check-label ms-1" for="form-{{ key }}">{{ form["title"] }}</label>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn">Reset All</button>
-                    <div>
-                        <button type="button" class="btn btn-outline-secondary me-2" id="backBtn" style="display: none;">Back</button>
-                        <button type="button" class="btn btn-admin" id="nextBtn">Next</button>
-                        <button type="submit" class="btn btn-admin" id="submitBtn" style="display: none;">Apply Filters</button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -352,10 +525,6 @@
             </div>
             <p class="mt-3 text-muted">Loading details...</p>
         </div>
-        <!-- 
-          Your JavaScript will replace the contents of this modal-body.
-          Any long text it injects will now be forced to wrap.
-        -->
       </div>
     </div>
   </div>
@@ -435,7 +604,6 @@
     </div>
 </div>
 
-
 {% endblock %}
 
 {% block script %}
@@ -450,85 +618,33 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    updateChart();
-    const filterModalElement = document.getElementById('filterModal');
-    let filterModal;
-    if (filterModalElement) {
-        filterModal = new bootstrap.Modal(filterModalElement); 
+    if (typeof updateChart === 'function') {
+        updateChart();
     }
     
-    const filterForm = document.getElementById('filterForm');
-    const step1 = document.getElementById('filterStep1');
-    const step2 = document.getElementById('filterStep2');
-    const nextBtn = document.getElementById('nextBtn');
-    const backBtn = document.getElementById('backBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const resetBtn = document.getElementById('resetFiltersBtn');
-    const selectAllFormsCheckbox = document.getElementById('selectAllForms');
-    const formCheckboxes = filterForm ? filterForm.querySelectorAll('input[name="forms[]"]') : [];
-    const multiSelects = filterForm ? filterForm.querySelectorAll('select[multiple]') : []; 
+    // --- Check All (dedicated filter modals AND inline dropdowns) ---
+    document.querySelectorAll('.js-check-all').forEach(function(checkAllBox) {
+        const scopeEl = checkAllBox.closest('.modal') || checkAllBox.closest('.dropdown');
+        if (!scopeEl) return;
+        const targetName = checkAllBox.dataset.targetName;
+        const groupCheckboxes = scopeEl.querySelectorAll('input[type="checkbox"][name="' + targetName + '"]');
 
-    // --- Modal Step Navigation ---
-    if(nextBtn && step1 && step2 && backBtn && submitBtn) { 
-        nextBtn.addEventListener('click', function() {
-            step1.classList.remove('active');
-            step2.classList.add('active');
-            nextBtn.style.display = 'none';
-            backBtn.style.display = 'inline-block';
-            submitBtn.style.display = 'inline-block';
+        checkAllBox.addEventListener('change', function() {
+            groupCheckboxes.forEach(function(cb) { cb.checked = checkAllBox.checked; });
         });
-    }
 
-    if (backBtn && step1 && step2 && nextBtn && submitBtn) { 
-        backBtn.addEventListener('click', function() {
-            step2.classList.remove('active');
-            step1.classList.add('active');
-            nextBtn.style.display = 'inline-block';
-            backBtn.style.display = 'none';
-            submitBtn.style.display = 'none';
-        });
-    }
-    
-    if (filterModalElement && step1 && step2 && nextBtn && backBtn && submitBtn) { 
-        filterModalElement.addEventListener('hidden.bs.modal', function () {
-             step2.classList.remove('active');
-             step1.classList.add('active');
-             nextBtn.style.display = 'inline-block';
-             backBtn.style.display = 'none';
-             submitBtn.style.display = 'none';
-        });
-    }
-
-    // --- Filter Logic ---
-    if (resetBtn && filterForm) {
-        resetBtn.addEventListener('click', function() {
-            filterForm.reset();
-            // Clear multiselect dropdowns
-            multiSelects.forEach(select => {
-                 Array.from(select.options).forEach(option => option.selected = false);
-            });
-            if (selectAllFormsCheckbox) {
-                 selectAllFormsCheckbox.checked = false; 
-            }
-        });
-    }
-
-    if (selectAllFormsCheckbox) {
-        selectAllFormsCheckbox.addEventListener('change', function() {
-            formCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+        // Keep the switch in sync if the user unchecks/checks items individually
+        groupCheckboxes.forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                const allChecked = Array.from(groupCheckboxes).every(function(c) { return c.checked; });
+                checkAllBox.checked = allChecked;
             });
         });
-    }
 
-    formCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            if (!this.checked && selectAllFormsCheckbox) {
-                selectAllFormsCheckbox.checked = false;
-            } else if (selectAllFormsCheckbox){
-                const allChecked = Array.from(formCheckboxes).every(cb => cb.checked);
-                selectAllFormsCheckbox.checked = allChecked;
-            }
+        // Reset the switch whenever this modal is closed/reopened cleanly with Reset All
+        scopeEl.addEventListener('hidden.bs.modal', function() {
+            const allChecked = groupCheckboxes.length > 0 && Array.from(groupCheckboxes).every(function(c) { return c.checked; });
+            checkAllBox.checked = allChecked;
         });
     });
 
@@ -537,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try { 
             $('#report-table').DataTable({
                 paging: false,       // Disables pagination
-                info: false,         // Hides table info text (e.g. "Showing 1 to N entries")
+                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
                 scrollX: true,       // Enables horizontal scrolling
                 scrollY: '400px',    // Fixed height for vertical scrolling inside the container
                 scrollCollapse: true,
@@ -638,19 +754,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle modal data population
     const rejectedModal = document.getElementById('rejectionModal');
-    
-    rejectedModal.addEventListener('show.bs.modal', function(event) {
-        // Get the button that triggered the modal
-        const button = event.relatedTarget;
-        
-        // Extract data from data-* attributes
-        const entry_id = button.getAttribute('data-entry-id');
-        const form_name = button.getAttribute('data-form-name');
-        
-        // Update the modal's hidden input fields
-        rejectedModal.querySelector('#reject_entry_id').value = entry_id;
-        rejectedModal.querySelector('#reject_form_name').value = form_name;
-    });
+    if (rejectedModal) {
+        rejectedModal.addEventListener('show.bs.modal', function(event) {
+            // Get the button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract data from data-* attributes
+            const entry_id = button.getAttribute('data-entry-id');
+            const form_name = button.getAttribute('data-form-name');
+            
+            // Update the modal's hidden input fields
+            rejectedModal.querySelector('#reject_entry_id').value = entry_id;
+            rejectedModal.querySelector('#reject_form_name').value = form_name;
+        });
+    }
 
     const skipBtn = document.getElementById('skipAddNote');
     if (skipBtn) {
@@ -662,21 +779,78 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('rejectionForm').submit();
         });
     }
-});
 
-// PDF Preview script
+    // PDF Preview script
     const bsModal = document.getElementById('pdfPreviewModal');
     const bsPdfPreview = document.getElementById('bsPdfEmbed');
-    bsModal.addEventListener('show.bs.modal', function(event){
-        const trigger = event.relatedTarget;
-        const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
-        bsPdfPreview.setAttribute('src', pdfPath);
-    });
-    // Triggered when modal is fully hidden
-    bsModal.addEventListener('hidden.bs.modal', function () {
-        bsPdfPreview.setAttribute('src', '');
-    });
+    if (bsModal && bsPdfPreview) {
+        bsModal.addEventListener('show.bs.modal', function(event){
+            const trigger = event.relatedTarget;
+            const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+            bsPdfPreview.setAttribute('src', pdfPath);
+        });
+        // Triggered when modal is fully hidden
+        bsModal.addEventListener('hidden.bs.modal', function () {
+            bsPdfPreview.setAttribute('src', '');
+        });
+    }
+
+    // Update button text with selected checkbox counts dynamically
+    function setupFilterCounts() {
+        // 1. Handle Modal Filters
+        document.querySelectorAll('button[data-bs-target]').forEach(button => {
+            const targetId = button.getAttribute('data-bs-target');
+            if (!targetId || !targetId.startsWith('#')) return;
+            
+            const targetModal = document.querySelector(targetId);
+            if (!targetModal || !targetModal.classList.contains('modal')) return;
+            
+            // Store the original button text (e.g., "Select Form")
+            const defaultText = button.textContent.trim();
+            
+            const updateCount = () => {
+                // Select only the options inside the modal body, excluding the Check All toggle
+                const checkedCount = targetModal.querySelectorAll('.modal-body input[type="checkbox"]:checked').length;
+                button.textContent = checkedCount > 0 ? `${defaultText} (${checkedCount})` : defaultText;
+            };
+
+            // Delegate event to capture all checkbox changes, including Check All interactions
+            targetModal.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    setTimeout(updateCount, 0); // Defer to allow external Check All script to update DOM first
+                }
+            });
+            updateCount(); // Run once on load
+        });
+
+        // 2. Handle Dropdown Filters
+        document.querySelectorAll('button[data-bs-toggle="dropdown"]').forEach(button => {
+            const dropdownMenu = button.nextElementSibling;
+            if (!dropdownMenu || !dropdownMenu.classList.contains('dropdown-menu')) return;
+            
+            // Dropdown text is wrapped in a <span>
+            const textSpan = button.querySelector('span');
+            if (!textSpan) return;
+            
+            const defaultText = textSpan.textContent.trim();
+            
+            const updateCount = () => {
+                // Exclude the specific Check All switch class
+                const checkedCount = dropdownMenu.querySelectorAll('input[type="checkbox"]:not(.js-check-all):checked').length;
+                textSpan.textContent = checkedCount > 0 ? `${defaultText} (${checkedCount})` : defaultText;
+            };
+
+            dropdownMenu.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    setTimeout(updateCount, 0);
+                }
+            });
+            updateCount();
+        });
+    }
+
+    setupFilterCounts();
+});
 </script>
 <script src="/static/dynamic_form_rendering.js"></script>
 {% endblock %}
-
