@@ -2009,6 +2009,8 @@ db.execute("""
         sem INTEGER, 
         branch TEXT,
         section TEXT,
+        academic_session TEXT,
+        academic_term TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
@@ -4157,7 +4159,10 @@ def batch_management():
     row = db.execute("SELECT * FROM drive_settings WHERE id=1")
     drive_settings = row[0] if row else {}
 
-    batch_rows = db.execute("SELECT * FROM batch_structure")
+    batch_rows = []
+    if (drive_settings):
+        batch_rows = db.execute("SELECT * FROM batch_structure WHERE academic_session = ? AND academic_term = ?",
+        drive_settings['academic_session'], drive_settings['academic_term'])
 
     current_year = datetime.now().year
 
@@ -4336,7 +4341,18 @@ def create_drive_structure():
         master_folder_id = sys_config["master_folder_id"]
         if not master_folder_id:
             flash("Kindly create a drive master folder before updating the structure", "warning")
-            return redirect(url_for("batch_management")) 
+            return redirect(url_for("batch_management"))
+
+    curr_academic_session = ""
+    curr_academic_term = ""
+    curr_settings_row = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if (curr_settings_row):
+        curr_settings = curr_settings_row[0]
+        curr_academic_session = curr_settings['academic_session']
+        curr_academic_term = curr_settings['academic_term']
+    else:
+        flash("Please update the drive master folder, before updating batch structure", "warning")
+        return redirect("batch_management")
 
     # Get drive structure inputs
     raw_batch_structure = request.form.get("structure_json")
@@ -4409,14 +4425,15 @@ def create_drive_structure():
 
         # 3. Apply the layout changes at the very end
         if structures_to_insert:
-            db.execute("DELETE FROM batch_structure")
-            
+            db.execute("""
+                DELETE FROM batch_structure WHERE academic_session = ? AND academic_term = ?
+            """, curr_academic_session, curr_academic_term)
             # However, because we are inside a single transaction, looping individual executions is incredibly fast!
             for item in structures_to_insert:
                 db.execute("""
-                    INSERT INTO batch_structure (sem, branch, section)
-                    VALUES (?, ?, ?)
-                """, item[0], item[1], item[2])
+                    INSERT INTO batch_structure (sem, branch, section, academic_session, academic_term)
+                    VALUES (?, ?, ?, ?, ?)
+                """, item[0], item[1], item[2], curr_academic_session, curr_academic_term)
 
         if sem_list and branch_list:
             db.execute("DELETE FROM batch_structure_summary")
@@ -4440,7 +4457,10 @@ def create_drive_structure():
         # Roll back all changes instantly if an unhandled error/crash happens inside the transaction
         print(f"Structure creation failed: {e}")
         flash(f"An error occurred: {e}", "danger")
-        db.execute("ROLLBACK")
+        try:
+            db.execute("ROLLBACK")
+        except Exception:
+            pass
 
     return redirect(url_for('super_admin'))
 
