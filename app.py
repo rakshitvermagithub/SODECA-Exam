@@ -1933,6 +1933,9 @@ for form in form_name_list:
             f"""CREATE TABLE IF NOT EXISTS {form}(
             entry_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             student_id INTEGER NOT NULL,
+            sem INTEGER NOT NULL,
+            branch TEXT NOT NULL,
+            section TEXT NOT NULL,
             academic_session TEXT,
             academic_term TEXT,
             {field_cols_sql},
@@ -2924,6 +2927,8 @@ def verify_student_details():
             flash("Please submit student details before proceeding.", "warning")
             return redirect(url_for('student_details'))
 
+        session["student_details"] = student_details_row[0]
+
         # Show the page with filled details
         return render_template("verify_student_details.html", details=student_details_row[0])
 
@@ -2955,6 +2960,9 @@ def fill_form():
         # Clean up the session
         session.pop("selected_forms", None)
         session.pop("current_form_index", None)
+        session.pop("academic_session")
+        session.pop("academic_term")
+        session.pop("student_details")
 
         session["finished_all_forms"] = True
 
@@ -3094,15 +3102,16 @@ def fill_form():
             placeholder_sql = ",".join(["?"]*len(form_inputs)) # eg. "?,?,?..."
             values_list = list(form_inputs.values()) # eg. ["Value1", "Value2"...]
             # eg. "field1 = excluded.field1, field2 = excluded.field2..."
-            update_clause = ", ".join([f"{field} = excluded.{field}" for field in form_fields])
+            update_clause = ", ".join([f"{field} = excluded.{field}" for field in form_fields]) 
 
             try:
                 # Dynamically store form entries in respective tables in database
                 db.execute(f"""
-                    INSERT INTO {current_form} (student_id, academic_session, academic_term, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
-                    VALUES(?, ?, ?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
-                """, session["user_id"], session.get("academic_session"), session.get("academic_term"), *values_list, # *values_list gives a string eg. "Value1", "Value2"...
-                save_path, "pending", "pending", )
+                    INSERT INTO {current_form} (student_id, sem, branch, section, academic_session, academic_term, {form_fields_sql}, full_path, google_file_id, status, submitted_at)
+                    VALUES(?, ?, ?, ?, ?, ?, {placeholder_sql}, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
+                """, session["user_id"], session.get("student_details")["semester"], session.get("student_details")["branch"], session.get("student_details")["section"],
+                session.get("academic_session"), session.get("academic_term"), *values_list, # *values_list gives a string eg. "Value1", "Value2"...
+                save_path, "pending", "pending")
 
             except Exception as e:
                 print(f"Database error: {e}", file=sys.stderr)
