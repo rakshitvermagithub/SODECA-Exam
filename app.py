@@ -1157,6 +1157,81 @@ FORM_DEFINITIONS = {
             ],
         'enctype': 'multipart/form-data',
         'fields': [
+                        {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'radio',
+                'field_name': 'position',
+                'required': False,
+                'field_hidden': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': False,
+                'field_hidden': True,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'radio',
+                'field_name': 'award_type',
+                'required': False,
+                'field_hidden': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': False,
+                'field_hidden': True,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': False,
+                'field_hidden': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': False,
+                'field_hidden': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
             {
                 'field_label': 'Name of the Competition/Event/Activity',
                 'field_type': 'text',
@@ -1209,61 +1284,6 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'required': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': { 'max_length': 150 }
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Event Level',
@@ -1329,13 +1349,6 @@ FORM_DEFINITIONS = {
                 }
             },
             {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
                 'field_label': 'Organized By',
                 'field_type': 'radio',
                 'field_name': 'organized_by',
@@ -1359,14 +1372,6 @@ FORM_DEFINITIONS = {
                 'field_name': 'organizer_details',
                 'required': True,
                 'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
             {
@@ -4257,36 +4262,58 @@ def student_report():
         where_clause = ""
         filtered_data = []
 
-        # Get single roll number
-        university_roll_number = request.form.get("university_roll_number")
-        if university_roll_number:
-            where_params.append(f"s.university_roll_no='{university_roll_number}'")
+        academic_sessions = request.form.getlist("academic_sessions[]")
+        if academic_sessions:
+            quoted_academic_sessions = [f"'{academic_session}'" for academic_session in academic_sessions]
+            joined_academic_sessions = ",".join(quoted_academic_sessions)
+            where_params.append(f"f.academic_session IN ({joined_academic_sessions})")
+        
+        academic_terms = request.form.getlist("academic_terms[]")
+        if academic_terms:
+            quoted_academic_terms = [f"'{academic_term}'" for academic_term in academic_terms]
+            joined_academic_terms = ",".join(quoted_academic_terms)
+            where_params.append(f"f.academic_term IN ({joined_academic_terms})")
+
         # Get multiple checkbox values using .getlist()
         semesters = request.form.getlist("semesters[]") # Returns a list like ['1', '3', '5']
         if semesters:
             joined_semesters = ",".join(semesters)
-            where_params.append(f"s.semester IN ({joined_semesters})")
+            where_params.append(f"f.sem IN ({joined_semesters})")
 
         branches = request.form.getlist("branches[]")   # Returns a list like ['CSE', 'IT']
         if branches:
             quoted_branches = [f"'{branch}'" for branch in branches]
             joined_branches = ",".join(quoted_branches)
-            where_params.append(f"s.branch IN ({joined_branches})")
+            where_params.append(f"f.branch IN ({joined_branches})")
         
         sections = request.form.getlist("sections[]")
         if sections:
             quoted_sections = [f"'{section}'" for section in sections]
             joined_sections = ",".join(quoted_sections)
-            where_params.append(f"s.section IN ({joined_sections})")
+            where_params.append(f"f.section IN ({joined_sections})")
+
+        submission_categories = request.form.getlist("submission_categories[]")
+        if submission_categories:
+            quoted_submission_categories = [f"'{submission_category}'" for submission_category in submission_categories]
+            joined_submission_categories = ",".join(quoted_submission_categories)
+            where_params.append(f"f.submission_category IN ({joined_submission_categories})")
 
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
         forms = request.form.getlist("forms[]")
-        for form in forms:
-            base_queries.append(
-                f"""SELECT s.student_name, s.university_roll_no, s.semester, s.branch, s.section,
-                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at, f.status, f.certificate
+        if forms:
+            for form in forms:
+                base_queries.append(
+                    f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
+                    f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term, f.submission_category
+                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
+                    )
+        else:
+            for form in form_name_list:
+                base_queries.append(
+                f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
+                f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term, f.submission_category
                 FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
                 )
 
@@ -4310,34 +4337,32 @@ def student_report():
         else:
             flash("Please select at least one form to filter.", "warning")
 
-        return render_template("student_report.html", filtered_data=filtered_data, FORM_DEFINITIONS=FORM_DEFINITIONS)
-
     else:
         # Without filter
         for form in form_name_list:
             base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no,
                 '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate,
-                f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                f.sem, f.branch, f.section, f.academic_session, f.academic_term, f.submission_category
                 FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
                 )
         complete_query = " UNION ALL ".join(base_queries) 
         final_query = f"{complete_query} ORDER BY submitted_at DESC"
-        universal_report = db.execute(final_query)
+        filtered_data = db.execute(final_query)
 
-        academic_session_list = db.execute("SELECT DISTINCT academic_session FROM batch_structure")
-        sem_options_list = get_sem_options()
-        branch_options_list = get_branch_options()
-        section_options_list = get_section_options()
+    academic_session_list = db.execute("SELECT DISTINCT academic_session FROM batch_structure")
+    sem_options_list = get_sem_options()
+    branch_options_list = get_branch_options()
+    section_options_list = get_section_options()
 
-        return render_template("student_report.html", 
-            filtered_data=universal_report, 
-            FORM_DEFINITIONS=FORM_DEFINITIONS,
-            academic_session_list=academic_session_list,
-            sem_options_list=sem_options_list,
-            branch_options_list=branch_options_list,
-            section_options_list=section_options_list
-        )
+    return render_template("student_report.html", 
+        filtered_data=filtered_data, 
+        form_dict=form_dict,
+        academic_session_list=academic_session_list,
+        sem_options_list=sem_options_list,
+        branch_options_list=branch_options_list,
+        section_options_list=section_options_list
+    )
 
 @app.route("/batch_management", methods=["GET"])
 @login_required
@@ -4755,7 +4780,6 @@ def visual_report():
             chartLabels.append(form_title)
 
     return jsonify({"chartData" : chartData, "labelData": chartLabels})
-
 
 if __name__ == '__main__':
 

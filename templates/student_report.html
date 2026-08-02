@@ -8,16 +8,13 @@
 <link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 <style>
-    :root {
-        --bs-admin-purple: #4f46e5;
-        --bs-admin-purple-rgb: 79, 70, 229;
-    }
-
     .page-wrapper {
         min-height: calc(100vh - 140px);
         background-color: #f0f2f5;
         padding-top: 3rem;
-        padding-bottom: 3rem;
+        padding-bottom: 2.5rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
     }
 
     .form-title-admin {
@@ -132,34 +129,39 @@
 <div class="page-wrapper">
     <div class="container-fluid px-3 px-lg-4">
 
-        <div class="row justify-content-center g-4">
+        <div class="row justify-content-center g-5">
+            <div class="col-12 col-xl-3 mt-4 mt-xl-5 d-flex flex-wrap align-items-start justify-content-center">
+                <div class="chart-container border border-secondary-subtle py-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                    <canvas id="categoryPieChart"></canvas>
+                </div>
+            </div>
             <div class="col-12 col-xl-9">
-                <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
+                
                 <!-- Filter Bar Above Table -->
-                <div class="card mb-4 border-0 shadow-sm">
-                    <div class="card-body p-2 bg-light rounded-3">
+                <div class="card mb-4 bg-light border border-secondary-subtle py-2">
+                    <div class="card-body p-2 rounded-3">
                         <form id="globalFilterForm" action="{{ url_for('student_report') }}" method="POST">
                             <div class="row g-2 align-items-end flex-wrap">
                                 
                                 <!-- 1. Form (modal) -->
-                                <div class="col-auto" style="min-width:140px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Form</label>
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Form Category</label>
                                     <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#formModal">
                                         Select Form
                                     </button>
                                 </div>
 
                                 <!-- 2. Academic Session (modal) -->
-                                <div class="col-auto" style="min-width:160px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Academic Session</label>
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Session</label>
                                     <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sessionModal">
                                         Select Session
                                     </button>
                                 </div>
 
                                 <!-- 3. Academic Term (dropdown) -->
-                                <div class="col-auto" style="min-width:140px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Academic Term</label>
+                                <div class="col-auto" style="min-width:100px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Term</label>
                                     <div class="dropdown">
                                         <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                             <span>Select Term</span>
@@ -167,13 +169,13 @@
                                         <ul class="dropdown-menu p-2 shadow-sm">
                                             <li>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="odd" id="termOdd">
+                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="Odd" id="termOdd">
                                                     <label class="form-check-label small" for="termOdd">Odd</label>
                                                 </div>
                                             </li>
                                             <li>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="even" id="termEven">
+                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="Even" id="termEven">
                                                     <label class="form-check-label small" for="termEven">Even</label>
                                                 </div>
                                             </li>
@@ -182,7 +184,7 @@
                                 </div>
 
                                 <!-- 4. Semester (modal) -->
-                                <div class="col-auto" style="min-width:130px;">
+                                <div class="col-auto" style="min-width:120px;">
                                     <label class="form-label fw-bold text-secondary small mb-1 d-block">Semester</label>
                                     <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#semesterModal">
                                         Select Sem
@@ -190,7 +192,7 @@
                                 </div>
 
                                 <!-- 5. Branch (modal) -->
-                                <div class="col-auto" style="min-width:150px;">
+                                <div class="col-auto" style="min-width:120px;">
                                     <label class="form-label fw-bold text-secondary small mb-1 d-block">Branch</label>
                                     <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#branchModal">
                                         Select Branch
@@ -198,7 +200,7 @@
                                 </div>
 
                                 <!-- 6. Section (modal) -->
-                                <div class="col-auto" style="min-width:130px;">
+                                <div class="col-auto" style="min-width:120px;">
                                     <label class="form-label fw-bold text-secondary small mb-1 d-block">Section</label>
                                     <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sectionModal">
                                         Select Section
@@ -207,7 +209,7 @@
 
                                 <!-- 7. Participation / Achievement (dropdown) -->
                                 <div class="col-auto" style="min-width:170px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation / Achievement</label>
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation/Achievement</label>
                                     <div class="dropdown">
                                         <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                             <span>Select Type</span>
@@ -215,13 +217,13 @@
                                         <ul class="dropdown-menu p-2 shadow-sm">
                                             <li>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="record_types[]" value="participation" id="typePart">
+                                                    <input class="form-check-input" type="checkbox" name="submission_categories[]" value="participation" id="typePart">
                                                     <label class="form-check-label small" for="typePart">Participation</label>
                                                 </div>
                                             </li>
                                             <li>
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="record_types[]" value="achievement" id="typeAch">
+                                                    <input class="form-check-input" type="checkbox" name="submission_categories[]" value="achievement" id="typeAch">
                                                     <label class="form-check-label small" for="typeAch">Achievement</label>
                                                 </div>
                                             </li>
@@ -256,11 +258,11 @@
                                         </div>
                                         <div class="modal-body p-3">
                                             <div class="row row-cols-1 row-cols-md-2 g-2">
-                                                {% for key, form in FORM_DEFINITIONS.items() %}
+                                                {% for key, value in form_dict.items() %}
                                                 <div class="col">
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
-                                                        <label class="form-check-label small" for="form_{{ key }}">{{ form["title"] }}</label>
+                                                        <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
                                                     </div>
                                                 </div>
                                                 {% endfor %}
@@ -411,13 +413,7 @@
                         </form>
                     </div>
                 </div>                
-            <!-- <div class="text-center mb-4">
-                     <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
-                        <i class="bi bi-funnel-fill me-2"></i> Advanced filter
-                    </button>
-                </div> -->
-
-                <table id="report-table" class="stripe hover nowrap border">
+                <table id="report-table" class="display nowrap border">
                     <thead class="bg-dark text-white ">
                         <tr>
                             <th>#</th>
@@ -427,11 +423,12 @@
                             <th>Category</th>
                             <th>Proof</th>
                             <th>Proof(G-Drive)</th>
-                            <th>Submitted at</th>
-                            <th>Withdrawn at</th>
+                            <th>Achievement/Participation</th>
                             <th>Status</th>
                             <th>More Details</th>
                             <th>Action</th>
+                            <th>Submitted at</th>
+                            <th>Withdrawn at</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -456,8 +453,7 @@
                                 </a>
                                 {% endif %}
                             </td>
-                            <td>{{ data["submitted_at"] }}</td>
-                            <td>{{ data["withdrawn_at"] }}</td>
+                            <td>{{ data["submission_category"] }}</td>
                             {% if status == 'accepted' %}
                             <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
                             {% elif status == 'rejected' %}
@@ -467,7 +463,7 @@
                             {% endif %}
 
                             <td>
-                                <button type="button" class="btn btn-sm btn-more-details"
+                                <button type="button" class="btn btn-outline-primary"
                                         data-bs-toggle="modal"
                                         data-bs-target="#submissionDetailsModal"
                                         data-entry-id="{{ data['entry_id'] }}"
@@ -478,20 +474,19 @@
 
                             <td>
                                 <div class="d-flex gap-2">
+                                    <form action="{{ url_for('upload_to_drive') }}" method="post">
                                     {% if session.get('drive_auth_token')%}
-                                        <form action="{{ url_for('upload_to_drive') }}" method="post">
                                             <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
-                                            <input type="hidden" name="semester" value="{{ data['sem'] }}">
-                                            <input type="hidden" name="branch" value="{{ data['branch'] }}">
-                                            <input type="hidden" name="section" value="{{ data['section'] }}">
+                                            <input type="hidden" name="batch_str" value="{{ data['sem'] }}_{{ data['branch'] }}_{{ data['section'] }}">
                                             <input type="hidden" name="form_name" value="{{ data['category'] }}">
                                             <input type="hidden" name="filename" value="{{ data['certificate'] }}">
+                                            <input type="hidden" name="submission_category" value="{{ data['submission_category'] }}">
                                             <button type="submit" class="btn btn-sm btn-outline-success"
                                             {% if status != 'pending'%}disabled{% endif %}>Accept</button>
-                                        </form>
                                     {% else %}
                                         <button type="submit" class="btn btn-sm btn-outline-success"
                                         {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                    </form>
                                     {% endif %}
                                     <form action="" method="POST">
                                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
@@ -503,15 +498,12 @@
                                     </form>
                                 </div>
                             </td>
+                            <td>{{ data["submitted_at"] }}</td>
+                            <td>{{ data["withdrawn_at"] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-            <div class="col-12 col-xl-3 mt-4 mt-xl-5 d-flex flex-wrap align-items-start justify-content-center">
-                <div class="chart-container" style="background-color: #f8f9fa; margin-top: 92px; border-radius: 10px;">
-                    <canvas id="categoryPieChart"></canvas>
-                </div>
             </div>
         </div>
     </div>
@@ -665,17 +657,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('report-table')) {
         try { 
             $('#report-table').DataTable({
-                paging: false,       // Disables pagination
+                paging: true,
+                pageLength: 4,       // Disables pagination
                 info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
                 scrollX: true,       // Enables horizontal scrolling
-                scrollY: '400px',    // Fixed height for vertical scrolling inside the container
                 scrollCollapse: true,
                 layout: {
                     topStart: {
                         buttons: [
                             { 
                                 extend: 'excel', 
-                                text: 'Download excel', 
+                                text: 'Download Report', 
                                 className: 'btn-sm btn-excel-green' 
                             }
                         ]
