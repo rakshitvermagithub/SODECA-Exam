@@ -429,8 +429,8 @@
                             <th>Proof(G-Drive)</th>
                             <th>Submitted at</th>
                             <th>Withdrawn at</th>
-                            <th>More Details</th>
                             <th>Status</th>
+                            <th>More Details</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -442,18 +442,30 @@
                             <td>{{ loop.index }}</td>
                             <td>{{ data["student_name"] }}</td>
                             <td>{{ data["university_roll_no"] }}</td>
-                            <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
+                            <td>{{ data["sem"] }}{{ data["branch"] }}-{{ data["section"] }}</td>
                             <td>{{ data["category"] }}</td>
                             <td>
                                 <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file={{ url_for('view_submission', filename=data['certificate']) }}>Click Here</a>
                             </td>
                             <td>
+                                {% if data["google_file_id"] == "pending" %}
+                                Pending
+                                {% else %}
                                 <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-file-earmark-text"></i> G-Drive
+                                    <i class="bi bi-file-earmark-text"></i> Drive link
                                 </a>
+                                {% endif %}
                             </td>
                             <td>{{ data["submitted_at"] }}</td>
                             <td>{{ data["withdrawn_at"] }}</td>
+                            {% if status == 'accepted' %}
+                            <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
+                            {% elif status == 'rejected' %}
+                            <td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>
+                            {% elif status == 'pending' %}
+                            <td><span class="badge rounded-pill text-bg-warning">Pending</span></td>
+                            {% endif %}
+
                             <td>
                                 <button type="button" class="btn btn-sm btn-more-details"
                                         data-bs-toggle="modal"
@@ -464,23 +476,14 @@
                                 </button>
                             </td>
 
-                            {% if status == 'accepted' %}
-                            <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
-                            {% elif status == 'rejected' %}
-                            <td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>
-                            {% elif status == 'pending' %}
-                            <td><span class="badge rounded-pill text-bg-warning">Pending</span></td>
-                            {% endif %}
-
                             <td>
                                 <div class="d-flex gap-2">
                                     {% if session.get('drive_auth_token')%}
                                         <form action="{{ url_for('upload_to_drive') }}" method="post">
                                             <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
-                                            <input type="hidden" name="semester" value="{{ data['semester'] }}">
+                                            <input type="hidden" name="semester" value="{{ data['sem'] }}">
                                             <input type="hidden" name="branch" value="{{ data['branch'] }}">
                                             <input type="hidden" name="section" value="{{ data['section'] }}">
-                                            <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
                                             <input type="hidden" name="form_name" value="{{ data['category'] }}">
                                             <input type="hidden" name="filename" value="{{ data['certificate'] }}">
                                             <button type="submit" class="btn btn-sm btn-outline-success"
