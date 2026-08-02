@@ -4064,8 +4064,76 @@ def discharge_faculty():
 
     return redirect(url_for("assign_batch"))
 
-def get_filter_options(academic_session=None, academic_term=None, semester=None, branch=None):
-    query = "SELECT DISTINCT sem, branch, section FROM batch_structure"
+def get_sem_options(academic_session=None, academic_term=None):
+    query = "SELECT DISTINCT sem FROM batch_structure"
+    conditions = []
+    
+    if academic_session:
+        sessions = ", ".join(f"'{s}'" for s in academic_session)
+        conditions.append(f"academic_session IN ({sessions})")
+
+    if academic_term:
+        terms = ", ".join(f"'{t}'" for t in academic_term)
+        conditions.append(f"academic_term IN ({terms})")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY sem"
+
+    print(query)
+    return db.execute(query)
+
+def get_branch_options(academic_session=None, academic_term=None, semester=None):
+    query = "SELECT DISTINCT branch FROM batch_structure"
+    conditions = []
+    
+    if academic_session:
+        sessions = ", ".join(f"'{s}'" for s in academic_session)
+        conditions.append(f"academic_session IN ({sessions})")
+
+    if academic_term:
+        terms = ", ".join(f"'{t}'" for t in academic_term)
+        conditions.append(f"academic_term IN ({terms})")
+
+    if semester:
+        semesters = ", ".join(f"'{sem}'" for sem in semester)
+        conditions.append(f"sem IN ({semesters})")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY sem"
+
+    print(query)
+    return db.execute(query)
+
+def get_section_options(academic_session=None, academic_term=None, semester=None):
+    query = "SELECT DISTINCT branch FROM batch_structure"
+    conditions = []
+    
+    if academic_session:
+        sessions = ", ".join(f"'{s}'" for s in academic_session)
+        conditions.append(f"academic_session IN ({sessions})")
+
+    if academic_term:
+        terms = ", ".join(f"'{t}'" for t in academic_term)
+        conditions.append(f"academic_term IN ({terms})")
+
+    if semester:
+        semesters = ", ".join(f"'{sem}'" for sem in semester)
+        conditions.append(f"sem IN ({semesters})")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY branch"
+
+    print(query)
+    return db.execute(query)
+
+def get_section_options(academic_session=None, academic_term=None, semester=None, branch=None):
+    query = "SELECT DISTINCT section FROM batch_structure"
     conditions = []
     
     if academic_session:
@@ -4087,7 +4155,7 @@ def get_filter_options(academic_session=None, academic_term=None, semester=None,
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
 
-    query += " ORDER BY sem"
+    query += " ORDER BY section"
 
     print(query)
     return db.execute(query)
@@ -4175,13 +4243,17 @@ def student_report():
         universal_report = db.execute(final_query)
 
         academic_session_list = db.execute("SELECT DISTINCT academic_session FROM batch_structure")
-        filter_options_list = get_filter_options()
+        sem_options_list = get_sem_options()
+        branch_options_list = get_branch_options()
+        section_options_list = get_section_options()
 
         return render_template("student_report.html", 
-        filtered_data=universal_report, 
-        FORM_DEFINITIONS=FORM_DEFINITIONS,
-        academic_session_list=academic_session_list,
-        filter_options_list=filter_options_list
+            filtered_data=universal_report, 
+            FORM_DEFINITIONS=FORM_DEFINITIONS,
+            academic_session_list=academic_session_list,
+            sem_options_list=sem_options_list,
+            branch_options_list=branch_options_list,
+            section_options_list=section_options_list
         )
 
 @app.route("/batch_management", methods=["GET"])
