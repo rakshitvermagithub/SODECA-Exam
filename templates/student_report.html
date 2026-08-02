@@ -8,16 +8,13 @@
 <link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 <style>
-    :root {
-        --bs-admin-purple: #4f46e5;
-        --bs-admin-purple-rgb: 79, 70, 229;
-    }
-
     .page-wrapper {
         min-height: calc(100vh - 140px);
         background-color: #f0f2f5;
         padding-top: 3rem;
-        padding-bottom: 3rem;
+        padding-bottom: 2.5rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
     }
 
     .form-title-admin {
@@ -37,13 +34,6 @@
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-    }
-
-    .card-minimalist-admin {
-        border: none;
-        border-top: 5px solid var(--bs-admin-purple);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-        border-radius: 0.5rem;
     }
     
     .btn-admin {
@@ -74,43 +64,60 @@
         border-color: var(--bs-admin-purple);
     }
 
-    /* Modal Styling */
-    .modal-header-admin {
-        background-color: var(--bs-admin-purple);
-        color: white;
+    /* Custom Green Style for Download Excel Button */
+    .btn-excel-green {
+        background-color: #198754 !important;
+        color: #ffffff !important;
+        border-color: #198754 !important;
     }
-    .modal-header-admin .btn-close {
-        filter: invert(1) grayscale(100%) brightness(200%);
-    }
-    .filter-step { display: none; } 
-    .filter-step.active { display: block; } 
-
-    /* Ensure modal body scrolls */
-    #filterModal .modal-body {
-        overflow-y: auto; 
-        max-height: 65vh; /* Ensure a max height to trigger scroll */
+    .btn-excel-green:hover {
+        background-color: #157347 !important;
+        border-color: #146c43 !important;
+        color: #ffffff !important;
     }
 
-    /* Custom Admin Table Style */
-    .table-admin thead {
-        background-color: rgba(var(--bs-admin-purple-rgb), 0.05);
+    /* Fixed Scrollable Container for Unstyled Table */
+    .table-scroll-container {
+        max-height: 500px;
+        overflow: auto;
     }
-    .table-admin th {
-        color: var(--bs-admin-purple);
-        font-weight: 600;
+
+    /* Filter bar trigger buttons - wrap evenly across all screen sizes */
+    .filter-trigger-btn {
+        flex: 1 1 150px;
+        white-space: nowrap;
     }
-    .table-admin td {
-        vertical-align: middle;
+    @media (max-width: 575.98px) {
+        .filter-trigger-btn {
+            flex: 1 1 100%;
+        }
     }
-    
-    #submissionDetailsModalBody {
-        overflow-wrap: break-word;
-        word-wrap: break-word; /* Fallback for older browsers */
+
+    /* Fluid pie-chart sizing so the fixed-pixel canvas never overflows small screens */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
     }
-    /* Increase dimness of the Bootstrap backdrop */
-    .modal-backdrop.show {
-        opacity: 0.85; /* Default is usually 0.5 */
-        background-color: #000;
+    .chart-container canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 440px;
+    }
+
+    /* Responsive tweaks for small screens */
+    @media (max-width: 767.98px) {
+        .page-wrapper {
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+        .chart-container {
+            margin-top: 1.5rem !important;
+        }
+        .dropdown-menu.w-100 {
+            min-width: 100%;
+        }
     }
 
 </style>
@@ -120,232 +127,384 @@
 {% include "message.html" %}
 
 <div class="page-wrapper">
-    <div class="container">
+    <div class="container-fluid px-3 px-lg-4">
 
-        <div class="d-flex justfy-content-center">
-            <div class="col-8">
-                <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
-                <div class="text-center mb-4">
-                     <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
-                        <i class="bi bi-funnel-fill me-2"></i> Apply Filters
-                    </button>
-        {#            <button type="button" class="btn btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#chartModal" onclick="updateChart()">#}
-        {#                <i class="bi bi-pie-chart-fill me-2"></i> Visual Report#}
-        {#            </button>#}
+        <div class="row justify-content-center g-5">
+            <div class="col-12 col-xl-3 mt-4 mt-xl-5 d-flex flex-wrap align-items-start justify-content-center">
+                <div class="chart-container border border-secondary-subtle py-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                    <canvas id="categoryPieChart"></canvas>
                 </div>
+            </div>
+            <div class="col-12 col-xl-9">
+                
+                <!-- Filter Bar Above Table -->
+                <div class="card mb-4 bg-light border border-secondary-subtle py-2">
+                    <div class="card-body p-2 rounded-3">
+                        <form id="globalFilterForm" action="{{ url_for('student_report') }}" method="POST">
+                            <div class="row g-2 align-items-end flex-wrap">
+                                
+                                <!-- 1. Form (modal) -->
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Form Category</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#formModal">
+                                        Select Form
+                                    </button>
+                                </div>
 
-                <div class="card card-minimalist-admin">
-                     <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-bordered border-secondary-subtle table-hover align-middle table-admin" id="report-table" style="width:100%">
-                                <caption class="caption-top p-3">List of Student's SODECA Records</caption>
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Student's Name</th>
-                                        <th>Roll Number</th>
-                                        <th>Batch</th>
-                                        <th>Category</th>
-                                        <th>Proof</th>
-                                        <th>Proof(G-Drive)</th>
-                                        <th>Submitted at</th>
-                                        <th>Withdrawn at</th>
-                                        <th>More Details</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for data in filtered_data %}
-                                    {% set status = data['status'] %}
-                                    {% set file_drive_link = data['certificate']%}
-                                    <tr>
-                                        <td>{{ loop.index }}</td>
-                                        <td>{{ data["student_name"] }}</td>
-                                        <td>{{ data["university_roll_no"] }}</td>
-                                        <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
-                                        <td>{{ data["category"] }}</td>
-                                        <td>
-                                            <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=data['certificate']) }}>Click Here</a>
-                                        </td>
-                                        <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-file-earmark-text"></i> G-Drive </a></td>
-                                        <td>{{ data["submitted_at"] }}</td>
-                                        <td>{{ data["withdrawn_at"] }}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-more-details"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#submissionDetailsModal"
-                                                    data-entry-id="{{ data['entry_id'] }}"
-                                                    data-form-name="{{ data['category'] }}">
-                                                Open
-                                            </button>
-                                        </td>
+                                <!-- 2. Academic Session (modal) -->
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Session</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sessionModal">
+                                        Select Session
+                                    </button>
+                                </div>
 
-                                        {% if status == 'accepted' %}
-                                        <td>
-                                            <span class="badge rounded-pill text-bg-success">Accepted</span></td>
-                                        </td>
-                                        {% elif status == 'rejected' %}
-                                        <td>
-                                            <span class="badge rounded-pill text-bg-danger">Rejected</span></td>
-                                        </td>
-                                        {% elif status == 'pending' %}
-                                        <td>
-                                            <span class="badge rounded-pill text-bg-warning">Pending</span></td>
-                                        </td>
-                                        {% endif %}
+                                <!-- 3. Academic Term (dropdown) -->
+                                <div class="col-auto" style="min-width:100px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Term</label>
+                                    <div class="dropdown">
+                                        <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                            <span>Select Term</span>
+                                        </button>
+                                        <ul class="dropdown-menu p-2 shadow-sm">
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="Odd" id="termOdd">
+                                                    <label class="form-check-label small" for="termOdd">Odd</label>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="Even" id="termEven">
+                                                    <label class="form-check-label small" for="termEven">Even</label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
 
-                                        <td>
-                                            <div class="d-flex gap-2">
-                                                {% if session.get('drive_auth_token')%}
-                                                    <form action="{{ url_for('upload_to_drive') }}" method="post">
-                                                        <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
-                                                        <input type="hidden" name="semester" value="{{ data['semester'] }}">
-                                                        <input type="hidden" name="branch" value="{{ data['branch'] }}">
-                                                        <input type="hidden" name="section" value="{{ data['section'] }}">
-                                                        <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
-                                                        <input type="hidden" name="form_name" value="{{ data['category'] }}">
-                                                        <input type="hidden" name="filename" value="{{ data['certificate'] }}">
-                                                        <button type="submit" class="btn btn-sm btn-outline-success"
-                                                        {% if status != 'pending'%}disabled{% endif %}>Accept</button>
-                                                    </form>
-                                                {% else %}
-                                                    <!-- Button opens a modal with a button to authorize drive -->
-                                                    <button type="submit" class="btn btn-sm btn-outline-success"
-                                                    {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                <!-- 4. Semester (modal) -->
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Semester</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#semesterModal">
+                                        Select Sem
+                                    </button>
+                                </div>
 
-                                                {% endif %}
-                                                <form action="" method="POST">
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                                        data-bs-target="#rejectionModal" data-entry-id = "{{ data['entry_id'] }}"
-                                                        data-form-name = "{{ data['category'] }}"
-                                                        {% if status != 'pending'%}disabled{% endif %}>
-                                                        Reject
-                                                    </button>
-                                                </form>
+                                <!-- 5. Branch (modal) -->
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Branch</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#branchModal">
+                                        Select Branch
+                                    </button>
+                                </div>
+
+                                <!-- 6. Section (modal) -->
+                                <div class="col-auto" style="min-width:120px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Section</label>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sectionModal">
+                                        Select Section
+                                    </button>
+                                </div>
+
+                                <!-- 7. Participation / Achievement (dropdown) -->
+                                <div class="col-auto" style="min-width:170px;">
+                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation/Achievement</label>
+                                    <div class="dropdown">
+                                        <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                            <span>Select Type</span>
+                                        </button>
+                                        <ul class="dropdown-menu p-2 shadow-sm">
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="submission_categories[]" value="participation" id="typePart">
+                                                    <label class="form-check-label small" for="typePart">Participation</label>
+                                                </div>
+                                            </li>
+                                            <li>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="submission_categories[]" value="achievement" id="typeAch">
+                                                    <label class="form-check-label small" for="typeAch">Achievement</label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="col-auto" style="min-width:130px;">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                                        <i class="bi bi-funnel-fill me-1"></i> Apply Filter
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <!-- ================= DEDICATED FILTER MODALS ================= -->
+
+                            <!-- 1. Form Name Modal -->
+                            <div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-md">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Form Types</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_formModal" data-target-name="forms[]">
+                                                <label class="form-check-label small" for="checkAll_formModal">Check All</label>
                                             </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-3 ms-5 mt-5 d-flex flex-wrap align-items-start justify-content-center">
-                <div class="chart-container" style="background-color: #f8f9fa; margin-top: 92px; border-radius: 10px;">
-                    <canvas id="categoryPieChart" style="width: 400px; height: 440px;"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="row row-cols-1 row-cols-md-2 g-2">
+                                                {% for key, value in form_dict.items() %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
+                                                        <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    {# Ensures the entire modal dialog allows scrolling of the body #}
-    <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
-        <div class="modal-content">
-            <div class="modal-header modal-header-admin">
-                <h1 class="modal-title fs-5" id="filterModalLabel">Apply Report Filters</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{url_for('student_report')}}" id="filterForm">
-                <div class="modal-body p-4">
-                    
-                    <!-- Step 1: Student Filters -->
-                    <div class="filter-step active" id="filterStep1">
-                        <h5 class="fw-semibold mb-4"><i class="bi bi-people me-2"></i>Filter by Student Criteria</h5>
-                        
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label for="roll_number" class="form-label">University Roll Number</label>
-                                <input type="text" class="form-control" name="university_roll_number" id="roll_number" placeholder="e.g., 21ESKCS123">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Semester</label>
-                                    <div>
-                                        {% for i in range(3, 9) %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem{{ i }}"><label class="form-check-label" for="sem{{ i }}">{{ i }}</label>
-                                        </div>{% endfor %}
+                            <!-- 2. Academic Session Modal -->
+                            <div class="modal fade" id="sessionModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Academic Session</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_sessionModal" data-target-name="academic_sessions[]">
+                                                <label class="form-check-label small" for="checkAll_sessionModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            {% if academic_session_list %}
+                                            {% for academic_session in academic_session_list %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="academic_sessions[]" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}">
+                                                <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
+                                            </div>
+                                            {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Branch</label>
-                                    <div>
-                                        {% set branches = ['CSE', 'CSE(AI)', 'CSE(DS)', 'CSE(IOT)'] %}
-                                        {% for branch in branches %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branch{{ branch }}"><label class="form-check-label" for="branch{{ branch }}">{{ branch }}</label>
-                                        </div>{% endfor %}
+                            <!-- 4. Semester Modal -->
+                            <div class="modal fade" id="semesterModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Semesters</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_semesterModal" data-target-name="semesters[]">
+                                                <label class="form-check-label small" for="checkAll_semesterModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="row row-cols-2 g-2">
+                                                {% if sem_options_list %}
+                                                {% for options in sem_options_list %}
+                                                {% set sem = options['sem'] %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ sem }}" id="{{ sem }}">
+                                                        <label class="form-check-label" for="{{ sem }}">{{ sem }}</label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Section</label>
-                                    <div>
-                                        {% set sections = ['A', 'B', 'C', 'D', 'E', 'F'] %}
-                                        {% for section in sections %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="section{{ section }}"><label class="form-check-label" for="section{{ section }}">{{ section }}</label>
-                                        </div>{% endfor %}
+
+                            <!-- 5. Branch Modal -->
+                            <div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Branches</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_branchModal" data-target-name="branches[]">
+                                                <label class="form-check-label small" for="checkAll_branchModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            {% if branch_options_list %}
+                                            {% for options in branch_options_list %}
+                                            {% set branch = options['branch'] %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
+                                                <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
+                                            </div>
+                                            {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6"> 
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Group</label>
-                                    <div>
-                                        {% set groups = ['G1', 'G2'] %}
-                                        {% for group in groups %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="class_groups[]" value="{{ group }}" id="group{{ group }}"><label class="form-check-label" for="group{{ group }}">{{ group }}</label>
-                                        </div>{% endfor %}
+
+                            <!-- 6. Section Modal -->
+                            <div class="modal fade" id="sectionModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header py-2 bg-light">
+                                            <h6 class="modal-title fw-bold">Select Sections</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_sectionModal" data-target-name="sections[]">
+                                                <label class="form-check-label small" for="checkAll_sectionModal">Check All</label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-body p-3">
+                                            <div class="row row-cols-2 g-2">
+                                                {% if section_options_list %}
+                                                {% for options in section_options_list %}
+                                                {% set section = options['section'] %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="{{ section }}">
+                                                        <label class="form-check-label" for="{{ section }}">{{ section }}</label>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-1">
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+
+                        </form>
                     </div>
-                    
-                    <!-- Step 2: Form Filters -->
-                    <div class="filter-step" id="filterStep2">
-                         <h5 class="fw-semibold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Filter by Form Type</h5>
-                         <div class="d-flex justify-content-end mb-3">
-                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="selectAllForms">
-                                <label class="form-check-label" for="selectAllForms">Select All</label>
-                            </div>
-                         </div>
-                         <div class="row row-cols-1 row-cols-md-3 g-2"> 
-                            {% for key, form in FORM_DEFINITIONS.items() %}
-                            <div class="col">
-                                <div class="form-check fs-6 mb-1 rounded-2">
-                                    <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form-{{ key }}">
-                                    <label class="form-check-label ms-1" for="form-{{ key }}">{{ form["title"] }}</label>
+                </div>                
+                <table id="report-table" class="display nowrap border">
+                    <thead class="bg-dark text-white ">
+                        <tr>
+                            <th>#</th>
+                            <th>Student's Name</th>
+                            <th>Roll Number</th>
+                            <th>Batch</th>
+                            <th>Category</th>
+                            <th>Proof</th>
+                            <th>Proof(G-Drive)</th>
+                            <th>Achievement/Participation</th>
+                            <th>Status</th>
+                            <th>More Details</th>
+                            <th>Action</th>
+                            <th>Submitted at</th>
+                            <th>Withdrawn at</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in filtered_data %}
+                        {% set status = data['status'] %}
+                        {% set file_drive_link = data['certificate']%}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ data["student_name"] }}</td>
+                            <td>{{ data["university_roll_no"] }}</td>
+                            <td>{{ data["sem"] }}{{ data["branch"] }}-{{ data["section"] }}</td>
+                            <td>{{ data["category"] }}</td>
+                            <td>
+                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file={{ url_for('view_submission', filename=data['certificate']) }}>Click Here</a>
+                            </td>
+                            <td>
+                                {% if data["google_file_id"] == "pending" %}
+                                Pending
+                                {% else %}
+                                <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-text"></i> Drive link
+                                </a>
+                                {% endif %}
+                            </td>
+                            <td>{{ data["submission_category"] }}</td>
+                            {% if status == 'accepted' %}
+                            <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
+                            {% elif status == 'rejected' %}
+                            <td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>
+                            {% elif status == 'pending' %}
+                            <td><span class="badge rounded-pill text-bg-warning">Pending</span></td>
+                            {% endif %}
+
+                            <td>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#submissionDetailsModal"
+                                        data-entry-id="{{ data['entry_id'] }}"
+                                        data-form-name="{{ data['category'] }}">
+                                    Open
+                                </button>
+                            </td>
+
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <form action="{{ url_for('upload_to_drive') }}" method="post">
+                                    {% if session.get('drive_auth_token')%}
+                                            <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
+                                            <input type="hidden" name="batch_str" value="{{ data['sem'] }}_{{ data['branch'] }}_{{ data['section'] }}">
+                                            <input type="hidden" name="form_name" value="{{ data['category'] }}">
+                                            <input type="hidden" name="filename" value="{{ data['certificate'] }}">
+                                            <input type="hidden" name="submission_category" value="{{ data['submission_category'] }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                            {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success"
+                                        {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+                                    </form>
+                                    {% endif %}
+                                    <form action="" method="POST">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                            data-bs-target="#rejectionModal" data-entry-id="{{ data['entry_id'] }}"
+                                            data-form-name="{{ data['category'] }}"
+                                            {% if status != 'pending'%}disabled{% endif %}>
+                                            Reject
+                                        </button>
+                                    </form>
                                 </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn">Reset All</button>
-                    <div>
-                        <button type="button" class="btn btn-outline-secondary me-2" id="backBtn" style="display: none;">Back</button>
-                        <button type="button" class="btn btn-admin" id="nextBtn">Next</button>
-                        <button type="submit" class="btn btn-admin" id="submitBtn" style="display: none;">Apply Filters</button>
-                    </div>
-                </div>
-            </form>
+                            </td>
+                            <td>{{ data["submitted_at"] }}</td>
+                            <td>{{ data["withdrawn_at"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -371,10 +530,6 @@
             </div>
             <p class="mt-3 text-muted">Loading details...</p>
         </div>
-        <!-- 
-          Your JavaScript will replace the contents of this modal-body.
-          Any long text it injects will now be forced to wrap.
-        -->
       </div>
     </div>
   </div>
@@ -454,7 +609,6 @@
     </div>
 </div>
 
-
 {% endblock %}
 
 {% block script %}
@@ -464,93 +618,38 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.bootstrap5.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    updateChart();
-    const filterModalElement = document.getElementById('filterModal');
-    let filterModal;
-    if (filterModalElement) {
-        filterModal = new bootstrap.Modal(filterModalElement); 
+    if (typeof updateChart === 'function') {
+        updateChart();
     }
     
-    const filterForm = document.getElementById('filterForm');
-    const step1 = document.getElementById('filterStep1');
-    const step2 = document.getElementById('filterStep2');
-    const nextBtn = document.getElementById('nextBtn');
-    const backBtn = document.getElementById('backBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const resetBtn = document.getElementById('resetFiltersBtn');
-    const selectAllFormsCheckbox = document.getElementById('selectAllForms');
-    const formCheckboxes = filterForm ? filterForm.querySelectorAll('input[name="forms[]"]') : [];
-    const multiSelects = filterForm ? filterForm.querySelectorAll('select[multiple]') : []; 
+    // --- Check All (dedicated filter modals AND inline dropdowns) ---
+    document.querySelectorAll('.js-check-all').forEach(function(checkAllBox) {
+        const scopeEl = checkAllBox.closest('.modal') || checkAllBox.closest('.dropdown');
+        if (!scopeEl) return;
+        const targetName = checkAllBox.dataset.targetName;
+        const groupCheckboxes = scopeEl.querySelectorAll('input[type="checkbox"][name="' + targetName + '"]');
 
-    // --- Modal Step Navigation ---
-    if(nextBtn && step1 && step2 && backBtn && submitBtn) { 
-        nextBtn.addEventListener('click', function() {
-            step1.classList.remove('active');
-            step2.classList.add('active');
-            nextBtn.style.display = 'none';
-            backBtn.style.display = 'inline-block';
-            submitBtn.style.display = 'inline-block';
+        checkAllBox.addEventListener('change', function() {
+            groupCheckboxes.forEach(function(cb) { cb.checked = checkAllBox.checked; });
         });
-    }
 
-    if (backBtn && step1 && step2 && nextBtn && submitBtn) { 
-        backBtn.addEventListener('click', function() {
-            step2.classList.remove('active');
-            step1.classList.add('active');
-            nextBtn.style.display = 'inline-block';
-            backBtn.style.display = 'none';
-            submitBtn.style.display = 'none';
-        });
-    }
-    
-    if (filterModalElement && step1 && step2 && nextBtn && backBtn && submitBtn) { 
-        filterModalElement.addEventListener('hidden.bs.modal', function () {
-             step2.classList.remove('active');
-             step1.classList.add('active');
-             nextBtn.style.display = 'inline-block';
-             backBtn.style.display = 'none';
-             submitBtn.style.display = 'none';
-        });
-    }
-
-    // --- Filter Logic ---
-    if (resetBtn && filterForm) {
-        resetBtn.addEventListener('click', function() {
-            filterForm.reset();
-            // Clear multiselect dropdowns
-            multiSelects.forEach(select => {
-                 Array.from(select.options).forEach(option => option.selected = false);
-            });
-            if (selectAllFormsCheckbox) {
-                 selectAllFormsCheckbox.checked = false; 
-            }
-        });
-    }
-
-    if (selectAllFormsCheckbox) {
-        selectAllFormsCheckbox.addEventListener('change', function() {
-            formCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+        // Keep the switch in sync if the user unchecks/checks items individually
+        groupCheckboxes.forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                const allChecked = Array.from(groupCheckboxes).every(function(c) { return c.checked; });
+                checkAllBox.checked = allChecked;
             });
         });
-    }
 
-    formCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            if (!this.checked && selectAllFormsCheckbox) {
-                selectAllFormsCheckbox.checked = false;
-            } else if (selectAllFormsCheckbox){
-                const allChecked = Array.from(formCheckboxes).every(cb => cb.checked);
-                selectAllFormsCheckbox.checked = allChecked;
-            }
+        // Reset the switch whenever this modal is closed/reopened cleanly with Reset All
+        scopeEl.addEventListener('hidden.bs.modal', function() {
+            const allChecked = groupCheckboxes.length > 0 && Array.from(groupCheckboxes).every(function(c) { return c.checked; });
+            checkAllBox.checked = allChecked;
         });
     });
 
@@ -558,20 +657,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('report-table')) {
         try { 
             $('#report-table').DataTable({
+                paging: true,
+                pageLength: 4,       // Disables pagination
+                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
+                scrollX: true,       // Enables horizontal scrolling
+                scrollCollapse: true,
                 layout: {
                     topStart: {
                         buttons: [
-                            { extend: 'copy', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'csv', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'excel', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'pdf', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'print', className: 'btn-sm btn-outline-admin' }
+                            { 
+                                extend: 'excel', 
+                                text: 'Download Report', 
+                                className: 'btn-sm btn-excel-green' 
+                            }
                         ]
                     }
-                },
-                scrollX: true,
-                scrollCollapse: true, // Optional, collapses table height if data is small
-
+                }
             });
         } catch (e) {
             console.error("Error initializing DataTable:", e);
@@ -658,19 +759,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle modal data population
     const rejectedModal = document.getElementById('rejectionModal');
-    
-    rejectedModal.addEventListener('show.bs.modal', function(event) {
-        // Get the button that triggered the modal
-        const button = event.relatedTarget;
-        
-        // Extract data from data-* attributes
-        const entry_id = button.getAttribute('data-entry-id');
-        const form_name = button.getAttribute('data-form-name');
-        
-        // Update the modal's hidden input fields
-        rejectedModal.querySelector('#reject_entry_id').value = entry_id;
-        rejectedModal.querySelector('#reject_form_name').value = form_name;
-    });
+    if (rejectedModal) {
+        rejectedModal.addEventListener('show.bs.modal', function(event) {
+            // Get the button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract data from data-* attributes
+            const entry_id = button.getAttribute('data-entry-id');
+            const form_name = button.getAttribute('data-form-name');
+            
+            // Update the modal's hidden input fields
+            rejectedModal.querySelector('#reject_entry_id').value = entry_id;
+            rejectedModal.querySelector('#reject_form_name').value = form_name;
+        });
+    }
 
     const skipBtn = document.getElementById('skipAddNote');
     if (skipBtn) {
@@ -682,21 +784,78 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('rejectionForm').submit();
         });
     }
-});
 
-// PDF Preview script
+    // PDF Preview script
     const bsModal = document.getElementById('pdfPreviewModal');
     const bsPdfPreview = document.getElementById('bsPdfEmbed');
-    bsModal.addEventListener('show.bs.modal', function(event){
-        const trigger = event.relatedTarget;
-        const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
-        bsPdfPreview.setAttribute('src', pdfPath);
-    });
-    // Triggered when modal is fully hidden
-    bsModal.addEventListener('hidden.bs.modal', function () {
-        bsPdfPreview.setAttribute('src', '');
-    });
+    if (bsModal && bsPdfPreview) {
+        bsModal.addEventListener('show.bs.modal', function(event){
+            const trigger = event.relatedTarget;
+            const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+            bsPdfPreview.setAttribute('src', pdfPath);
+        });
+        // Triggered when modal is fully hidden
+        bsModal.addEventListener('hidden.bs.modal', function () {
+            bsPdfPreview.setAttribute('src', '');
+        });
+    }
+
+    // Update button text with selected checkbox counts dynamically
+    function setupFilterCounts() {
+        // 1. Handle Modal Filters
+        document.querySelectorAll('button[data-bs-target]').forEach(button => {
+            const targetId = button.getAttribute('data-bs-target');
+            if (!targetId || !targetId.startsWith('#')) return;
+            
+            const targetModal = document.querySelector(targetId);
+            if (!targetModal || !targetModal.classList.contains('modal')) return;
+            
+            // Store the original button text (e.g., "Select Form")
+            const defaultText = button.textContent.trim();
+            
+            const updateCount = () => {
+                // Select only the options inside the modal body, excluding the Check All toggle
+                const checkedCount = targetModal.querySelectorAll('.modal-body input[type="checkbox"]:checked').length;
+                button.textContent = checkedCount > 0 ? `${defaultText} (${checkedCount})` : defaultText;
+            };
+
+            // Delegate event to capture all checkbox changes, including Check All interactions
+            targetModal.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    setTimeout(updateCount, 0); // Defer to allow external Check All script to update DOM first
+                }
+            });
+            updateCount(); // Run once on load
+        });
+
+        // 2. Handle Dropdown Filters
+        document.querySelectorAll('button[data-bs-toggle="dropdown"]').forEach(button => {
+            const dropdownMenu = button.nextElementSibling;
+            if (!dropdownMenu || !dropdownMenu.classList.contains('dropdown-menu')) return;
+            
+            // Dropdown text is wrapped in a <span>
+            const textSpan = button.querySelector('span');
+            if (!textSpan) return;
+            
+            const defaultText = textSpan.textContent.trim();
+            
+            const updateCount = () => {
+                // Exclude the specific Check All switch class
+                const checkedCount = dropdownMenu.querySelectorAll('input[type="checkbox"]:not(.js-check-all):checked').length;
+                textSpan.textContent = checkedCount > 0 ? `${defaultText} (${checkedCount})` : defaultText;
+            };
+
+            dropdownMenu.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    setTimeout(updateCount, 0);
+                }
+            });
+            updateCount();
+        });
+    }
+
+    setupFilterCounts();
+});
 </script>
 <script src="/static/dynamic_form_rendering.js"></script>
 {% endblock %}
-
