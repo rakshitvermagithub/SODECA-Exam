@@ -63,6 +63,9 @@
         font-size: .875em;
         color: var(--bs-danger);
     }
+    .hiddencols{
+        display: None;
+    }
 </style>
 {% endblock %}
 
@@ -121,7 +124,7 @@
                                 
                                 <div class="row g-3">
                                 {% for field in form_to_show["fields"] %}
-                                    <div class="col-md-6 mb-3 position-relative">
+                                    <div class="col-md-6 mb-3 position-relative{% if field.field_hidden %} hiddencols{% endif %}">
                                         <label for="{{ field.field_name }}" class="form-label">{{ field.field_label }} {% if field.required %}<span class="text-danger">*</span>{% endif %}</label>
                                                                                                                         
                                         {% if field.field_type == 'radio' %}
@@ -425,6 +428,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidElement.focus();
             }
+        }
+    });
+    const category_achievement = document.getElementById('submission_category-achievement');
+    category_achievement.addEventListener('click', function() {
+        if (category_achievement.value === 'achievement') {
+            document.querySelectorAll('.hiddencols').forEach(element => {
+                element.style.display = 'block';
+            });
+        }
+    });
+    const category_participation = document.getElementById('submission_category-participation');
+    category_participation.addEventListener('click', function() {
+        if (category_participation.value === 'participation') {
+            document.querySelectorAll('.hiddencols').forEach(element => {
+                element.style.display = 'None';
+            });
         }
     });
 });

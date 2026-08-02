@@ -165,7 +165,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'field_hidden': True,
+                'required': False,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -178,7 +179,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -187,7 +189,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -201,7 +204,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -210,14 +214,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -318,7 +324,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -331,7 +338,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -340,7 +348,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -354,7 +363,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -363,14 +373,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -534,7 +546,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -547,7 +560,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -556,7 +570,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -570,7 +585,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -579,14 +595,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -715,7 +733,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -728,7 +747,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -737,7 +757,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -751,7 +772,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -760,14 +782,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -890,7 +914,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -903,7 +928,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -912,7 +938,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -926,7 +953,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -935,14 +963,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1181,6 +1211,16 @@ FORM_DEFINITIONS = {
                 'field_validation': { 'max_length': 500 }
             },
             {
+                'field_label': ' Participation/ Achievement',
+                'field_type': 'radio',
+                'field_name': 'submission_category',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
@@ -1361,7 +1401,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1374,7 +1415,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -1383,7 +1425,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1397,7 +1440,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'field_hidden': True,
+                'required': False,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1406,14 +1450,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1513,7 +1559,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1526,7 +1573,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -1535,7 +1583,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1549,7 +1598,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1558,14 +1608,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1678,7 +1730,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1691,7 +1744,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -1700,7 +1754,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1714,7 +1769,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1723,14 +1779,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1810,7 +1868,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'radio',
                 'field_name': 'position',
-                'required': True,
+                'field_hidden': True,
+                'required': False,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1823,7 +1882,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -1832,7 +1892,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'radio',
                 'field_name': 'award_type',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1846,7 +1907,8 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1855,14 +1917,16 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': True,
+                'required': False,
+                'field_hidden': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1922,7 +1986,11 @@ for form in form_name_list:
             field_col_name = field_col["field_name"]
 
             # Defining form fields with dataype TEXT and is REQUIRED
-            col_def = f"{field_col_name} TEXT NOT NULL"
+            try:
+                if field_col["field_hidden"]:
+                    col_def = f"{field_col_name} TEXT NOT NULL DEFAULT 'NA'"
+            except KeyError:
+                col_def = f"{field_col_name} TEXT NOT NULL"
             col_def_list.append(col_def)
 
         # SQL string
@@ -2998,23 +3066,24 @@ def fill_form():
 
             # If input field is a date
             if field_type == "date":
-                date_string = request.form.get(field_name)
+                if request.form.get(field_name):
+                    date_string = request.form.get(field_name)
 
-                try:
-                    # Parse the date string into a datetime object
-                    date_object = datetime.strptime(date_string, '%Y-%m-%d').date()
+                    try:
+                        # Parse the date string into a datetime object
+                        date_object = datetime.strptime(date_string, '%Y-%m-%d').date()
 
-                    if field_name == "to_date":
-                        to_date = date_object
-                    if field_name == "from_date":
-                        from_date = date_object
+                        if field_name == "to_date":
+                            to_date = date_object
+                        if field_name == "from_date":
+                            from_date = date_object
 
-                    # After succesful parsing only, Append in form_inputs
-                    form_inputs[field_name] = date_string
+                        # After succesful parsing only, Append in form_inputs
+                        form_inputs[field_name] = date_string
 
-                except ValueError:
-                    flash("Invalid date format submitted.")
-                    return redirect(request.url)
+                    except ValueError:
+                        flash("Invalid date format submitted.")
+                        return redirect(request.url)
 
             elif field_type == "file":
 
@@ -3071,7 +3140,8 @@ def fill_form():
             # Text and Radio inputs
             else:
                 # Update form_inputs dict
-                form_inputs[field_name] = request.form.get(field_name)
+                if request.form.get(field_name):
+                    form_inputs[field_name] = request.form.get(field_name)
                 # TODO: Error Handling
 
             # If any required input is missing
@@ -3081,7 +3151,10 @@ def fill_form():
                 return redirect(request.url)
 
             # Debugging
-            print(f"{field_title}: {form_inputs[field_name]}")
+            try:
+                print(f"{field_title}: {form_inputs[field_name]}")
+            except KeyError:
+                print(f"{field_title}: Not a Required Key")
 
         # Error checking using "date_object"
         if from_date and to_date:
