@@ -1979,6 +1979,7 @@ form_name_list = list(FORM_DEFINITIONS.keys())
 # Create tables for all the forms in FORM_DEFINITIONS
 for form in form_name_list:
     # Check if table named the form exists
+    # db.execute(f"DROP TABLE {form}")
     table_exists = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", form)
 
     # If not exists
@@ -4377,7 +4378,7 @@ def batch_management():
     drive_settings = row[0] if row else {}
 
     batch_rows = []
-    if (drive_settings):
+    if drive_settings:
         batch_rows = db.execute("SELECT * FROM batch_structure WHERE academic_session = ? AND academic_term = ?",
         drive_settings['academic_session'], drive_settings['academic_term'])
 
