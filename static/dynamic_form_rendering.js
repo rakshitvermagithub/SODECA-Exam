@@ -144,77 +144,93 @@ let myPieChart;
 Chart.register(ChartDataLabels);
 
 function updateChart() {
-    let dataChart = [];
-    let labelsChart = [];
+    let dataChart = new Map();
+    const myData = JSON.parse(document.getElementById('filtered-data').textContent);
+    myData.forEach((row) => {
+       if (!dataChart.get(row['category'])) dataChart.set(row['category'], 1);
+       else dataChart.set(row['category'], dataChart.get(row['category']) + 1);
+    });
+    console.log(dataChart);
 
-    fetch('/visual_report', {
-        method: 'POST',
-        headers: {
-            'Content-type': 'application/json',
-        }
-    })
-    .then(response=>response.json())
-    .then(responseData => {
-        dataChart = responseData.chartData;
-        labelsChart = responseData.labelData;
-        const ctx = document.getElementById('categoryPieChart').getContext('2d');
-        Chart.register(ChartDataLabels);
+    const ctx = document.getElementById('categoryPieChart').getContext('2d');
 
-        console.log("Chart Labels values are: ", labelsChart);
-        console.log("Chart data values are: ", dataChart);
-        myPieChart = new Chart(ctx, {
-            type: 'pie', // Changed to standard Pie chart
-            data: {
-                labels: labelsChart,
-                datasets: [{
-                    data: dataChart, // Dummy percentages
-                    backgroundColor: [
-                        'rgba(44, 127, 184, 0.7)', // Primary blue
-                        '#3498db', // Light blue
-                        '#2ecc71', // Green
-                        '#f1c40f', // Yellow
-                        '#e74c3c', // Red
-                        'rgba(255, 152, 150, 0.7)',
-                        'rgba(158, 218, 229, 0.7)',
-                        'rgba(140, 86, 75, 0.7)',
-                        'rgba(247, 182, 210, 0.7)',
-                        'rgba(255, 215, 0, 0.7)'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff',
-                    hoverOffset: 4,
-                    datalabels: {
-                        color: 'black',
-                    }
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
+    myPieChart = new Chart(ctx, {
+        type: 'pie', // Changed to standard Pie chart
+        data: {
+            labels: [...dataChart.keys()],
+            datasets: [{
+                data: [...dataChart.values()], // Dummy percentages
+                backgroundColor: [
+                    'rgba(44, 127, 184, 0.7)', // Primary blue
+                    '#3498db', // Light blue
+                    '#2ecc71', // Green
+                    '#f1c40f', // Yellow
+                    '#e74c3c', // Red
+                    'rgba(255, 152, 150, 0.7)',
+                    'rgba(158, 218, 229, 0.7)',
+                    'rgba(140, 86, 75, 0.7)',
+                    'rgba(247, 182, 210, 0.7)',
+                    'rgba(255, 215, 0, 0.7)'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
             plugins: {
-                    legend: {
-                        position: 'top', // Moves it to the right side of the pie
-                        labels: {
-                            font: {
-                                family: "'Poppins', sans-serif",
-                                size: 11 // Reduced from 13 for smaller text
-                            },
-                            color: '#1a1a1a',
-                            padding: 12, // Reduced padding to tighten the list
-                            boxWidth: 12 // Makes the colored squares smaller
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return ' ' + context.label + ': ' + context.raw + '%';
-                            }
+                legend: {
+                    position: 'top', // Moves it to the right side of the pie
+                    labels: {
+                        font: {
+                            family: "'Poppins', sans-serif",
+                            size: 11 // Reduced from 13 for smaller text
+                        },
+                        color: '#1a1a1a',
+                        padding: 12, // Reduced padding to tighten the list
+                        boxWidth: 12 // Makes the colored squares smaller
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return ' ' + context.label + ': ' + context.raw + '%';
                         }
                     }
+                },
+                datalabels: {
+                    formatter: (value, context) => {
+                        return value;
+                    },
+                    color: '#444', // Color of the text on the chart
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    anchor: 'center', // Position: 'start', 'center', or 'end'
+                    align: 'center'
                 }
-                // cutout property removed so it fills the center
             }
-        });
-    })
-    .catch(error => console.error('Error during fetching data: ', error));
+            // cutout property removed so it fills the center
+        }
+    });
+
+    // fetch('/visual_report', {
+    //     method: 'POST',
+    //     headers: {
+    //         'Content-type': 'application/json',
+    //     }
+    // })
+    // .then(response=>response.json())
+    // .then(responseData => {
+    //     dataChart = responseData.chartData;
+    //     labelsChart = responseData.labelData;
+    //
+    //     console.log("Chart Labels values are: ", labelsChart);
+    //     console.log("Chart data values are: ", dataChart);
+    //
+    // })
+    // .catch(error => console.error('Error during fetching data: ', error));
 }

@@ -232,10 +232,17 @@
                                 </div>
 
                                 <!-- Submit Button -->
-                                <div class="col-auto" style="min-width:130px;">
-                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
-                                        <i class="bi bi-funnel-fill me-1"></i> Apply Filter
-                                    </button>
+                                <div class="d-flex justify-content-start">
+                                    <div class="m-2">
+                                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                                            <i class="bi bi-funnel-fill me-1"></i> Apply Filter
+                                        </button>
+                                    </div>
+                                    <div class="m-2">
+                                        <button type="button" class="btn btn-secondary btn-sm w-100 fw-bold" onclick="window.location.reload()">
+                                            <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                                        </button>
+                                    </div>
                                 </div>
 
                             </div>
@@ -621,6 +628,9 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<script id="filtered-data" type="application/json">
+  {{ filtered_data|tojson }}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof updateChart === 'function') {
