@@ -227,7 +227,7 @@
                                 <td>{{ faculty["contact"] }}</td>
                                 <td>
                                     {% if faculty.branch and faculty.semester and faculty.section %}
-                                        {{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}
+                                        {{ faculty["semester"] }}{{ faculty["branch"] }}-{{ faculty["section"] }}
                                     {% else %}
                                         <span class="text-muted">&mdash;</span>
                                     {% endif %}
@@ -242,11 +242,6 @@
                                             data-bs-contact="{{ faculty['contact'] }}">
                                             <i class="bi bi-pencil-fill"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
-                                            data-bs-email="{{ faculty['college_email'] }}"
-                                            data-bs-fullname="{{ faculty['full_name'] }}">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
                                         {% if faculty.branch and faculty.semester and faculty.section %}
                                         <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
                                             <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
@@ -255,6 +250,11 @@
                                             </button>
                                         </form>
                                         {% endif %}
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -331,8 +331,9 @@
                              <div class="form-floating">
                                 <select class="form-select" id="section" name="section_option" required>
                                     <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                    {% for batch in batch_list %}
-                                    <option value="{{batch}}" {% if details and details.batch == batch %}selected{% endif %}>{{batch}}</option>
+                                    {% for section_dict in sections %}
+                                    {% set section = section_dict["section"] %}
+                                    <option value="{{ section }}" {% if details and details.batch == batch %}selected{% endif %}>{{ section }}</option>
                                     {% endfor %}
                                 </select>
                                 <label>Section</label>
