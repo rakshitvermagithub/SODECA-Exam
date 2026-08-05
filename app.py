@@ -2043,7 +2043,7 @@ db.execute("""
     auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT,
     first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, role TEXT NOT NULL DEFAULT 'student'
-    CHECK (role IN ('student', 'faculty', 'admin', 'tester', 'dev')))
+    CHECK (role IN ('student', 'faculty', 'coordinator', 'admin')))
 """)
 # Initialise table to store student details
 db.execute("""
@@ -3882,8 +3882,8 @@ def super_admin():
         return render_template("super_admin.html")
     return "Access Denied!"
 
-@app.route("/faculty_list", methods=["GET", "POST"])
-def faculty_list():
+@app.route("/faculty_management", methods=["GET", "POST"])
+def faculty_management():
 
     if request.method == "POST":
         # Add/Update request
@@ -3950,11 +3950,11 @@ def faculty_list():
             flash(f"Error updating: {e}", "danger")
             print(f"Error updating faculty list: {e}")
 
-        return redirect(url_for('faculty_list'))
+        return redirect(url_for('faculty_management.html'))
     
     else:
         faculty_data = db.execute("SELECT * FROM faculty_details")
-        return render_template("faculty_list.html", faculty_data=faculty_data)
+        return render_template("faculty_management.html", faculty_data=faculty_data)
 
 @app.route("/delete_user/<pk>", methods=["POST"])
 def delete_user(pk):
@@ -4151,6 +4151,11 @@ def discharge_faculty():
         print(f"Error at updating faculty emails: {e}")
 
     return redirect(url_for("assign_batch"))
+
+@app.route("/add_sodeca_coordinator", methods=["GET", "POST"])
+def add_sodeca_coordinator():
+    return redirect(url_for("faculty_list"))
+
 
 def get_sem_options(academic_session=None, academic_term=None):
     query = "SELECT DISTINCT sem FROM batch_structure"
