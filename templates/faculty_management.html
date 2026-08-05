@@ -160,7 +160,7 @@
                                 <th scope="col">Designation</th>
                                 <th scope="col">Department</th>
                                 <th scope="col">Contact</th>
-                                <th scope="col">Operation</th>
+                                <th scope="col" style="width: 150px;">Operation</th>
                                 <th scope="col" style="width: 180px;">Assigned Batch</th>
                             </tr>
                         </thead>
@@ -186,17 +186,17 @@
                                             data-bs-contact="{{ faculty['contact'] }}">
                                             <i class="bi bi-pencil-fill"></i>
                                         </button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
                                         <form action="{{ url_for('discharge_coordinator') }}" method="post" class="d-inline">
                                             <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
                                             <button class="btn btn-outline-dark" type="submit" title="Remove SODECA Coordinator role">
                                                 <i class="bi bi-person-dash-fill"></i>
                                             </button>
                                         </form>
-                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
-                                            data-bs-email="{{ faculty['college_email'] }}"
-                                            data-bs-fullname="{{ faculty['full_name'] }}">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
                                     </div>
                                 </td>
                                 <td>
@@ -228,14 +228,11 @@
                                             data-bs-fullname="{{ faculty['full_name'] }}">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
-                                        {% if faculty.branch and faculty.semester and faculty.section %}
-                                        
-                                        {% endif %}
                                     </div>
                                 </td>
                                 <td>
                                     {% if faculty.branch and faculty.semester and faculty.section %}
-                                        <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
+                                        <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
                                         <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
                                             <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
                                             <button class="btn btn-sm rounded-circle btn-outline-danger" type="submit" title="Discharge from batch">
