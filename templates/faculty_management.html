@@ -9,7 +9,7 @@
     :root {
         --admin-navy: #1e293b;
         --admin-navy-light: #334155;
-        --admin-accent: #0284c7;
+        --admin-accent: #0385c7;
         --admin-border: #e2e8f0;
         --admin-bg-light: #f8fafc;
         --admin-text-dark: #0f172a;
@@ -160,12 +160,12 @@
                                 <th scope="col">Designation</th>
                                 <th scope="col">Department</th>
                                 <th scope="col">Contact</th>
-                                <th scope="col">Assigned Batch</th>
-                                <th scope="col" style="width: 190px;">Operation</th>
+                                <th scope="col">Operation</th>
+                                <th scope="col" style="width: 180px;">Assigned Batch</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for faculty in faculty_data if faculty.is_sodeca_coordinator %}
+                            {% for faculty in faculty_data if faculty.is_coordinator %}
                             <tr class="coordinator-row">
                                 <td>{{ loop.index }}</td>
                                 <td>
@@ -177,13 +177,6 @@
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
                                 <td>
-                                    {% if faculty.branch and faculty.semester and faculty.section %}
-                                        {{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}
-                                    {% else %}
-                                        <span class="text-muted">&mdash;</span>
-                                    {% endif %}
-                                </td>
-                                <td>
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
                                             data-bs-email="{{ faculty['college_email'] }}"
@@ -193,31 +186,26 @@
                                             data-bs-contact="{{ faculty['contact'] }}">
                                             <i class="bi bi-pencil-fill"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
-                                            data-bs-email="{{ faculty['college_email'] }}"
-                                            data-bs-fullname="{{ faculty['full_name'] }}">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
-                                        {% if faculty.branch and faculty.semester and faculty.section %}
-                                        <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
-                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
-                                            <button class="btn btn-outline-warning" type="submit" title="Discharge from batch">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        </form>
-                                        {% endif %}
-                                        <form action="{{ url_for('discharge_sodeca_coordinator') }}" method="post" class="d-inline">
+                                        <form action="{{ url_for('discharge_coordinator') }}" method="post" class="d-inline">
                                             <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
                                             <button class="btn btn-outline-dark" type="submit" title="Remove SODECA Coordinator role">
                                                 <i class="bi bi-person-dash-fill"></i>
                                             </button>
                                         </form>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
                                     </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted">&mdash;</span>
                                 </td>
                             </tr>
                             {% endfor %}
 
-                            {% for faculty in faculty_data if not faculty.is_sodeca_coordinator %}
+                            {% for faculty in faculty_data if not faculty.is_coordinator%}
                             <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>{{ faculty["full_name"] }}</td>
@@ -226,13 +214,6 @@
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
                                 <td>
-                                    {% if faculty.branch and faculty.semester and faculty.section %}
-                                        {{ faculty["semester"] }}{{ faculty["branch"] }}-{{ faculty["section"] }}
-                                    {% else %}
-                                        <span class="text-muted">&mdash;</span>
-                                    {% endif %}
-                                </td>
-                                <td>
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
                                             data-bs-email="{{ faculty['college_email'] }}"
@@ -242,20 +223,28 @@
                                             data-bs-contact="{{ faculty['contact'] }}">
                                             <i class="bi bi-pencil-fill"></i>
                                         </button>
-                                        {% if faculty.branch and faculty.semester and faculty.section %}
-                                        <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
-                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
-                                            <button class="btn btn-outline-warning" type="submit" title="Discharge from batch">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        </form>
-                                        {% endif %}
                                         <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
                                             data-bs-email="{{ faculty['college_email'] }}"
                                             data-bs-fullname="{{ faculty['full_name'] }}">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
+                                        {% if faculty.branch and faculty.semester and faculty.section %}
+                                        
+                                        {% endif %}
                                     </div>
+                                </td>
+                                <td>
+                                    {% if faculty.branch and faculty.semester and faculty.section %}
+                                        <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
+                                        <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
+                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
+                                            <button class="btn btn-sm rounded-circle btn-outline-danger" type="submit" title="Discharge from batch">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted">&mdash;</span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -358,7 +347,7 @@
                 <h1 class="modal-title fs-5" id="addCoordinatorModalLabel">Add SODECA Coordinator</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ url_for('add_sodeca_coordinator') }}" method="post">
+            <form action="{{ url_for('add_coordinator') }}" method="post">
                 <div class="modal-body p-4">
                     <div class="form-floating">
                         <select class="form-select" name="college_email" id="coordinatorEmail" required>

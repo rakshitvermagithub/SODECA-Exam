@@ -2058,6 +2058,7 @@ db.execute("""
     faculty_user_id INTEGER UNIQUE, full_name TEXT NOT NULL, designation TEXT NOT NULL,
     department TEXT NOT NULL, semester INTEGER, branch TEXT, section TEXT, 
     contact TEXT NOT NULL DEFAULT 'to be updated',
+    is_coordinator INTEGER DEFAULT 0,
     FOREIGN KEY (faculty_user_id) REFERENCES users(user_id))
     """)
 
@@ -4034,13 +4035,16 @@ def faculty_management():
         semester = get_sem_options([curr_academic_session], [curr_academic_term])
         branches = get_branch_options([curr_academic_session], [curr_academic_term])
         sections = get_section_options([curr_academic_session], [curr_academic_term])
+
+        coordinator_list = db.execute("SELECT * FROM faculty_details WHERE is_coordinator=1")
         
         faculty_data = db.execute("SELECT * FROM faculty_details")
         return render_template("faculty_management.html", 
         faculty_data=faculty_data,
         semester=semester,
         branches=branches,
-        sections=sections
+        sections=sections,
+        coordinator_list=coordinator_list
         )
 
 @app.route("/delete_user/<pk>", methods=["POST"])
@@ -4218,35 +4222,36 @@ def discharge_faculty():
 
     return redirect(url_for("faculty_management"))
 
-@app.route("/add_sodeca_coordinator", methods=["GET", "POST"])
-def add_sodeca_coordinator():
+@app.route("/add_coordinator", methods=["POST"])
+def add_coordinator():
+    try:
+        to_be_coordinator_email = request.form.get("college_email")
+
+        db.execute("UPDATE users SET role='coordinator' WHERE email=?", to_be_coordinator_email)
+        db.execute("UPDATE faculty_details SET is_coordinator=1 WHERE college_email=?", to_be_coordinator_email)
+
+        flash(f"Assigned {to_be_coordinator_email} as SODECA Coordinator", "success")
+
+    except Exception as e:
+        print(f"Database Error: {e}")
+        flash("Database Error", "danger")
     return redirect(url_for("faculty_management"))
-    query = "SELECT DISTINCT section FROM batch_structure"
-    conditions = []
-    
-    if academic_session:
-        sessions = ", ".join(f"'{s}'" for s in academic_session)
-        conditions.append(f"academic_session IN ({sessions})")
 
-    if academic_term:
-        terms = ", ".join(f"'{t}'" for t in academic_term)
-        conditions.append(f"academic_term IN ({terms})")
+@app.route("/discharge_coordinator", methods=["GET", "POST"])
+def discharge_coordinator():
+    try:
+        to_be_discharged = request.form.get("college_email")
 
-    if semester:
-        semesters = ", ".join(f"'{sem}'" for sem in semester)
-        conditions.append(f"sem IN ({semesters})")
+        db.execute("UPDATE users SET role='faculty' WHERE email=?", to_be_discharged)
+        db.execute("UPDATE faculty_details SET is_coordinator=0 WHERE college_email=?", to_be_discharged)
 
-    if branch:
-        branches = ", ".join(f"'{b}'" for b in branch)
-        conditions.append(f"branch IN ({branches})")
+        flash(f"Dischared {to_be_discharged} as SODECA Coordinator", "success")
 
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+    except Exception as e:
+        print(f"Database Error: {e}")
+        flash("Database Error", "danger")
 
-    query += " ORDER BY section"
-
-    print(query)
-    return db.execute(query)
+    return redirect(url_for("faculty_management"))
 
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
