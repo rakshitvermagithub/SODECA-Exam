@@ -131,7 +131,7 @@
 
         <div class="row justify-content-center g-5">
             <div class="col-12 col-xl-3 mt-4 mt-xl-5 d-flex flex-wrap align-items-start justify-content-center">
-                <div class="chart-container border border-secondary-subtle py-3" style="background-color: #f8f9fa; border-radius: 10px;">
+                <div class="chart-container border border-secondary-subtle py-3" style="background-color: #f8f9fa; border-radius: 10px;" id="chart-container">
                     <canvas id="categoryPieChart"></canvas>
                 </div>
             </div>
@@ -140,284 +140,223 @@
                 <!-- Filter Bar Above Table -->
                 <div class="card mb-4 bg-light border border-secondary-subtle py-2">
                     <div class="card-body p-2 rounded-3">
-                        <form id="globalFilterForm" action="{{ url_for('student_report') }}" method="POST">
-                            <div class="row g-2 align-items-end flex-wrap">
-                                
-                                <!-- 1. Form (modal) -->
-                                <div class="col-auto" style="min-width:120px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Form Category</label>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#formModal">
-                                        Select Form
+                        <div class="row g-2 align-items-end flex-wrap">
+
+                            <!-- 1. Academic Session (modal) -->
+                            <div class="col-auto" style="min-width:120px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Session</label>
+                                <div class="dropdown">
+                                    <button type="button" id="session_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        Select...
                                     </button>
-                                </div>
-
-                                <!-- 2. Academic Session (modal) -->
-                                <div class="col-auto" style="min-width:120px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Session</label>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sessionModal">
-                                        Select Session
-                                    </button>
-                                </div>
-
-                                <!-- 3. Academic Term (dropdown) -->
-                                <div class="col-auto" style="min-width:100px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Term</label>
-                                    <div class="dropdown">
-                                        <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                            <span>Select Term</span>
-                                        </button>
-                                        <ul class="dropdown-menu p-2 shadow-sm">
-                                            <li>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="Odd" id="termOdd">
-                                                    <label class="form-check-label small" for="termOdd">Odd</label>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="academic_terms[]" value="Even" id="termEven">
-                                                    <label class="form-check-label small" for="termEven">Even</label>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                <!-- 4. Semester (modal) -->
-                                <div class="col-auto" style="min-width:120px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Semester</label>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#semesterModal">
-                                        Select Sem
-                                    </button>
-                                </div>
-
-                                <!-- 5. Branch (modal) -->
-                                <div class="col-auto" style="min-width:120px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Branch</label>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#branchModal">
-                                        Select Branch
-                                    </button>
-                                </div>
-
-                                <!-- 6. Section (modal) -->
-                                <div class="col-auto" style="min-width:120px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Section</label>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sectionModal">
-                                        Select Section
-                                    </button>
-                                </div>
-
-                                <!-- 7. Participation / Achievement (dropdown) -->
-                                <div class="col-auto" style="min-width:170px;">
-                                    <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation/Achievement</label>
-                                    <div class="dropdown">
-                                        <button class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                            <span>Select Type</span>
-                                        </button>
-                                        <ul class="dropdown-menu p-2 shadow-sm">
-                                            <li>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="submission_categories[]" value="participation" id="typePart">
-                                                    <label class="form-check-label small" for="typePart">Participation</label>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="submission_categories[]" value="achievement" id="typeAch">
-                                                    <label class="form-check-label small" for="typeAch">Achievement</label>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                <!-- Submit Button -->
-                                <div class="d-flex justify-content-start">
-                                    <div class="m-2">
-                                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
-                                            <i class="bi bi-funnel-fill me-1"></i> Apply Filter
-                                        </button>
-                                    </div>
-                                    <div class="m-2">
-                                        <button type="button" class="btn btn-secondary btn-sm w-100 fw-bold" onclick="window.location.reload()">
-                                            <i class="bi bi-arrow-clockwise me-1"></i> Reset
-                                        </button>
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <!-- ================= DEDICATED FILTER MODALS ================= -->
-
-                            <!-- 1. Form Name Modal -->
-                            <div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-md">
-                                    <div class="modal-content">
-                                        <div class="modal-header py-2 bg-light">
-                                            <h6 class="modal-title fw-bold">Select Form Types</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_formModal" data-target-name="forms[]">
-                                                <label class="form-check-label small" for="checkAll_formModal">Check All</label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-body p-3">
-                                            <div class="row row-cols-1 row-cols-md-2 g-2">
-                                                {% for key, value in form_dict.items() %}
-                                                <div class="col">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
-                                                        <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
-                                                    </div>
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer py-1">
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 2. Academic Session Modal -->
-                            <div class="modal fade" id="sessionModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content">
-                                        <div class="modal-header py-2 bg-light">
-                                            <h6 class="modal-title fw-bold">Academic Session</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_sessionModal" data-target-name="academic_sessions[]">
-                                                <label class="form-check-label small" for="checkAll_sessionModal">Check All</label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-body p-3">
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="session_dropdown">
+                                        <li>
                                             {% if academic_session_list %}
-                                            {% for academic_session in academic_session_list %}
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="academic_sessions[]" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}">
-                                                <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
-                                            </div>
-                                            {% endfor %}
-                                            {% endif %}
-                                        </div>
-                                        <div class="modal-footer py-1">
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 4. Semester Modal -->
-                            <div class="modal fade" id="semesterModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content">
-                                        <div class="modal-header py-2 bg-light">
-                                            <h6 class="modal-title fw-bold">Select Semesters</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_semesterModal" data-target-name="semesters[]">
-                                                <label class="form-check-label small" for="checkAll_semesterModal">Check All</label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-body p-3">
-                                            <div class="row row-cols-2 g-2">
-                                                {% if sem_options_list %}
-                                                {% for options in sem_options_list %}
-                                                {% set sem = options['sem'] %}
-                                                <div class="col">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ sem }}" id="{{ sem }}">
-                                                        <label class="form-check-label" for="{{ sem }}">{{ sem }}</label>
+                                                {% for academic_session in academic_session_list %}
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="radio" name="academic_sessions" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}" {% if academic_session['academic_session'] == current_session %}checked{% endif %}>
+                                                        <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
                                                     </div>
-                                                </div>
                                                 {% endfor %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer py-1">
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
-                                        </div>
-                                    </div>
+                                            {% endif %}
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
 
-                            <!-- 5. Branch Modal -->
-                            <div class="modal fade" id="branchModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content">
-                                        <div class="modal-header py-2 bg-light">
-                                            <h6 class="modal-title fw-bold">Select Branches</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_branchModal" data-target-name="branches[]">
-                                                <label class="form-check-label small" for="checkAll_branchModal">Check All</label>
+                            <!-- 2. Form (modal) -->
+                            <div class="col-auto" style="min-width:120px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block" for="form_type">Form Category</label>
+                                <div class="dropdown">
+                                    <button type="button" id="form_type_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        Select...
+                                    </button>
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="form_dropdown">
+                                        <li>
+                                            {% for key, value in form_dict.items() %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
+                                                    <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
+                                                </div>
+                                            {% endfor %}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 3. Academic Term (dropdown) -->
+                            <div class="col-auto" style="min-width:100px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Even/Odd</label>
+                                <div class="dropdown">
+                                    <button id="even_odd_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        <span>Select...</span>
+                                    </button>
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="even_odd">
+                                        <li>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="academic_terms" value="Odd" id="termOdd">
+                                                <label class="form-check-label small" for="termOdd">Odd</label>
                                             </div>
-                                        </div>
-                                        <div class="modal-body p-3">
+                                        </li>
+                                        <li>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="academic_terms" value="Even" id="termEven">
+                                                <label class="form-check-label small" for="termEven">Even</label>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 4. Semester (modal) -->
+                            <div class="col-auto" style="min-width:120px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Semester</label>
+                                <div class="dropdown">
+                                    <button type="button" id="semester_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        Select...
+                                    </button>
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="semester_dropdown">
+                                        <li>
+                                            <div class="col">
+                                                <div class="odd_sem form-check">
+                                                    <input class="form-check-input" type="checkbox" name="semesters[]" value="1" id="odd_1">
+                                                    <label class="form-check-label" for="odd_1"> 1</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="even_sem form-check">
+                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="2" id="even_2">
+                                                    <label class="form-check-label" for="even_2"> 2</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="odd_sem form-check">
+                                                    <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="3" id="odd_3">
+                                                    <label class="form-check-label" for="odd_3"> 3</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="even_sem form-check">
+                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="4" id="even_4">
+                                                    <label class="form-check-label" for="even_4"> 4</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="odd_sem form-check">
+                                                    <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="5" id="odd_5">
+                                                    <label class="form-check-label" for="odd_5"> 5</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="even_sem form-check">
+                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="6" id="even_6">
+                                                    <label class="form-check-label" for="even_6"> 6</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="odd_sem form-check">
+                                                    <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="7" id="odd_7">
+                                                    <label class="form-check-label" for="odd_7"> 7</label>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="even_sem form-check">
+                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="8" id="even_8">
+                                                    <label class="form-check-label" for="even_8"> 8</label>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 5. Branch (modal) -->
+                            <div class="col-auto" style="min-width:120px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Branch</label>
+                                <div class="dropdown">
+                                    <button type="button" id="branch_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        Select...
+                                    </button>
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="branch_dropdown">
+                                        <li>
                                             {% if branch_options_list %}
-                                            {% for options in branch_options_list %}
-                                            {% set branch = options['branch'] %}
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
-                                                <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
-                                            </div>
-                                            {% endfor %}
-                                            {% endif %}
-                                        </div>
-                                        <div class="modal-footer py-1">
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 6. Section Modal -->
-                            <div class="modal fade" id="sectionModal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content">
-                                        <div class="modal-header py-2 bg-light">
-                                            <h6 class="modal-title fw-bold">Select Sections</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="px-3 pt-2 d-flex justify-content-end border-bottom pb-2">
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input js-check-all" type="checkbox" role="switch" id="checkAll_sectionModal" data-target-name="sections[]">
-                                                <label class="form-check-label small" for="checkAll_sectionModal">Check All</label>
-                                            </div>
-                                        </div>
-                                        <div class="modal-body p-3">
-                                            <div class="row row-cols-2 g-2">
-                                                {% if section_options_list %}
-                                                {% for options in section_options_list %}
-                                                {% set section = options['section'] %}
-                                                <div class="col">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="{{ section }}">
-                                                        <label class="form-check-label" for="{{ section }}">{{ section }}</label>
+                                                {% for options in branch_options_list %}
+                                                    {% set branch = options['branch'] %}
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
+                                                        <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
                                                     </div>
-                                                </div>
                                                 {% endfor %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer py-1">
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
-                                        </div>
-                                    </div>
+                                            {% endif %}
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
 
-                        </form>
+                            <!-- 6. Section (modal) -->
+                            <div class="col-auto" style="min-width:120px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Section/ Group</label>
+                                <div class="dropdown">
+                                    <button type="button" id="section_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        Select...
+                                    </button>
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="section_dropdown">
+                                        <li>
+                                            {% if section_options_list %}
+                                                {% for options in section_options_list %}
+                                                    {% set section = options['section'] %}
+                                                    <div class="col">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="{{ section }}">
+                                                            <label class="form-check-label" for="{{ section }}">{{ section }}</label>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 7. Participation / Achievement (dropdown) -->
+                            <div class="col-auto" style="min-width:170px;">
+                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation/Achievement</label>
+                                <div class="dropdown">
+                                    <button id="par_ach_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                        <span>Select...</span>
+                                    </button>
+                                    <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
+                                        <li>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="submission_categories" value="participation" id="typePart">
+                                                <label class="form-check-label small" for="typePart">Participation</label>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="submission_categories" value="achievement" id="typeAch">
+                                                <label class="form-check-label small" for="typeAch">Achievement</label>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-flex justify-content-start">
+                                <div class="m-2">
+                                    <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="fetchFilteredData()" id="apply_filter">
+                                        <i class="bi bi-funnel-fill me-1"></i> Apply Filter
+                                    </button>
+                                </div>
+                                <div class="m-2">
+                                    <button type="button" class="btn btn-secondary btn-sm w-100 fw-bold" onclick="window.location.href = '{{ url_for('student_report') }}'">
+                                        <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>                
                 <table id="report-table" class="display nowrap border">
@@ -438,7 +377,7 @@
                             <th>Withdrawn at</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
                         {% for data in filtered_data %}
                         {% set status = data['status'] %}
                         {% set file_drive_link = data['certificate']%}
@@ -628,13 +567,14 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-<script id="filtered-data" type="application/json">
-  {{ filtered_data|tojson }}
+<script id = "filtered-data" type="application/json">
+    {{ filtered_data|tojson }}
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof updateChart === 'function') {
-        updateChart();
+        const filtered_data = JSON.parse(document.getElementById('filtered-data').textContent);
+        updateChart(filtered_data);
     }
     
     // --- Check All (dedicated filter modals AND inline dropdowns) ---
@@ -863,9 +803,25 @@ document.addEventListener('DOMContentLoaded', function() {
             updateCount();
         });
     }
+    // Holding filter button for few seconds
+    const button = document.getElementById('apply_filter');
 
+    // Add a click event listener to the button
+    button.addEventListener('click', function() {
+        // 1. Instantly disable the button to prevent further clicks
+        button.disabled = true;
+        button.textContent = "Applying filters...";
+
+        // 2. Wait for 2000 milliseconds (2 seconds)
+        setTimeout(function() {
+          // 3. Revoke the restriction by enabling the button again
+          button.disabled = false;
+          button.textContent = "Apply Filter";
+        }, 1000);
+    });
     setupFilterCounts();
 });
 </script>
 <script src="/static/dynamic_form_rendering.js"></script>
+<script src="/static/filters.js"></script>
 {% endblock %}

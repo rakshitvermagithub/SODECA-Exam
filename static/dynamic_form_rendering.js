@@ -14,22 +14,14 @@ const loadingTableStructure = `
     </div>
 `;
 
-const noDataAvailableTableStructure = `
-    <div class="table-responsive pt-2" id="dynamic_table">
-        <table class = "table table-striped table-bordered display nowrap" id="empty_table">
-            <thead class = "table-dark">
-                    <tr>
-                        <th class="text-center">No Data Available</th>
-                    </tr>
-
-            </thead>
-            <tbody>
-                 <tr>
-                    <td class="text-center">No Data Available</td>
-                 </tr>
-            </tbody>
-        </table>
-    </div>
+const noDataAvailableTableStructure = `   
+     <tr>
+        <td class="noDataClass" style="width: 100%">
+            <div class="d-flex justify-content-center">
+                No Data Available
+            </div>
+        </td> 
+     </tr>   
 `
 
 new DataTable(`#tb_blood_donor`, {
@@ -143,16 +135,24 @@ function openTab(evt, containerId) {
 let myPieChart;
 Chart.register(ChartDataLabels);
 
-function updateChart() {
+function updateChart(filtered_data) {
     let dataChart = new Map();
-    const myData = JSON.parse(document.getElementById('filtered-data').textContent);
-    myData.forEach((row) => {
+    if (filtered_data.length === 0) {
+        document.getElementById('chart-container').innerHTML = `
+            <h5 class="text-center">No data Available</h5>
+        `;
+        return;
+    }
+    document.getElementById('chart-container').innerHTML = `
+        <canvas id="categoryPieChart"></canvas>
+    `;
+    filtered_data.forEach((row) => {
        if (!dataChart.get(row['category'])) dataChart.set(row['category'], 1);
        else dataChart.set(row['category'], dataChart.get(row['category']) + 1);
     });
-    console.log(dataChart);
 
     const ctx = document.getElementById('categoryPieChart').getContext('2d');
+    if(myPieChart) myPieChart.destroy();
 
     myPieChart = new Chart(ctx, {
         type: 'pie', // Changed to standard Pie chart
