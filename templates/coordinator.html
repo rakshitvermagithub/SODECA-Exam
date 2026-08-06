@@ -1,0 +1,218 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Super Admin Dashboard
+{% endblock %}
+
+{% block css %}
+<style>
+    /* Importing Inter and Roboto for a highly legible, clean, and professional aesthetic */
+    /* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap'); */
+
+    :root {
+        --admin-navy: #1e293b;
+        --admin-navy-light: #334155;
+        --admin-accent: #0284c7;
+        --admin-border: #e2e8f0;
+        --admin-bg-light: #f8fafc;
+        --admin-text-dark: #0f172a;
+        --admin-text-muted: #64748b;
+    }
+
+    .page-wrapper {
+        min-height: calc(100vh - 140px);
+        background-color: #f1f5f9;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        /* font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased; */
+    }
+
+    .form-title-admin {
+        font-weight: 700;
+        color: var(--admin-navy);
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+        font-size: 1.75rem;
+    }
+
+    /* Main Container Card */
+    .card-dashboard {
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 0.5rem;
+        background: white;
+        overflow: hidden;
+    }
+
+    /* Inner Functionality Cards (Grid Boxes) */
+    .func-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 1.75rem;
+        background-color: white;
+        border: 1px solid var(--admin-border);
+        border-radius: 0.375rem;
+        text-decoration: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--admin-text-dark);
+        position: relative;
+    }
+
+    .func-card:hover {
+        background-color: var(--admin-bg-light);
+        border-color: var(--admin-navy-light);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+        color: var(--admin-navy);
+    }
+
+    .func-icon {
+        width: 44px;
+        height: 44px;
+        background-color: var(--admin-bg-light);
+        border: 1px solid var(--admin-border);
+        border-radius: 0.375rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--admin-navy-light);
+        margin-bottom: 1.25rem;
+        transition: all 0.2s;
+    }
+    
+    .func-card:hover .func-icon {
+        background-color: var(--admin-navy);
+        border-color: var(--admin-navy);
+        color: white;
+    }
+
+    .func-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.01em;
+    }
+
+    .func-desc {
+        font-size: 0.875rem;
+        color: var(--admin-text-muted);
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+
+    .func-arrow {
+        position: absolute;
+        bottom: 1.75rem;
+        right: 1.75rem;
+        opacity: 0.4;
+        transition: all 0.2s;
+        font-size: 1.1rem;
+        color: var(--admin-text-muted);
+    }
+
+    .func-card:hover .func-arrow {
+        opacity: 1;
+        transform: translateX(4px);
+        color: var(--admin-navy);
+    }
+
+    /* System Settings Area */
+    .system-settings-area {
+        background-color: var(--admin-bg-light);
+        border-top: 1px solid var(--admin-border);
+        padding: 1.5rem 2rem;
+    }
+    
+    .btn-system {
+        font-size: 0.85rem;
+        font-weight: 500;
+        border-radius: 0.375rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--admin-border);
+        background: white;
+        color: var(--admin-navy-light);
+        transition: all 0.15s;
+    }
+    .btn-system:hover {
+        background-color: var(--admin-navy);
+        color: white;
+        border-color: var(--admin-navy);
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+<div class="page-wrapper">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h2 class="form-title-admin">Admin Dashboard</h2>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10">
+                <div class="card card-dashboard">
+                    <div class="card-body p-4 p-md-5">
+                        
+                        <!-- The 4-Box Grid -->
+                        <div class="row row-cols-1 row-cols-md-2 g-4">
+                            
+                            <!-- 1. SODECA Reports -->
+                            <div class="col">
+                                <a href="{{ url_for('student_report')}}" class="func-card">
+                                    <div class="func-icon">
+                                        <i class="bi bi-file-earmark-bar-graph"></i>
+                                    </div>
+                                    <div class="func-title">SODECA Reports</div>
+                                    <p class="func-desc">Generate, filter, and export comprehensive SODECA activity reports for all students.</p>
+                                    <i class="bi bi-arrow-right func-arrow"></i>
+                                </a>
+                            </div>
+
+                            <!-- 2. Faculty Management -->
+                            <div class="col">
+                                <a href="{{ url_for('faculty_management') }}" class="func-card">
+                                    <div class="func-icon">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <div class="func-title">Faculty Management</div>
+                                    <p class="func-desc">Assign a batch to or discharge a batch from a faculty member.</p>
+                                    <i class="bi bi-arrow-right func-arrow"></i>
+                                </a>
+                            </div>
+
+                            <!-- 3. Student Management -->
+                            <div class="col">
+                                <a href="{{ url_for('student_management_page') }}" class="func-card">
+                                    <div class="func-icon">
+                                        <i class="bi bi-person-lines-fill"></i>
+                                    </div>
+                                    <div class="func-title">Student Management</div>
+                                    <p class="func-desc">Add students to authorize thier email to access the portal.</p>
+                                    <i class="bi bi-arrow-right func-arrow"></i>
+                                </a>
+                            </div>
+
+                            <!-- 4. Batch Management -->
+                            <div class="col">
+                                <a href="{{ url_for('batch_management')}}" class="func-card">
+                                    <div class="func-icon">
+                                        <i class="bi bi-layers"></i>
+                                    </div>
+                                    <div class="func-title">Batch & Drive Management</div>
+                                    <p class="func-desc">Generate the Batch structure and Drive folders for this SODECA term.</p>
+                                    <i class="bi bi-arrow-right func-arrow"></i>
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
+{% endblock %}

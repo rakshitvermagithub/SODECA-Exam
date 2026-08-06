@@ -3944,6 +3944,14 @@ def get_section_options(academic_session=None, academic_term=None, semester=None
     print(query)
     return db.execute(query)
 
+@app.route("/coordinator", methods=["GET"])
+@login_required
+def coordinator():
+    if session.get("user_role") != "coordinator":
+        abort(404)
+
+    return render_template("coordinator.html")
+
 @app.route("/super_admin", methods=["GET"])
 @login_required
 def super_admin():
