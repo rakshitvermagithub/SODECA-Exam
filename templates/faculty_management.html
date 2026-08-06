@@ -683,11 +683,6 @@ document.addEventListener('DOMContentLoaded', function () {
             fullNameInput.value = correspondingName || '';
         });
     }
-
-    {% if show_modal %}
-        var myModal = new bootstrap.Modal(document.getElementById('assignmentModal'));
-        myModal.show();
-    {% endif %}
 });
 </script>
 {% endblock %}
