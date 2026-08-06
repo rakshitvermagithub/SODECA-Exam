@@ -2408,8 +2408,11 @@ def sodeca_home():
     if session.get("user_role") == 'admin':
         return redirect(url_for("super_admin"))
     # If faculty
-    if session.get("user_role") == 'faculty':
+    elif session.get("user_role") == 'faculty':
         return redirect(url_for("faculty_dashboard"))
+    # If coordinator
+    elif session.get("user_role") == 'coordinator':
+        return redirect(url_for("coordinator"))
     # If student
     return render_template("sodeca_home.html")
 
@@ -2680,7 +2683,7 @@ def login():
         # Check if email id is of a developer
         is_dev = check_dev_email(email)
 
-        if not email.endswith('@skit.ac.in') and not is_dev:
+        if not email.endswith('@skit.ac.in'):
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("login"))
 
@@ -2723,14 +2726,17 @@ def login():
         if user_role == 'admin':
             return redirect(url_for("super_admin"))
 
+        # If Coordinator
+        elif user_role == 'coordinator':
+            return redirect(url_for("coordinator"))
+
         # If Faculty
         elif email in faculty_emails:
-            print("isFaculty")
             user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
         # If Student or a developer
-        elif user_role == 'student' or user_role == 'dev':
+        elif user_role == 'student':
             details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", user_id)
             # If student has not filled details
             if not details_filled:
