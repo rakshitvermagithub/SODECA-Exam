@@ -85,13 +85,6 @@
         box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3);
     }
 
-    .table-admin thead {
-        background-color: var(--admin-bg-light);
-    }
-    .table-admin th {
-        color: var(--admin-navy);
-        font-weight: 600;
-    }
     .table-admin td {
         vertical-align: middle;
     }
@@ -155,17 +148,17 @@
             <!-- Faculty List (default view) -->
             <div class="card-body p-4" id="faculty-list-section">
                 <div class="table-responsive">
-                    <table class="table table-hover table-admin text-center align-middle">
-                        <thead>
+                    <table id="faculty-list-table" class="display border text-center align-middle dt-head-center">
+                        <thead class="text-white" style="background-color: var(--admin-navy);">
                             <tr>
                                 <th scope="col" style="width: 40px;">#</th>
                                 <th scope="col">Full Name</th>
                                 <th scope="col">College Email</th>
+                                <th scope="col" style="width: 180px;">Assigned Batch</th>
                                 <th scope="col">Designation</th>
                                 <th scope="col">Department</th>
                                 <th scope="col">Contact</th>
                                 <th scope="col" style="width: 150px;">Operation</th>
-                                <th scope="col" style="width: 180px;">Assigned Batch</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -177,6 +170,9 @@
                                     <span class="badge badge-coordinator ms-1">SODECA Coordinator</span>
                                 </td>
                                 <td>{{ faculty["college_email"] }}</td>
+                                <td>
+                                    <span class="text-muted">&mdash;</span>
+                                </td>
                                 <td>{{ faculty["designation"] }}</td>
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
@@ -205,9 +201,6 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td>
-                                    <span class="text-muted">&mdash;</span>
-                                </td>
                             </tr>
                             {% endfor %}
 
@@ -216,6 +209,19 @@
                                 <td>{{ loop.index }}</td>
                                 <td>{{ faculty["full_name"] }}</td>
                                 <td>{{ faculty["college_email"] }}</td>
+                                <td>
+                                    {% if faculty.branch and faculty.semester and faculty.section %}
+                                        <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
+                                        <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
+                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
+                                            <button class="btn btn-sm rounded-circle btn-outline-danger" type="submit" title="Discharge from batch">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted">&mdash;</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ faculty["designation"] }}</td>
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
@@ -235,19 +241,6 @@
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
                                     </div>
-                                </td>
-                                <td>
-                                    {% if faculty.branch and faculty.semester and faculty.section %}
-                                        <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
-                                        <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
-                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
-                                            <button class="btn btn-sm rounded-circle btn-outline-danger" type="submit" title="Discharge from batch">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <span class="text-muted">&mdash;</span>
-                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -275,9 +268,11 @@
                                 <select class="form-select" name="college_email" id="collegeEmail" required>
                                     <option value="" selected disabled>Select Faculty Email</option>
                                     {% for faculty in faculty_data %}
+                                        {% if not faculty.is_coordinator %}
                                         <option value="{{ faculty['college_email'] }}" data-name="{{ faculty['full_name'] }}">
                                             {{ faculty['college_email'] }}
                                         </option>
+                                        {% endif %}
                                     {% endfor %}
                                 </select>
                                 <label for="collegeEmail">Faculty Email</label>
@@ -563,6 +558,21 @@
 {% block script %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+        // --- DataTable Initialization ---
+    if (document.getElementById('faculty-list-table')) {
+        try { 
+            $('#faculty-list-table').DataTable({
+                paging: true,
+                pageLength: 4,       // Disables pagination
+                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
+                scrollX: true,       // Enables horizontal scrolling
+                scrollCollapse: true,
+            });
+        } catch (e) {
+            console.error("Error initializing DataTable:", e);
+        }
+    }
+
     // Edit modal population
     const editModal = document.getElementById('editFacultyModal');
     if (editModal) {
