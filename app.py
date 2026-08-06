@@ -4317,47 +4317,49 @@ def student_report():
         where_params = []
         where_clause = ""
         filtered_data = []
-
-        academic_sessions = request.form.getlist("academic_sessions[]")
-        if academic_sessions:
-            quoted_academic_sessions = [f"'{academic_session}'" for academic_session in academic_sessions]
-            joined_academic_sessions = ",".join(quoted_academic_sessions)
-            where_params.append(f"f.academic_session IN ({joined_academic_sessions})")
+        received_json_data = request.get_json()
+        print("Received JSON Data is: ",received_json_data)
+        academic_session = received_json_data.get('academic_session_data')
+        print("Academic session are: ",academic_session)
+        if academic_session:
+            where_params.append(f"f.academic_session IN ('{academic_session}')")
         
-        academic_terms = request.form.getlist("academic_terms[]")
-        if academic_terms:
-            quoted_academic_terms = [f"'{academic_term}'" for academic_term in academic_terms]
-            joined_academic_terms = ",".join(quoted_academic_terms)
-            where_params.append(f"f.academic_term IN ({joined_academic_terms})")
+        academic_term = received_json_data.get('even_odd_data')
+        print("Academic terms are: ",academic_term)
+        if academic_term:
+            where_params.append(f"f.academic_term IN ('{academic_term}')")
 
         # Get multiple checkbox values using .getlist()
-        semesters = request.form.getlist("semesters[]") # Returns a list like ['1', '3', '5']
+        semesters = received_json_data.get('semester_data') # Returns a list like ['1', '3', '5']
+        print("Semesters are: ",semesters)
         if semesters:
             joined_semesters = ",".join(semesters)
             where_params.append(f"f.sem IN ({joined_semesters})")
 
-        branches = request.form.getlist("branches[]")   # Returns a list like ['CSE', 'IT']
+        branches = received_json_data.get('branch_data')   # Returns a list like ['CSE', 'IT']
+        print("Branches are: ",branches)
         if branches:
             quoted_branches = [f"'{branch}'" for branch in branches]
             joined_branches = ",".join(quoted_branches)
             where_params.append(f"f.branch IN ({joined_branches})")
         
-        sections = request.form.getlist("sections[]")
+        sections = received_json_data.get('section_data')
+        print("Sections are: ",sections)
         if sections:
             quoted_sections = [f"'{section}'" for section in sections]
             joined_sections = ",".join(quoted_sections)
             where_params.append(f"f.section IN ({joined_sections})")
 
-        submission_categories = request.form.getlist("submission_categories[]")
-        if submission_categories:
-            quoted_submission_categories = [f"'{submission_category}'" for submission_category in submission_categories]
-            joined_submission_categories = ",".join(quoted_submission_categories)
-            where_params.append(f"f.submission_category IN ({joined_submission_categories})")
+        submission_category = received_json_data.get('submission_type_data')
+        print("Submission categories are: ",submission_category)
+        if submission_category:
+            where_params.append(f"f.submission_category IN ('{submission_category}')")
 
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
-        forms = request.form.getlist("forms[]")
+        forms = received_json_data.get('form_type_data')
+        print("Forms are: ",forms)
         if forms:
             for form in forms:
                 base_queries.append(
@@ -4381,6 +4383,8 @@ def student_report():
             try:
                 print(f"Executing query: {final_query}")  # Debug
                 filtered_data = db.execute(final_query)
+                print("Final filtered data is: ",filtered_data)
+                return jsonify({"success": True, "message": "All Ok!", "data": filtered_data}), 200
 
                 if not filtered_data:
                     flash("No records found with selected filters.", "info")
@@ -4389,10 +4393,11 @@ def student_report():
                 flash(f"Database error: {e}", "danger")
                 print(f"Error: {e}")
                 print(f"Query: {final_query}")  # See the actual query
-                return redirect(url_for("student_report"))
+                return jsonify({"success": False, "message": "We are experiencing technical difficulties. Please try again later."}), 500
         else:
             flash("Please select at least one form to filter.", "warning")
 
+        return jsonify({"success": False, "message": "Something went wrong. Please try again later."}), 500
     else:
         # Without filter
         for form in form_name_list:
@@ -4411,13 +4416,21 @@ def student_report():
     branch_options_list = get_branch_options()
     section_options_list = get_section_options()
 
+    current_session_row = db.execute("SELECT academic_session FROM drive_settings")
+    if not current_session_row:
+        flash("Configure batch settings in batch management","warning")
+        return redirect(request.referrer)
+
+    current_session = current_session_row[0]['academic_session']
+
     return render_template("student_report.html", 
         filtered_data=filtered_data, 
         form_dict=form_dict,
         academic_session_list=academic_session_list,
         sem_options_list=sem_options_list,
         branch_options_list=branch_options_list,
-        section_options_list=section_options_list
+        section_options_list=section_options_list,
+        current_session=current_session
     )
 
 @app.route("/batch_management", methods=["GET"])
