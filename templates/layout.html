@@ -109,8 +109,9 @@
                         {% endif %}
                         
                         {% if session.get("user_id") %}
+                        {% set user_role = session.get("user_role") %}
 
-                            {% if session.get("user_role") == 'student' %}
+                            {% if user_role == 'student' %}
                                 {% if request.path != '/sodeca_forms' %}
                                     <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="btn border-primary">SODECA Forms</a></li>
                                 {% endif %}
@@ -129,7 +130,7 @@
                                     </ul>
                                 </li>
 
-                            {% elif session.get("user_role") == 'faculty' %}
+                            {% elif user_role == 'faculty' %}
                                 {% if request.path != '/batch_report' %}
                                     <li class="nav-item">
                                         <a href="{{ url_for('batch_report') }}" class="btn border-primary">Batch Reports</a>
@@ -148,7 +149,7 @@
                                     <a href="/logout" class="btn btn-outline-danger">Logout</a>
                                 </li>
 
-                            {% elif session.get("user_role") == 'admin' %}
+                            {% elif user_role == 'admin' or user_role == 'coordinator' %}
                                 <li class="nav-item">
                                     <a href="{{ url_for('student_report') }}" class="btn border-primary">SODECA Reports</a>
                                 </li>
@@ -182,7 +183,10 @@
             {% endif %}
 
             {% if session.get("user_id") %}
-                {% if session.get("user_role") != 'faculty' %}
+            {% set user_role = session.get("user_role") %}
+
+                {% if user_role != 'faculty' %}
+
                     {% if request.path != '/sodeca_forms'%}
                         <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="nav-link">SODECA Forms</a></li>
                     {% endif %}

@@ -350,9 +350,11 @@
                                     </button>
                                 </div>
                                 <div class="m-2">
-                                    <button type="button" class="btn btn-secondary btn-sm w-100 fw-bold" onclick="window.location.href = '{{ url_for('student_report') }}'">
-                                        <i class="bi bi-arrow-clockwise me-1"></i> Reset
-                                    </button>
+                                    <a href="{{ url_for('student_report') }}">
+                                        <button type="button" class="btn btn-secondary btn-sm w-100 fw-bold">
+                                            <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                                        </button>
+                                    </a>
                                 </div>
                             </div>
 

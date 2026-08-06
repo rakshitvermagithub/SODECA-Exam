@@ -149,7 +149,7 @@
 <div class="page-wrapper">
     <div class="container">
         <div class="text-center mb-4">
-            <h2 class="form-title-admin">Admin Dashboard</h2>
+            <h2 class="form-title-admin">{% if user_role == 'admin' %}Admin{% else %}Coordinator{% endif %} Dashboard</h2>
         </div>
 
         <div class="row justify-content-center">
@@ -167,7 +167,7 @@
                                         <i class="bi bi-file-earmark-bar-graph"></i>
                                     </div>
                                     <div class="func-title">SODECA Reports</div>
-                                    <p class="func-desc">Generate, filter, and export comprehensive institutional activity reports for all students.</p>
+                                    <p class="func-desc">Generate, filter, and export comprehensive SODECA activity reports for all students.</p>
                                     <i class="bi bi-arrow-right func-arrow"></i>
                                 </a>
                             </div>
@@ -179,7 +179,7 @@
                                         <i class="bi bi-people"></i>
                                     </div>
                                     <div class="func-title">Faculty Management</div>
-                                    <p class="func-desc">Appoint or remove faculty members, update academic roles, and modify designations.</p>
+                                    <p class="func-desc">Manage Faculty list and Batch assignment for SODECA.</p>
                                     <i class="bi bi-arrow-right func-arrow"></i>
                                 </a>
                             </div>
@@ -191,7 +191,7 @@
                                         <i class="bi bi-person-lines-fill"></i>
                                     </div>
                                     <div class="func-title">Student Management</div>
-                                    <p class="func-desc">Access centralized student rosters, verify fulfillment statuses, and manage records.</p>
+                                    <p class="func-desc">Add students to authorize thier email to access the portal.</p>
                                     <i class="bi bi-arrow-right func-arrow"></i>
                                 </a>
                             </div>
@@ -203,7 +203,7 @@
                                         <i class="bi bi-layers"></i>
                                     </div>
                                     <div class="func-title">Batch & Drive Management</div>
-                                    <p class="func-desc">Allocate batch counselors to specific academic sections and oversee structural operations.</p>
+                                    <p class="func-desc">Generate the Batch structure and Drive folders for this SODECA term.</p>
                                     <i class="bi bi-arrow-right func-arrow"></i>
                                 </a>
                             </div>

@@ -16,7 +16,7 @@ from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
-    make_response, current_app
+    make_response, current_app, abort
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -2043,7 +2043,7 @@ db.execute("""
     auth_provider TEXT DEFAULT 'local' NOT NULL, profile_picture TEXT,
     first_name TEXT, last_name TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, role TEXT NOT NULL DEFAULT 'student'
-    CHECK (role IN ('student', 'faculty', 'admin', 'tester', 'dev')))
+    CHECK (role IN ('student', 'faculty', 'coordinator', 'admin')))
 """)
 # Initialise table to store student details
 db.execute("""
@@ -2058,6 +2058,7 @@ db.execute("""
     faculty_user_id INTEGER UNIQUE, full_name TEXT NOT NULL, designation TEXT NOT NULL,
     department TEXT NOT NULL, semester INTEGER, branch TEXT, section TEXT, 
     contact TEXT NOT NULL DEFAULT 'to be updated',
+    is_coordinator INTEGER DEFAULT 0,
     FOREIGN KEY (faculty_user_id) REFERENCES users(user_id))
     """)
 
@@ -2407,8 +2408,11 @@ def sodeca_home():
     if session.get("user_role") == 'admin':
         return redirect(url_for("super_admin"))
     # If faculty
-    if session.get("user_role") == 'faculty':
+    elif session.get("user_role") == 'faculty':
         return redirect(url_for("faculty_dashboard"))
+    # If coordinator
+    elif session.get("user_role") == 'coordinator':
+        return redirect(url_for("coordinator"))
     # If student
     return render_template("sodeca_home.html")
 
@@ -2679,7 +2683,7 @@ def login():
         # Check if email id is of a developer
         is_dev = check_dev_email(email)
 
-        if not email.endswith('@skit.ac.in') and not is_dev:
+        if not email.endswith('@skit.ac.in'):
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("login"))
 
@@ -2722,14 +2726,17 @@ def login():
         if user_role == 'admin':
             return redirect(url_for("super_admin"))
 
+        # If Coordinator
+        elif user_role == 'coordinator':
+            return redirect(url_for("coordinator"))
+
         # If Faculty
         elif email in faculty_emails:
-            print("isFaculty")
             user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
         # If Student or a developer
-        elif user_role == 'student' or user_role == 'dev':
+        elif user_role == 'student':
             details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", user_id)
             # If student has not filled details
             if not details_filled:
@@ -3875,34 +3882,115 @@ def reject_entry():
     
     return redirect(request.referrer)
 
+def get_sem_options(academic_session=None, academic_term=None):
+    query = "SELECT DISTINCT sem FROM batch_structure"
+    conditions = []
+    
+    if academic_session:
+        sessions = ", ".join(f"'{s}'" for s in academic_session)
+        conditions.append(f"academic_session IN ({sessions})")
+
+    if academic_term:
+        terms = ", ".join(f"'{t}'" for t in academic_term)
+        conditions.append(f"academic_term IN ({terms})")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY sem"
+
+    print(query)
+    return db.execute(query)
+
+def get_branch_options(academic_session=None, academic_term=None, semester=None):
+    query = "SELECT DISTINCT branch FROM batch_structure"
+    conditions = []
+    
+    if academic_session:
+        sessions = ", ".join(f"'{s}'" for s in academic_session)
+        conditions.append(f"academic_session IN ({sessions})")
+
+    if academic_term:
+        terms = ", ".join(f"'{t}'" for t in academic_term)
+        conditions.append(f"academic_term IN ({terms})")
+
+    if semester:
+        semesters = ", ".join(f"'{sem}'" for sem in semester)
+        conditions.append(f"sem IN ({semesters})")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY sem"
+
+    print(query)
+    return db.execute(query)
+
+def get_section_options(academic_session=None, academic_term=None, semester=None):
+    query = "SELECT DISTINCT section FROM batch_structure"
+    conditions = []
+    
+    if academic_session:
+        sessions = ", ".join(f"'{s}'" for s in academic_session)
+        conditions.append(f"academic_session IN ({sessions})")
+
+    if academic_term:
+        terms = ", ".join(f"'{t}'" for t in academic_term)
+        conditions.append(f"academic_term IN ({terms})")
+
+    if semester:
+        semesters = ", ".join(f"'{sem}'" for sem in semester)
+        conditions.append(f"sem IN ({semesters})")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY branch"
+
+    print(query)
+    return db.execute(query)
+
+@app.route("/coordinator", methods=["GET"])
+@login_required
+def coordinator():
+    if session.get("user_role") != "coordinator":
+        abort(404)
+
+    return render_template("coordinator.html")
+
 @app.route("/super_admin", methods=["GET"])
 @login_required
 def super_admin():
-    if session.get("user_role") == "admin" or session.get("user_role") == 'tester':
-        return render_template("super_admin.html")
-    return "Access Denied!"
+    if session.get("user_role") != "admin":
+        abort(404)
 
-@app.route("/faculty_list", methods=["GET", "POST"])
-def faculty_list():
+    return render_template("super_admin.html")
 
+@app.route("/faculty_management", methods=["GET", "POST"])
+@login_required
+def faculty_management():
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
+    # Add/Update new faculty
     if request.method == "POST":
-        # Add/Update request
         full_name = request.form.get("full_name")
         if not full_name:
             flash("Name is a required field", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
         college_email = request.form.get("college_email")
         if not college_email:
             flash("Email is a required field", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
         designation = request.form.get("designation")
         if not designation:
             flash("Designation is a required field", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
         department = request.form.get("department")
         if not department:
             flash("Department is a required field", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
         contact = request.form.get("contact")
         if not contact:
             contact = 'to be updated'
@@ -3950,19 +4038,45 @@ def faculty_list():
             flash(f"Error updating: {e}", "danger")
             print(f"Error updating faculty list: {e}")
 
-        return redirect(url_for('faculty_list'))
+        return redirect(url_for('faculty_management'))
     
     else:
+        curr_settings_row = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+        if not curr_settings_row:
+            print("Please configure batch settings in batch management before opening faculty_management")
+            flash("Please configure batch settings in batch management", "warning")
+            redirect(request.referrer)
+        
+        curr_academic_session = curr_settings_row[0]["academic_session"]
+        curr_academic_term = curr_settings_row[0]["academic_term"]
+
+        semester = get_sem_options([curr_academic_session], [curr_academic_term])
+        branches = get_branch_options([curr_academic_session], [curr_academic_term])
+        sections = get_section_options([curr_academic_session], [curr_academic_term])
+
+        coordinator_list = db.execute("SELECT * FROM faculty_details WHERE is_coordinator=1")
+        
         faculty_data = db.execute("SELECT * FROM faculty_details")
-        return render_template("faculty_list.html", faculty_data=faculty_data)
+        return render_template("faculty_management.html", 
+        faculty_data=faculty_data,
+        semester=semester,
+        branches=branches,
+        sections=sections,
+        coordinator_list=coordinator_list
+        )
 
 @app.route("/delete_user/<pk>", methods=["POST"])
+@login_required
 def delete_user(pk):
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     key_to_delete = request.form.get("college_email")
     if pk == 'faculty':
         if not key_to_delete:
             flash("Error: No faculty email was provided for deletion.", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
 
         try:
             # Execute the DELETE query using the primary key(college email)
@@ -3975,7 +4089,7 @@ def delete_user(pk):
             print(f"Database error while deleting faculty: {e}", file=sys.stderr)
             flash("An error occurred while trying to delete the faculty member.", "danger")
 
-        return redirect(url_for("faculty_list"))
+        return redirect(url_for("faculty_management"))
     
     elif pk == 'student':
         if not key_to_delete:
@@ -3995,7 +4109,10 @@ def delete_user(pk):
 
 @app.route("/uploadExcel", methods=["POST"])
 def uploadExcel():
-   
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     facutly_data = request.files.get('uploadedExcelFile')
     if not facutly_data or facutly_data.filename == '':
         return "No file selected or invalid file", 400
@@ -4022,7 +4139,7 @@ def uploadExcel():
         missing_cols = [col for col in compulsory_cols if col not in df.columns]
         if missing_cols:
             flash(f"Upload Failed: The file is missing these required columns: {', '.join(missing_cols)}", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
 
         # B. Check for Null/Empty values in these columns
         # First, convert pure whitespace strings to NaN (null) so we can catch them
@@ -4038,7 +4155,7 @@ def uploadExcel():
             error_row_numbers = (invalid_rows.index + 2).tolist()
             
             flash(f"Upload Failed: Missing compulsory details (Name, Email, Designation, or Dept) on Excel rows: {error_row_numbers[:10]}{'...' if len(error_row_numbers) > 10 else ''}. Please fix and try again.", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
         
         # Convert emails to string, lower and strip any leading/trailing space 
         df['college_email'] = df['college_email'].astype(str).str.lower().str.strip()
@@ -4050,7 +4167,7 @@ def uploadExcel():
         if not invalid_emails_df.empty:
             bad_email_list = invalid_emails_df['college_email'].tolist()
             flash(f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}", "danger")
-            return redirect(url_for("faculty_list"))
+            return redirect(url_for("faculty_management"))
         
         print("Checked for invalid emails")
 
@@ -4093,50 +4210,40 @@ def uploadExcel():
 
     update_faculty_emails()
 
-    return redirect(url_for('faculty_list'))
+    return redirect(url_for('faculty_management'))
 
-@app.route("/assign_batch", methods=["GET", "POST"])
+@app.route("/assign_batch", methods=["POST"])
 @login_required
 def assign_batch():
+    user_role = session.get("user_role")
 
-    if request.method == "POST":
-
-        college_email = request.form.get("college_email")
-        semester = request.form.get("semester_option")
-        branch = request.form.get("branch_option")
-        section = request.form.get("section_option")
-
-        try:
-            # Update batch in database
-            db.execute("UPDATE faculty_details SET semester=?, branch=?, section=? WHERE college_email=?",
-                    semester, branch, section, college_email)
-            flash("Batch updated!", "success")
-
-        except Exception as e:
-            flash(f"Error updating: {e}", "danger")
-        
-        return redirect (url_for("assign_batch"))
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
     
-    else:
-        referrer = request.referrer
-        if referrer and "/faculty_list" in referrer:
-            show_modal = True
-        else:
-            show_modal = False
-        faculty_data = db.execute("SELECT full_name, college_email, semester, branch, section FROM faculty_details")
+    college_email = request.form.get("college_email")
+    semester = request.form.get("semester_option")
+    branch = request.form.get("branch_option")
+    section = request.form.get("section_option")
 
-        branch_list = [None]
-        semester = [None]
-        section_set = [None]
+    try:
+        # Update batch in database
+        db.execute("UPDATE faculty_details SET semester=?, branch=?, section=? WHERE college_email=?",
+                semester, branch, section, college_email)
+        flash("Batch updated!", "success")
 
-        # Branch, Semester, Batches and Class Group data
-        semester = db.execute("SELECT DISTINCT sem FROM batch_structure ORDER BY sem ASC")
-        branch_list = db.execute("SELECT DISTINCT branch FROM batch_structure ORDER BY branch ASC")         
-
-        return render_template("assign_batch.html", branches=branch_list, semester=semester, batch_list=section_set, faculty_data=faculty_data, show_modal=show_modal)
+    except Exception as e:
+        flash(f"Error updating: {e}", "danger")
+    
+    return redirect (url_for("faculty_management"))
     
 @app.route("/discharge_faculty", methods=["POST"])
+@login_required
 def discharge_faculty():
+    user_role = session.get("user_role")
+
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     faculty_email = request.form.get("college_email")
     try:
         db.execute(
@@ -4150,107 +4257,55 @@ def discharge_faculty():
         flash(f"An unexpected database error occured. Please contact Admin.", "danger")
         print(f"Error at updating faculty emails: {e}")
 
-    return redirect(url_for("assign_batch"))
+    return redirect(url_for("faculty_management"))
 
-def get_sem_options(academic_session=None, academic_term=None):
-    query = "SELECT DISTINCT sem FROM batch_structure"
-    conditions = []
-    
-    if academic_session:
-        sessions = ", ".join(f"'{s}'" for s in academic_session)
-        conditions.append(f"academic_session IN ({sessions})")
+@app.route("/add_coordinator", methods=["POST"])
+@login_required
+def add_coordinator():
+    user_role = session.get("user_role")
+    if user_role != "admin":
+        abort(404)
 
-    if academic_term:
-        terms = ", ".join(f"'{t}'" for t in academic_term)
-        conditions.append(f"academic_term IN ({terms})")
+    try:
+        to_be_coordinator_email = request.form.get("college_email")
 
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+        db.execute("UPDATE users SET role='coordinator' WHERE email=?", to_be_coordinator_email)
+        db.execute("UPDATE faculty_details SET is_coordinator=1 WHERE college_email=?", to_be_coordinator_email)
 
-    query += " ORDER BY sem"
+        flash(f"Assigned {to_be_coordinator_email} as SODECA Coordinator", "success")
 
-    print(query)
-    return db.execute(query)
+    except Exception as e:
+        print(f"Database Error: {e}")
+        flash("Database Error", "danger")
+    return redirect(url_for("faculty_management"))
 
-def get_branch_options(academic_session=None, academic_term=None, semester=None):
-    query = "SELECT DISTINCT branch FROM batch_structure"
-    conditions = []
-    
-    if academic_session:
-        sessions = ", ".join(f"'{s}'" for s in academic_session)
-        conditions.append(f"academic_session IN ({sessions})")
+@app.route("/discharge_coordinator", methods=["POST"])
+@login_required
+def discharge_coordinator():
+    user_role = session.get("user_role")
+    if user_role != "admin":
+        abort(404)
 
-    if academic_term:
-        terms = ", ".join(f"'{t}'" for t in academic_term)
-        conditions.append(f"academic_term IN ({terms})")
+    try:
+        to_be_discharged = request.form.get("college_email")
 
-    if semester:
-        semesters = ", ".join(f"'{sem}'" for sem in semester)
-        conditions.append(f"sem IN ({semesters})")
+        db.execute("UPDATE users SET role='faculty' WHERE email=?", to_be_discharged)
+        db.execute("UPDATE faculty_details SET is_coordinator=0 WHERE college_email=?", to_be_discharged)
 
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+        flash(f"Dischared {to_be_discharged} as SODECA Coordinator", "success")
 
-    query += " ORDER BY sem"
+    except Exception as e:
+        print(f"Database Error: {e}")
+        flash("Database Error", "danger")
 
-    print(query)
-    return db.execute(query)
-
-def get_section_options(academic_session=None, academic_term=None, semester=None):
-    query = "SELECT DISTINCT branch FROM batch_structure"
-    conditions = []
-    
-    if academic_session:
-        sessions = ", ".join(f"'{s}'" for s in academic_session)
-        conditions.append(f"academic_session IN ({sessions})")
-
-    if academic_term:
-        terms = ", ".join(f"'{t}'" for t in academic_term)
-        conditions.append(f"academic_term IN ({terms})")
-
-    if semester:
-        semesters = ", ".join(f"'{sem}'" for sem in semester)
-        conditions.append(f"sem IN ({semesters})")
-
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-
-    query += " ORDER BY branch"
-
-    print(query)
-    return db.execute(query)
-
-def get_section_options(academic_session=None, academic_term=None, semester=None, branch=None):
-    query = "SELECT DISTINCT section FROM batch_structure"
-    conditions = []
-    
-    if academic_session:
-        sessions = ", ".join(f"'{s}'" for s in academic_session)
-        conditions.append(f"academic_session IN ({sessions})")
-
-    if academic_term:
-        terms = ", ".join(f"'{t}'" for t in academic_term)
-        conditions.append(f"academic_term IN ({terms})")
-
-    if semester:
-        semesters = ", ".join(f"'{sem}'" for sem in semester)
-        conditions.append(f"sem IN ({semesters})")
-
-    if branch:
-        branches = ", ".join(f"'{b}'" for b in branch)
-        conditions.append(f"branch IN ({branches})")
-
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-
-    query += " ORDER BY section"
-
-    print(query)
-    return db.execute(query)
+    return redirect(url_for("faculty_management"))
 
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
 def student_report():
+    user_role = session.get("user_role")
+    if user_role != 'admin' and user_role != 'coordinator':
+        abort(404)
 
     # Queries as per the number of forms selected
     base_queries = []
@@ -4381,10 +4436,10 @@ def student_report():
 @app.route("/batch_management", methods=["GET"])
 @login_required
 def batch_management():
-    user_role = role(session["user_id"])
+    user_role = session.get("user_role")
 
-    if user_role != "admin":
-        return "Access denied"
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
     
     # get the current drive settings stored in db
     row = db.execute("SELECT * FROM drive_settings WHERE id=1")
@@ -4408,7 +4463,12 @@ def batch_management():
 
 # Handles student_management_page loading and excel file uploads
 @app.route("/student_management_page", methods=["GET", "POST"])
+@login_required
 def student_management_page():
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     if request.method == 'POST':
         new_data = request.files.get('excel_file')
         if not new_data or new_data.filename == '':
@@ -4453,7 +4513,12 @@ def student_management_page():
     
 # Handles add email feature in student_management_page
 @app.route("/add_email", methods=["POST"])
+@login_required
 def addEmail():
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     email = request.form.get("new_email")
     existing_email = db.execute(
         "SELECT email FROM users"
@@ -4479,6 +4544,9 @@ def addEmail():
 @login_required
 @drive_auth_required
 def update_drive_master_folder():
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     # 1. Check if we have the drive token
     token = session.get('drive_auth_token')
@@ -4559,6 +4627,9 @@ def update_drive_master_folder():
 @login_required
 @drive_auth_required 
 def create_drive_structure():
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     # 1. Check if we have the token from Step 1
     token = session.get('drive_auth_token')
@@ -4698,10 +4769,9 @@ def create_drive_structure():
 @app.route("/update_master_folder", methods=["POST"])
 @login_required
 def update_master_folder():
-    user_role = role(session["user_id"])
-
-    if user_role != "admin":
-        return "Access denied"
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     folder_link = request.form.get("new_master_link")
     if not folder_link:
