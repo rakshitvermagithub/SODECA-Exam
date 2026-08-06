@@ -149,7 +149,7 @@
 <div class="page-wrapper">
     <div class="container">
         <div class="text-center mb-4">
-            <h2 class="form-title-admin">Admin Dashboard</h2>
+            <h2 class="form-title-admin">{% if user_role == 'admin' %}Admin{% else %}Coordinator{% endif %} Dashboard</h2>
         </div>
 
         <div class="row justify-content-center">

@@ -120,6 +120,7 @@
 
 {% block main %}
 {% include "message.html" %}
+{% set user_role = session.get("user_role") %}
 <div class="page-wrapper">
     <div class="container">
         <h2 class="text-center mb-4 form-title-admin">Faculty Management</h2>
@@ -133,8 +134,10 @@
                 <button class="btn btn-view-toggle" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">
                     <i class="bi bi-diagram-3-fill me-1"></i> Assign Batch
                 </button>
+
+                {% if user_role == 'admin' %}
                 <button class="btn btn-view-toggle" type="button" data-bs-toggle="modal" data-bs-target="#addCoordinatorModal">
-                    <i class="bi bi-person-badge-fill me-1"></i> Add SODECA Coordinator
+                    <i class="bi bi-person-badge-fill me-1"></i> Assing Coordinator
                 </button>
 
                 <div class="ms-auto">
@@ -146,6 +149,7 @@
                         <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadExcel">Upload Excel</a></li>
                     </ul>
                 </div>
+                {% endif %}
             </div>
 
             <!-- Faculty List (default view) -->
@@ -160,7 +164,9 @@
                                 <th scope="col">Designation</th>
                                 <th scope="col">Department</th>
                                 <th scope="col">Contact</th>
+                                {% if user_role == 'admin' %}
                                 <th scope="col" style="width: 150px;">Operation</th>
+                                {% endif %}
                                 <th scope="col" style="width: 180px;">Assigned Batch</th>
                             </tr>
                         </thead>
@@ -176,6 +182,7 @@
                                 <td>{{ faculty["designation"] }}</td>
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
+                                {% if user_role == 'admin' %}
                                 <td>
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
@@ -199,6 +206,7 @@
                                         </form>
                                     </div>
                                 </td>
+                                {% endif %}
                                 <td>
                                     <span class="text-muted">&mdash;</span>
                                 </td>
@@ -213,6 +221,7 @@
                                 <td>{{ faculty["designation"] }}</td>
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
+                                {% if user_role == 'admin' %}
                                 <td>
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
@@ -230,6 +239,7 @@
                                         </button>
                                     </div>
                                 </td>
+                                {% endif %}
                                 <td>
                                     {% if faculty.branch and faculty.semester and faculty.section %}
                                         <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
@@ -336,6 +346,7 @@
     </div>
 </div>
 
+{% if user_role == 'admin' %}
 <!-- Modal: Add SODECA Coordinator -->
 <div class="modal fade" id="addCoordinatorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addCoordinatorModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -550,6 +561,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 {% endblock %}
 
