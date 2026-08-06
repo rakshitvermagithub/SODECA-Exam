@@ -149,7 +149,7 @@
                                     <a href="/logout" class="btn btn-outline-danger">Logout</a>
                                 </li>
 
-                            {% elif user_role == 'admin' || user_role == 'cooridnator' %}
+                            {% elif user_role == 'admin' or user_role == 'coordinator' %}
                                 <li class="nav-item">
                                     <a href="{{ url_for('student_report') }}" class="btn border-primary">SODECA Reports</a>
                                 </li>
@@ -186,7 +186,7 @@
             {% set user_role = session.get("user_role") %}
 
                 {% if user_role != 'faculty' %}
-                
+
                     {% if request.path != '/sodeca_forms'%}
                         <li class="nav-item"><a href="{{ url_for('sodeca_forms') }}" class="nav-link">SODECA Forms</a></li>
                     {% endif %}

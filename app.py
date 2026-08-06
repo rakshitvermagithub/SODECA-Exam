@@ -16,7 +16,7 @@ from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
-    make_response, current_app
+    make_response, current_app, abort
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -3961,13 +3961,17 @@ def coordinator():
 @app.route("/super_admin", methods=["GET"])
 @login_required
 def super_admin():
-    if session.get("user_role") == "admin" or session.get("user_role") == 'tester':
-        return render_template("super_admin.html")
-    return "Access Denied!"
+    if session.get("user_role") != "admin":
+        abort(404)
+
+    return render_template("super_admin.html")
 
 @app.route("/faculty_management", methods=["GET", "POST"])
 @login_required
 def faculty_management():
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     # Add/Update new faculty
     if request.method == "POST":
@@ -4062,7 +4066,12 @@ def faculty_management():
         )
 
 @app.route("/delete_user/<pk>", methods=["POST"])
+@login_required
 def delete_user(pk):
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     key_to_delete = request.form.get("college_email")
     if pk == 'faculty':
         if not key_to_delete:
@@ -4100,7 +4109,10 @@ def delete_user(pk):
 
 @app.route("/uploadExcel", methods=["POST"])
 def uploadExcel():
-   
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     facutly_data = request.files.get('uploadedExcelFile')
     if not facutly_data or facutly_data.filename == '':
         return "No file selected or invalid file", 400
@@ -4203,6 +4215,11 @@ def uploadExcel():
 @app.route("/assign_batch", methods=["POST"])
 @login_required
 def assign_batch():
+    user_role = session.get("user_role")
+
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+    
     college_email = request.form.get("college_email")
     semester = request.form.get("semester_option")
     branch = request.form.get("branch_option")
@@ -4220,7 +4237,13 @@ def assign_batch():
     return redirect (url_for("faculty_management"))
     
 @app.route("/discharge_faculty", methods=["POST"])
+@login_required
 def discharge_faculty():
+    user_role = session.get("user_role")
+
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     faculty_email = request.form.get("college_email")
     try:
         db.execute(
@@ -4237,7 +4260,12 @@ def discharge_faculty():
     return redirect(url_for("faculty_management"))
 
 @app.route("/add_coordinator", methods=["POST"])
+@login_required
 def add_coordinator():
+    user_role = session.get("user_role")
+    if user_role != "admin":
+        abort(404)
+
     try:
         to_be_coordinator_email = request.form.get("college_email")
 
@@ -4251,8 +4279,13 @@ def add_coordinator():
         flash("Database Error", "danger")
     return redirect(url_for("faculty_management"))
 
-@app.route("/discharge_coordinator", methods=["GET", "POST"])
+@app.route("/discharge_coordinator", methods=["POST"])
+@login_required
 def discharge_coordinator():
+    user_role = session.get("user_role")
+    if user_role != "admin":
+        abort(404)
+
     try:
         to_be_discharged = request.form.get("college_email")
 
@@ -4270,6 +4303,9 @@ def discharge_coordinator():
 @app.route("/student_report", methods=["GET", "POST"])
 @login_required
 def student_report():
+    user_role = session.get("user_role")
+    if user_role != 'admin' and user_role != 'coordinator':
+        abort(404)
 
     # Queries as per the number of forms selected
     base_queries = []
@@ -4387,10 +4423,10 @@ def student_report():
 @app.route("/batch_management", methods=["GET"])
 @login_required
 def batch_management():
-    user_role = role(session["user_id"])
+    user_role = session.get("user_role")
 
-    if user_role != "admin":
-        return "Access denied"
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
     
     # get the current drive settings stored in db
     row = db.execute("SELECT * FROM drive_settings WHERE id=1")
@@ -4414,7 +4450,12 @@ def batch_management():
 
 # Handles student_management_page loading and excel file uploads
 @app.route("/student_management_page", methods=["GET", "POST"])
+@login_required
 def student_management_page():
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     if request.method == 'POST':
         new_data = request.files.get('excel_file')
         if not new_data or new_data.filename == '':
@@ -4459,7 +4500,12 @@ def student_management_page():
     
 # Handles add email feature in student_management_page
 @app.route("/add_email", methods=["POST"])
+@login_required
 def addEmail():
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
     email = request.form.get("new_email")
     existing_email = db.execute(
         "SELECT email FROM users"
@@ -4485,6 +4531,9 @@ def addEmail():
 @login_required
 @drive_auth_required
 def update_drive_master_folder():
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     # 1. Check if we have the drive token
     token = session.get('drive_auth_token')
@@ -4565,6 +4614,9 @@ def update_drive_master_folder():
 @login_required
 @drive_auth_required 
 def create_drive_structure():
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     # 1. Check if we have the token from Step 1
     token = session.get('drive_auth_token')
@@ -4704,10 +4756,9 @@ def create_drive_structure():
 @app.route("/update_master_folder", methods=["POST"])
 @login_required
 def update_master_folder():
-    user_role = role(session["user_id"])
-
-    if user_role != "admin":
-        return "Access denied"
+    user_role = session("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
 
     folder_link = request.form.get("new_master_link")
     if not folder_link:

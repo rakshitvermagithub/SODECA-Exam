@@ -139,6 +139,7 @@
                 <button class="btn btn-view-toggle" type="button" data-bs-toggle="modal" data-bs-target="#addCoordinatorModal">
                     <i class="bi bi-person-badge-fill me-1"></i> Assing Coordinator
                 </button>
+                {% endif %}
 
                 <div class="ms-auto">
                     <button class="btn btn-admin dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -149,7 +150,6 @@
                         <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadExcel">Upload Excel</a></li>
                     </ul>
                 </div>
-                {% endif %}
             </div>
 
             <!-- Faculty List (default view) -->
@@ -164,9 +164,7 @@
                                 <th scope="col">Designation</th>
                                 <th scope="col">Department</th>
                                 <th scope="col">Contact</th>
-                                {% if user_role == 'admin' %}
                                 <th scope="col" style="width: 150px;">Operation</th>
-                                {% endif %}
                                 <th scope="col" style="width: 180px;">Assigned Batch</th>
                             </tr>
                         </thead>
@@ -182,7 +180,6 @@
                                 <td>{{ faculty["designation"] }}</td>
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
-                                {% if user_role == 'admin' %}
                                 <td>
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
@@ -198,15 +195,16 @@
                                             data-bs-fullname="{{ faculty['full_name'] }}">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
+                                        {% if user_role == 'admin' %}
                                         <form action="{{ url_for('discharge_coordinator') }}" method="post" class="d-inline">
                                             <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
                                             <button class="btn btn-outline-dark" type="submit" title="Remove SODECA Coordinator role">
                                                 <i class="bi bi-person-dash-fill"></i>
                                             </button>
                                         </form>
+                                        {% endif %}
                                     </div>
                                 </td>
-                                {% endif %}
                                 <td>
                                     <span class="text-muted">&mdash;</span>
                                 </td>
@@ -221,7 +219,6 @@
                                 <td>{{ faculty["designation"] }}</td>
                                 <td>{{ faculty["department"] }}</td>
                                 <td>{{ faculty["contact"] }}</td>
-                                {% if user_role == 'admin' %}
                                 <td>
                                     <div class="btn-group btn-group-sm flex-wrap">
                                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
@@ -239,7 +236,6 @@
                                         </button>
                                     </div>
                                 </td>
-                                {% endif %}
                                 <td>
                                     {% if faculty.branch and faculty.semester and faculty.section %}
                                         <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
@@ -377,6 +373,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 <!-- Modal for Add New Faculty -->
 <div class="modal fade" id="addFacultyModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addFacultyModalLabel" aria-hidden="true">
@@ -561,8 +558,6 @@
         </div>
     </div>
 </div>
-{% endif %}
-
 {% endblock %}
 
 {% block script %}
