@@ -2954,15 +2954,23 @@ def get_sections():
     # Strip any accidental leading/trailing whitespace from text inputs
     branch = branch.strip()
 
+    curr_settings = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if not curr_settings:
+        return jsonify({"error": "No batch settings configured yet."}), 400
+
+    curr_academic_session = curr_settings[0]["academic_session"]
+    curr_academic_term = curr_settings[0]["academic_term"]
+
     try:        
         # 4. Parameterized Query execution remains secure
         query = """
             SELECT section 
             FROM batch_structure 
-            WHERE sem = ? AND branch = ?
+            WHERE sem=? AND branch=?
+            AND academic_session=? AND academic_term=?
             ORDER BY section ASC;
         """
-        rows = db.execute(query, sem, branch)
+        rows = db.execute(query, sem, branch, curr_academic_session, curr_academic_term)
         sections_list = [row['section'] for row in rows]
         return jsonify(sections_list), 200
         
@@ -4529,7 +4537,7 @@ def student_management_page():
 @app.route("/add_email", methods=["POST"])
 @login_required
 def addEmail():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
@@ -4558,7 +4566,7 @@ def addEmail():
 @login_required
 @drive_auth_required
 def update_drive_master_folder():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
@@ -4641,7 +4649,7 @@ def update_drive_master_folder():
 @login_required
 @drive_auth_required 
 def create_drive_structure():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
@@ -4783,7 +4791,7 @@ def create_drive_structure():
 @app.route("/update_master_folder", methods=["POST"])
 @login_required
 def update_master_folder():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
