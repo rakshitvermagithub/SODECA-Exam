@@ -3256,6 +3256,8 @@ def your_submissions():
             flash("An error occurred while fetching your submissions.", "danger")
             return redirect(url_for('sodeca_forms'))
 
+        # For loops on sessions
+
     return render_template("your_submissions.html", submissions=submissions)
 
 @app.route("/view_details", methods=["POST"])
@@ -4466,7 +4468,7 @@ def batch_management():
 
     session_options = [f"{current_year-1}-{(current_year)%100}", 
     f"{current_year}-{(current_year+1)%100}", 
-    f"{current_year+1}-{(current_year-1)%100}"]
+    f"{current_year+1}-{(current_year+2)%100}"]
 
     return render_template("batch_management.html", 
     drive_settings=drive_settings,
