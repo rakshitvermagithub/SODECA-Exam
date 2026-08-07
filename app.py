@@ -2735,7 +2735,7 @@ def login():
             user_role = 'faculty' 
             return redirect(url_for("faculty_dashboard"))
         
-        # If Student or a developer
+        # If Student
         elif user_role == 'student':
             details_filled = db.execute("SELECT student_user_id FROM student_details WHERE student_user_id = ?", user_id)
             # If student has not filled details
@@ -2746,11 +2746,8 @@ def login():
                 return redirect(url_for("student_details"))
             
             flash("Login successful.", "success")
-            return redirect(url_for("sodeca_forms"))
-        
-        elif session.get("user_role") == 'tester':
-            return redirect(url_for('sodeca_home'))
-        
+            return redirect(url_for("sodeca_home"))
+                
         flash("Invalid username/password", "danger")
         return url_for("login")
     else:
@@ -2881,6 +2878,14 @@ def student_details():
         return redirect(url_for("sodeca_forms"))
     
     else:
+        curr_settings = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+        if not curr_settings:
+            flash("System not configured yet.", "warning")
+            return redirect(url_for("sodeca_home.html"))
+        
+        curr_academic_session = curr_settings[0]["academic_session"]
+        curr_academic_term = curr_settings[0]["academic_term"]
+
         # Already available student details
         # Variable stores a list of dictionaries
         # Student information
@@ -2892,9 +2897,16 @@ def student_details():
         semester = [None]
         section_set = [None]
 
-        # Branch, Semester, Batches and Class Group data
-        semester = db.execute("SELECT DISTINCT sem FROM batch_structure ORDER BY sem ASC")
-        branch_list = db.execute("SELECT DISTINCT branch FROM batch_structure ORDER BY branch ASC")         
+        # Branch and Semester data
+        semester = db.execute("""
+            SELECT DISTINCT sem FROM batch_structure 
+            WHERE academic_session=? AND academic_term=? ORDER BY sem ASC
+        """, curr_academic_session, curr_academic_term)
+
+        branch_list = db.execute("""
+            SELECT DISTINCT branch FROM batch_structure 
+            WHERE academic_session=? AND academic_term=? ORDER BY branch ASC
+        """, curr_academic_session, curr_academic_term)         
 
         # If details are already available
         if student_details_row:
@@ -2942,15 +2954,23 @@ def get_sections():
     # Strip any accidental leading/trailing whitespace from text inputs
     branch = branch.strip()
 
+    curr_settings = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if not curr_settings:
+        return jsonify({"error": "No batch settings configured yet."}), 400
+
+    curr_academic_session = curr_settings[0]["academic_session"]
+    curr_academic_term = curr_settings[0]["academic_term"]
+
     try:        
         # 4. Parameterized Query execution remains secure
         query = """
             SELECT section 
             FROM batch_structure 
-            WHERE sem = ? AND branch = ?
+            WHERE sem=? AND branch=?
+            AND academic_session=? AND academic_term=?
             ORDER BY section ASC;
         """
-        rows = db.execute(query, sem, branch)
+        rows = db.execute(query, sem, branch, curr_academic_session, curr_academic_term)
         sections_list = [row['section'] for row in rows]
         return jsonify(sections_list), 200
         
@@ -3243,6 +3263,8 @@ def your_submissions():
             print(f"Error fetching submissions for student {student_id}: {e}")
             flash("An error occurred while fetching your submissions.", "danger")
             return redirect(url_for('sodeca_forms'))
+
+        # For loops on sessions
 
     return render_template("your_submissions.html", submissions=submissions)
 
@@ -4454,7 +4476,7 @@ def batch_management():
 
     session_options = [f"{current_year-1}-{(current_year)%100}", 
     f"{current_year}-{(current_year+1)%100}", 
-    f"{current_year+1}-{(current_year-1)%100}"]
+    f"{current_year+1}-{(current_year+2)%100}"]
 
     return render_template("batch_management.html", 
     drive_settings=drive_settings,
@@ -4515,7 +4537,7 @@ def student_management_page():
 @app.route("/add_email", methods=["POST"])
 @login_required
 def addEmail():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
@@ -4544,7 +4566,7 @@ def addEmail():
 @login_required
 @drive_auth_required
 def update_drive_master_folder():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
@@ -4627,7 +4649,7 @@ def update_drive_master_folder():
 @login_required
 @drive_auth_required 
 def create_drive_structure():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
@@ -4769,7 +4791,7 @@ def create_drive_structure():
 @app.route("/update_master_folder", methods=["POST"])
 @login_required
 def update_master_folder():
-    user_role = session("user_role")
+    user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
 
