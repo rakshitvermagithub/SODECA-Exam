@@ -1,11 +1,12 @@
 // Select the checked radio button within the group
 document.addEventListener('DOMContentLoaded', function() {
-    const checkedRadioAcadmeicSession = document.querySelector('input[name="academic_sessions"]:checked');
+    let checkedRadioAcadmeicSession = document.querySelector('input[name="academic_sessions"]:checked');
     if (checkedRadioAcadmeicSession) {
         // Get the value of the checked radio button
         document.getElementById('session_btn').textContent = checkedRadioAcadmeicSession.value;
     }
     document.getElementById('session_dropdown').addEventListener('click', function () {
+        checkedRadioAcadmeicSession = document.querySelector('input[name="academic_sessions"]:checked');
         if (checkedRadioAcadmeicSession) {
             // Get the value of the checked radio button
             document.getElementById('session_btn').textContent = checkedRadioAcadmeicSession.value;
@@ -111,14 +112,14 @@ function fetchFilteredData() {
             if (payload.data.length === 0) { tableBody.innerHTML = noDataAvailableTableStructure; }
             else {
                 tableBody.innerHTML = payload.data.map((data, index) => `
-                    <tr>
-                        <td>${index}</td>
+                    <tr data-certificate=${data['certificate']}>
+                        <td>${index + 1}</td>
                         <td>${data["student_name"]}</td>
                         <td>${data["university_roll_no"]}</td>
                         <td>${data["sem"]}${data["branch"]}-${data["section"]}</td>
                         <td>${data["category"]}</td>
                         <td>
-                            <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file=${baseFileUrl.replace('FILENAME_PLACEHOLDER', data['certificate'])}>Click Here</a>
+                            <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file=${baseFileUrl.replace('FILENAME_PLACEHOLDER', data['certificate'])}>Preview</a>
                         </td>
                         <td>
                             ${data["google_file_id"] === 'pending'
