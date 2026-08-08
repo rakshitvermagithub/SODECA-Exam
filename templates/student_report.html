@@ -454,9 +454,6 @@
             </div>
         </div>
     </div>
-    <button type="button" id="download-zip-btn" class="btn btn-primary">
-        Download Proof Files (.zip)
-    </button>
 </div>
 
 <div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
@@ -613,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#report-table').DataTable({
                 paging: false,
                 pageLength: 5,       // Disables pagination
-                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
+                info: false,         // Hides table info text (e.g. "Showing 1 to N entries")
                 scrollX: true,       // Enables horizontal scrolling
                 scrollCollapse: true,
                 layout: {
@@ -621,11 +618,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         buttons: [
                             { 
                                 extend: 'excel', 
-                                text: 'Download Excel', 
+                                text: '<i class="bi bi-file-earmark-spreadsheet-fill"></i> Download Excel', 
                                 className: 'btn-sm btn-excel-green' 
                             },
                             { 
-                                text: 'Download Proof files', 
+                                text: '<i class="bi bi-file-earmark-arrow-down-fill"></i> Download Proof files', 
                                 className: 'btn-sm',
                                 action: function (e, dt, node, config) {
                                     downloadFromCurrentDom();
