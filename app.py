@@ -4330,6 +4330,13 @@ def student_report():
     if user_role != 'admin' and user_role != 'coordinator':
         abort(404)
 
+    current_session_row = db.execute("SELECT academic_session FROM drive_settings")
+    if not current_session_row:
+        flash("Configure batch settings in batch management","warning")
+        return redirect(request.referrer)
+
+    current_session = current_session_row[0]['academic_session']
+
     # Queries as per the number of forms selected
     base_queries = []
 
@@ -4428,7 +4435,7 @@ def student_report():
                 f"""SELECT s.student_name, s.university_roll_no,
                 '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate,
                 f.sem, f.branch, f.section, f.academic_session, f.academic_term, f.submission_category
-                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id"""
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE academic_session='{current_session}'"""
                 )
         complete_query = " UNION ALL ".join(base_queries) 
         final_query = f"{complete_query} ORDER BY submitted_at DESC"
@@ -4438,13 +4445,6 @@ def student_report():
     sem_options_list = get_sem_options()
     branch_options_list = get_branch_options()
     section_options_list = get_section_options()
-
-    current_session_row = db.execute("SELECT academic_session FROM drive_settings")
-    if not current_session_row:
-        flash("Configure batch settings in batch management","warning")
-        return redirect(request.referrer)
-
-    current_session = current_session_row[0]['academic_session']
 
     return render_template("student_report.html", 
         filtered_data=filtered_data, 
