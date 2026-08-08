@@ -382,15 +382,14 @@
                     <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
                         {% for data in filtered_data %}
                         {% set status = data['status'] %}
-                        {% set file_drive_link = data['certificate']%}
-                        <tr>
+                        <tr data-certificate="{{ data['certificate'] }}">
                             <td>{{ loop.index }}</td>
                             <td>{{ data["student_name"] }}</td>
                             <td>{{ data["university_roll_no"] }}</td>
                             <td>{{ data["sem"] }}{{ data["branch"] }}-{{ data["section"] }}</td>
                             <td>{{ data["category"] }}</td>
                             <td>
-                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file={{ url_for('view_submission', filename=data['certificate']) }}>Click Here</a>
+                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file={{ url_for('view_submission', filename=data['certificate']) }}>Preview</a>
                             </td>
                             <td>
                                 {% if data["google_file_id"] == "pending" %}
@@ -455,6 +454,9 @@
             </div>
         </div>
     </div>
+    <button type="button" id="download-zip-btn" class="btn btn-primary">
+        Download Proof Files (.zip)
+    </button>
 </div>
 
 <div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
@@ -609,8 +611,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('report-table')) {
         try { 
             $('#report-table').DataTable({
-                paging: true,
-                pageLength: 4,       // Disables pagination
+                paging: false,
+                pageLength: 5,       // Disables pagination
                 info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
                 scrollX: true,       // Enables horizontal scrolling
                 scrollCollapse: true,
@@ -619,8 +621,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         buttons: [
                             { 
                                 extend: 'excel', 
-                                text: 'Download Report', 
+                                text: 'Download Excel', 
                                 className: 'btn-sm btn-excel-green' 
+                            },
+                            { 
+                                text: 'Download Proof files', 
+                                className: 'btn-sm',
+                                action: function (e, dt, node, config) {
+                                    downloadFromCurrentDom();
+                                }
                             }
                         ]
                     }
@@ -822,6 +831,72 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     });
     setupFilterCounts();
+
+    function getFilteredFileNames() {
+        // Select all table rows inside the tbody (reflects rendered/filtered rows)
+        const rows = document.querySelectorAll('#data-table-body-report tr');
+        const fileNames = [];
+
+        rows.forEach(row => {
+            // Read dataset attribute
+            const fileName = row.dataset.certificate;
+            
+            // Push valid filenames (ignoring empty/missing values)
+            if (fileName && fileName.trim() !== "" && fileName !== "null" && fileName !== "None") {
+                fileNames.push(fileName);
+            }
+        });
+
+        return fileNames;
+    }
+
+    async function downloadFromCurrentDom() {
+        const fileNames = [];
+
+        // Query the actual live DOM rows currently present in the table body
+        const rows = document.querySelectorAll('#report-table tbody tr');
+
+        rows.forEach(row => {
+            const fileName = row.getAttribute('data-certificate');
+            if (fileName && fileName.trim() !== "" && fileName !== "null" && fileName !== "None") {
+                fileNames.push(fileName);
+            }
+        });
+
+        if (fileNames.length === 0) {
+            alert("No proof files found in the current table selection.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/download_proof_files', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filenames: fileNames })
+            });
+
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'proof_files.zip';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error during download:", error);
+            alert("An error occurred while downloading proof files.");
+        }
+    }
+
+    const downloadBtn = document.getElementById('download-zip-btn');
+    
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadFilteredZip);
+    }
 });
 </script>
 <script src="/static/dynamic_form_rendering.js"></script>

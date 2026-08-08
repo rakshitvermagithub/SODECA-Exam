@@ -16,7 +16,7 @@ from config import Config
 from datetime import datetime, date, timedelta
 from email.message import EmailMessage
 from flask import Flask, flash, redirect, render_template, request, session, url_for, jsonify, send_from_directory, \
-    make_response, current_app, abort
+    make_response, current_app, abort, send_file
 from flask_session import Session
 from functools import wraps
 from google.oauth2.credentials import Credentials
@@ -33,6 +33,7 @@ import smtplib
 import sys
 import pandas as pd
 import json
+import zipfile
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -4453,6 +4454,38 @@ def student_report():
         branch_options_list=branch_options_list,
         section_options_list=section_options_list,
         current_session=current_session
+    )
+
+@app.route("/download_proof_files", methods=["POST"])
+@login_required
+def download_proof_files():
+    user_role = session.get("user_role")
+    if user_role != 'admin' and user_role != 'coordinator':
+        print(user_role)
+        abort(404)
+
+    data = request.get_json()
+    filenames = data.get("filenames", [])
+
+    upload_dir = app.config["UPLOAD_FOLDER"]
+    memory_file = io.BytesIO()
+
+    with zipfile.ZipFile(memory_file, "w", zipfile.ZIP_DEFLATED) as zf:
+        for filename in filenames:
+            # Join UPLOAD_FOLDER path with filename
+            file_path = os.path.join(upload_dir, filename)
+
+            if os.path.exists(file_path):
+                # Write file inside zip archive
+                zf.write(file_path, arcname=filename)
+
+    memory_file.seek(0)
+
+    return send_file(
+        memory_file,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="filtered_proofs.zip",
     )
 
 @app.route("/batch_management", methods=["GET"])
