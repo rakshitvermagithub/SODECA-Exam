@@ -2584,9 +2584,9 @@ def login_callback():
             is_dev = check_dev_email(email)
 
             # Check if the email belongs to the SKIT domain
-            # if not email.endswith('@skit.ac.in') and not is_dev:
-            #     flash("Access Denied. You must log in with a your SKIT email address.", "danger")
-            #     return redirect(url_for("login"))
+            if not email.endswith('@skit.ac.in'):
+                flash("Email must end with @skit.ac.in", "warning")
+                return redirect(url_for("login"))
 
             google_id = user_info['sub']
             first_name = user_info.get('given_name', '')
