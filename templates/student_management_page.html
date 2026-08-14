@@ -17,7 +17,6 @@
       border: none;
       height: 4px;
       width: 60px;
-      background: #4f46e5;
       border-radius: 4px;       /* Adds smooth, rounded edges */
       opacity: 1;
     }
@@ -35,7 +34,7 @@
             <hr class="rounded"/>
         </div>
     </div>
-    <div class="container d-flex justify-content-center mt-5">
+    <div class="container d-flex justify-content-center">
         <button type="button" class="btn btn-success mt-2" data-bs-toggle="modal"
             data-bs-target="#add_email"><i
                 class="fa-solid fa-add mt-1"></i>Add Email</button>
@@ -43,7 +42,7 @@
     <div class="container d-flex justify-content-center">
         <script src="/static/dataTables.js"></script>
         <script src="/static/dataTables.bootstrap5.js"></script>
-        <table class="table table-hover mt-3" id="student_directory1">
+        <table class="table table-hover nowrap display" id="student_directory1">
         <thead class="table-dark">
             <tr>
                 <th>Email</th>
