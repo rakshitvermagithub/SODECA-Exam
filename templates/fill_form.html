@@ -120,42 +120,58 @@
                         <div class="card-body p-4 p-md-5">
                             <h4 class="text-center mb-5 form-title">{{ form_to_show["title"] }}</h4>
                             
-                            <form id="fillForm" action="/fill_form" method="post" enctype="{{ form_to_show.enctype | default('application/x-www-form-urlencoded') }}" novalidate>
-                                
+                            <form id="fillForm" action="/fill_form" method="post" enctype="{{ form_to_show.enctype | default('application/x-www-form-urlencoded') }}" novalidate>       
                                 <div class="row g-3">
                                 {% for field in form_to_show["fields"] %}
-                                    <div class="col-md-6 mb-3 position-relative{% if field.field_hidden %} hiddencols{% endif %}">
-                                        <label for="{{ field.field_name }}" class="form-label">{{ field.field_label }} {% if field.required %}<span class="text-danger">*</span>{% endif %}</label>
-                                                                                                                        
-                                        {% if field.field_type == 'radio' %}
-                                            <div class="pt-2 border rounded px-3 py-2 bg-white" style="min-height: 58px;">
-                                            {% for option in field.options %}
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input" type="radio" name="{{ field.field_name }}" id="{{ field.field_name }}-{{ option.value }}" value="{{ option.value }}" {% if field.required %}required{% endif %}>
-                                                    <label class="form-check-label" for="{{ field.field_name }}-{{ option.value }}">{{ option.label }}</label>
-                                                </div>
-                                            {% endfor %}
-                                            </div>
-                                            <div class="invalid-feedback">Please select an option.</div>
-                                            
-                                        {% elif field.field_type == 'select' %}
-                                            <select class="form-select" id="{{ field.field_name }}" name="{{ field.field_name }}" {% if field.required %}required{% endif %}>
+                                    <div class="col-md-6 mb-3 position-relative field-wrapper" 
+                                        {% if field.depends_on %}
+                                            data-depends-on-field="{{ field.depends_on.field }}"
+                                            data-depends-on-value="{{ field.depends_on.value }}"
+                                            data-required-if-visible="{{ 'true' if field.required_if_visible else 'false' }}"
+                                            style="display: none;"
+                                        {% endif %}>
+                                        
+                                        <label for="{{ field.field_name }}" class="form-label">
+                                            {{ field.field_label }} 
+                                            <span class="text-danger required-asterisk {% if not field.required %}d-none{% endif %}">*</span>
+                                        </label>
+                                        
+                                        {% if field.field_type == 'select' %}
+                                            <select class="form-select" id="{{ field.field_name }}" name="{{ field.field_name }}" 
+                                                    {% if field.required %}required{% endif %}>
                                                 <option value="" selected disabled>Choose...</option>
                                                 {% for option in field.options %}
                                                     <option value="{{ option.value }}">{{ option.label }}</option>
                                                 {% endfor %}
                                             </select>
-                                            <div class="invalid-feedback"></div>
+                                            <div class="invalid-feedback">Please select an option.</div>
+
+                                        {% elif field.field_type == 'radio' %}
+                                            <div class="pt-2 border rounded px-3 py-2 bg-white" style="min-height: 58px;">
+                                            {% for option in field.options %}
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="{{ field.field_name }}" 
+                                                        id="{{ field.field_name }}-{{ option.value }}" value="{{ option.value }}" 
+                                                        {% if field.required %}required{% endif %}>
+                                                    <label class="form-check-label" for="{{ field.field_name }}-{{ option.value }}">{{ option.label }}</label>
+                                                </div>
+                                            {% endfor %}
+                                            </div>
+                                            <div class="invalid-feedback">Please select an option.</div>
                                         
                                         {% else %}
                                             <input type="{{ field.field_type }}" class="form-control" id="{{ field.field_name }}" 
-                                            name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" 
-                                            {% if field.field_type == "file" %} accept="application/pdf" {% endif %}
-                                            {% if field.required %}required{% endif %}>
+                                                name="{{ field.field_name }}" placeholder="{{ field.placeholder|default('') }}" 
+                                                {% if field.field_type == "file" %} accept="application/pdf" {% endif %}
+                                                {% if field.required %}required{% endif %}>
                                             <div class="invalid-feedback"></div>
                                         {% endif %}
 
-                                        {% if field.help_text %}<div class="form-text mt-1 text-muted small">{{ field.help_text }}</div>{% endif %}
+                                        {% if field.help_text %}
+                                            <div class="form-text mt-1 text-muted small">
+                                                {{ field.help_text | safe }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                                 </div>
@@ -221,61 +237,56 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!parentDiv) return;
 
         const feedbackElement = parentDiv.querySelector('.invalid-feedback');
-        const isRadio = input.type === 'radio';
-        const targetElement = isRadio ? parentDiv.querySelector('div[class*="border"]') : input;
+        const isRadioGroup = input.type === 'radio';
+        const targetElement = isRadioGroup ? parentDiv.querySelector('div[class*="border"]') : input;
         
         if (isValid) {
             targetElement.classList.remove('is-invalid');
             if (feedbackElement) {
                 feedbackElement.textContent = '';
-                if (isRadio) feedbackElement.style.display = 'none'; 
+                if (isRadioGroup) feedbackElement.style.display = 'none'; 
             }
         } else {
             targetElement.classList.add('is-invalid');
             if (feedbackElement) {
                 feedbackElement.textContent = message;
-                if (isRadio) feedbackElement.style.display = 'block'; 
+                if (isRadioGroup) feedbackElement.style.display = 'block'; 
             }
         }
-    };
-    
-    const parseFileSize = (sizeString) => {
-        if (!sizeString || typeof sizeString !== 'string') return null;
-        const units = { 'KB': 1024, 'MB': 1024 * 1024, 'GB': 1024 * 1024 * 1024 };
-        const match = sizeString.match(/^(\d+(\.\d+)?)\s*(KB|MB|GB)?$/i);
-        if (!match) return null;
-        const size = parseFloat(match[1]);
-        const unit = (match[3] || '').toUpperCase();
-        return size * (units[unit] || 1);
     };
 
     const validateField = (input) => {
         let isValid = true;
         let message = '';
         const fieldData = formFieldsData.find(f => f.field_name === input.id || f.field_name === input.name);
-        
         if (!fieldData) return true; 
 
-        // 1. Required
-        if (fieldData.required) {
-            if (input.type === 'radio') {
-                 const checkedRadio = form.querySelector(`input[name="${input.name}"]:checked`);
-                 if (!checkedRadio) {
-                     isValid = false;
-                     message = 'Please select an option.';
-                 }
+        // 1. Required Check
+        const isRequired = input.hasAttribute('required');
+        if (isRequired) {
+            if (input.tagName.toLowerCase() === 'select') {
+                if (!input.value || input.value === '') {
+                    isValid = false;
+                    message = 'Please select an option.';
+                }
+            } else if (input.type === 'radio') {
+                const checkedCount = form.querySelectorAll(`input[name="${input.name}"]:checked`).length;
+                if (checkedCount === 0) {
+                    isValid = false;
+                    message = 'Please select an option.';
+                }
             } else if (input.type === 'file') {
                 if (input.files.length === 0) {
-                     isValid = false;
-                     message = 'Please select a file.';
+                    isValid = false;
+                    message = 'Please select a file.';
                 }
-            } else if (!input.value || (typeof input.value === 'string' && input.value.trim() === '')) {
+            } else if (!input.value || input.value.trim() === '') {
                 isValid = false;
                 message = 'This field is required.';
             }
         }
-        
-        // 2. Length
+
+        // 2. Text Length Validation
         if (isValid && input.value && input.type === 'text' && fieldData.field_validation) {
             const min = fieldData.field_validation.min_length;
             const max = fieldData.field_validation.max_length;
@@ -290,89 +301,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // 3. Number
-        if (isValid && input.value && input.type === 'number' && fieldData.field_validation) {
-            const min = fieldData.field_validation.min;
-            const max = fieldData.field_validation.max;
-            const valueAsNumber = parseFloat(input.value);
-            
-            if (min !== undefined && valueAsNumber < min) {
-                isValid = false;
-                message = `Value must be ${min} or greater.`; 
-            }
-            if (isValid && max !== undefined && valueAsNumber > max) {
-                isValid = false;
-                message = `Value cannot exceed ${max}.`;
-            }
-        }
-        
-        // 4. Date
-        if (isValid && input.value && input.type === 'date') {
+        // 3. Date Validation
+        if (isValid && input.value && input.type === 'date' && fieldData.field_validation) {
             const selectedDate = new Date(input.value + 'T00:00:00'); 
-            
-            if (fieldData.field_validation) { 
-                if (fieldData.field_validation.max_date === 'today') {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (selectedDate > today) { 
-                        isValid = false;
-                        message = 'Date cannot be in the future.';
-                    }
-                }
-
-                if (isValid && fieldData.field_validation.after_field) {
-                    const fromDateEl = form.querySelector(`#${fieldData.field_validation.after_field}`);
-                    if (fromDateEl && fromDateEl.value) {
-                        const fromDate = new Date(fromDateEl.value + 'T00:00:00');
-                        if (selectedDate < fromDate) {
-                            isValid = false;
-                            message = `'${fieldData.field_label}' cannot be before 'From Date'.`;
-                        } else {
-                            showValidation(fromDateEl, true, '');
-                        }
-                    }
-                }
-                else if (isValid && fieldData.field_name === 'from_date') {
-                    const toDateFieldData = formFieldsData.find(f => f.field_validation && f.field_validation.after_field === fieldData.field_name);
-                    if(toDateFieldData) {
-                        const toDateEl = form.querySelector(`#${toDateFieldData.field_name}`);
-                        if (toDateEl && toDateEl.value) {
-                            const toDate = new Date(toDateEl.value + 'T00:00:00');
-                            if (selectedDate > toDate) {
-                                isValid = false;
-                                message = `'From Date' cannot be after 'To Date'.`;
-                                showValidation(toDateEl, false, "'To Date' cannot be before 'From Date'.");
-                            } else {
-                                showValidation(toDateEl, true, '');
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 5. File
-        if (isValid && input.type === 'file' && input.files.length > 0) {
-            const file = input.files[0];
-            const fileRules = fieldData.validation; 
-
-            if (fileRules) {
-                const acceptedTypes = fileRules.accepted_types;
-                if (acceptedTypes) {
-                    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-                    if (acceptedTypes.toLowerCase() !== fileExtension) {
-                         isValid = false;
-                         message = `Invalid file type. Only ${acceptedTypes} is allowed.`;
-                    }
-                }
-
-                const maxSizeString = fileRules.max_size;
-                if (isValid && maxSizeString) {
-                    const maxSizeBytes = parseFileSize(maxSizeString);
-                    if (maxSizeBytes && file.size > maxSizeBytes) {
-                        isValid = false;
-                        message = `File is too large. Maximum size is ${maxSizeString}.`;
-                    }
+            if (fieldData.field_validation.max_date === 'today') {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selectedDate > today) { 
+                    isValid = false;
+                    message = 'Date cannot be in the future.';
                 }
             }
         }
@@ -381,27 +318,73 @@ document.addEventListener('DOMContentLoaded', function() {
         return isValid;
     };
 
-    form.querySelectorAll('input, select').forEach(input => {
-        const eventType = (input.type === 'text' || input.type === 'number') ? 'input' : 'change';
-        input.addEventListener(eventType, () => validateField(input));
-        
-        if (['text', 'number', 'date'].includes(input.type)) {
-            input.addEventListener('blur', () => validateField(input));
+    // Generic handler for ALL fields with a depends_on schema.
+    // Reads data-depends-on-field / data-depends-on-value / data-required-if-visible
+    // (rendered by the Jinja template from each field's `depends_on` config).
+    const dependentWrappers = Array.from(
+        form.querySelectorAll('.field-wrapper[data-depends-on-field]')
+    );
+
+    const clearInput = (input) => {
+        input.classList.remove('is-invalid');
+        if (input.tagName.toLowerCase() === 'select') {
+            input.selectedIndex = 0;
+        } else if (input.type === 'radio' || input.type === 'checkbox') {
+            input.checked = false;
+        } else {
+            input.value = '';
         }
-        
-        if (input.id === 'from_date') {
-            input.addEventListener('change', () => {
-                const toDateFieldData = formFieldsData.find(f => f.field_validation && f.field_validation.after_field === 'from_date');
-                if (toDateFieldData) {
-                    const toDateEl = form.querySelector(`#${toDateFieldData.field_name}`);
-                    if (toDateEl) {
-                        validateField(toDateEl); 
-                    }
+    };
+
+    const applyDependencies = () => {
+        dependentWrappers.forEach(wrapper => {
+            const dependsOnField = wrapper.dataset.dependsOnField;
+            const dependsOnValue = wrapper.dataset.dependsOnValue;
+            const requiredIfVisible = wrapper.dataset.requiredIfVisible === 'true';
+
+            const controller = form.querySelector(`[name="${dependsOnField}"]`);
+            const currentValue = controller ? controller.value : null;
+            const shouldShow = currentValue === dependsOnValue;
+
+            const inputs = wrapper.querySelectorAll('input, select, textarea');
+            const asterisk = wrapper.querySelector('.required-asterisk');
+
+            if (shouldShow) {
+                wrapper.style.display = 'block';
+                if (requiredIfVisible) {
+                    inputs.forEach(input => input.setAttribute('required', 'required'));
+                    if (asterisk) asterisk.classList.remove('d-none');
                 }
-            });
+            } else {
+                wrapper.style.display = 'none';
+                inputs.forEach(input => {
+                    input.removeAttribute('required');
+                    clearInput(input);
+                });
+                if (asterisk) asterisk.classList.add('d-none');
+            }
+        });
+    };
+
+    // Attach change listeners to every field that controls at least one dependent field
+    const controllerNames = new Set(dependentWrappers.map(w => w.dataset.dependsOnField));
+    controllerNames.forEach(name => {
+        const controller = form.querySelector(`[name="${name}"]`);
+        if (controller) {
+            controller.addEventListener('change', applyDependencies);
         }
     });
 
+    // Attach Validation Listeners
+    form.querySelectorAll('input, select').forEach(input => {
+        const eventType = (input.type === 'text' || input.type === 'number') ? 'input' : 'change';
+        input.addEventListener(eventType, () => validateField(input));
+        if (['text', 'number', 'date'].includes(input.type)) {
+            input.addEventListener('blur', () => validateField(input));
+        }
+    });
+
+    // Submit Validation Handler
     form.addEventListener('submit', function(event) {
         let isFormValid = true;
         let firstInvalidElement = null;
@@ -409,11 +392,13 @@ document.addEventListener('DOMContentLoaded', function() {
         formFieldsData.forEach(fieldData => {
             const input = form.querySelector(`[name="${fieldData.field_name}"]`);
             if (input) {
-                const inputToValidate = input.type === 'radio' ? form.querySelector(`input[name="${fieldData.field_name}"]`) : input;
-                if (!validateField(inputToValidate)) {
+                const parentCol = input.closest('.mb-3');
+                if (parentCol && parentCol.style.display === 'none') return;
+
+                if (!validateField(input)) {
                     isFormValid = false;
                     if (!firstInvalidElement) {
-                        firstInvalidElement = inputToValidate; 
+                        firstInvalidElement = input; 
                     }
                 }
             }
@@ -423,29 +408,15 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             event.stopPropagation();
             alert('Please correct the errors marked in red before submitting.');
-            
-            if(firstInvalidElement) {
+            if (firstInvalidElement) {
                 firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidElement.focus();
             }
         }
     });
-    const category_achievement = document.getElementById('submission_category-achievement');
-    category_achievement.addEventListener('click', function() {
-        if (category_achievement.value === 'achievement') {
-            document.querySelectorAll('.hiddencols').forEach(element => {
-                element.style.display = 'block';
-            });
-        }
-    });
-    const category_participation = document.getElementById('submission_category-participation');
-    category_participation.addEventListener('click', function() {
-        if (category_participation.value === 'participation') {
-            document.querySelectorAll('.hiddencols').forEach(element => {
-                element.style.display = 'None';
-            });
-        }
-    });
+
+    // Initial state setup on page load
+    applyDependencies();
 });
 </script>
 {% endblock %}

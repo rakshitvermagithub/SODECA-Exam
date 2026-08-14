@@ -144,189 +144,38 @@ def allowed_file(filename):
 
 # Form Fields Defined
 FORM_DEFINITIONS = {
-    'blood_donor': {
-        'title': 'Blood Donor',
-        'description': [
-            "Certificate for donating blood in blood donation camp etc.",
-            "Only Donor Certificates to be uploaded"
-        ],
-        'enctype': 'multipart/form-data',  # Important for file uploads
-        'fields': [
-            {
-                'field_label': 'Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'field_hidden': True,
-                'required': False,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'field_hidden': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Event Title',
-                'field_type': 'text',
-                'field_name': 'event_title',
-                'required': True,  # Boolean instead of string
-                'placeholder': 'e.g., Blood Donation Camp 2024',
-                'help_text': 'Name of the blood donation event or campaign',
-                'field_validation': {
-                    'min_length': 3,
-                    'max_length': 50
-                }
-            },
-            {
-                'field_label': 'From Date',
-                'field_type': 'date',
-                'field_name': 'from_date',
-                'required': True,
-                'help_text': 'Start date of the donation event',
-                'field_validation': {
-                    'max_date': 'today'  # Can't be future date
-                }
-            },
-            {
-                'field_label': 'To Date',
-                'field_type': 'date',
-                'field_name': 'to_date',
-                'required': True,
-                'help_text': 'End date of the donation event',
-                'field_validation': {
-                    'max_date': 'today',
-                    'after_field': 'from_date'  # Must be after from_date
-                }
-            },
-            {
-                'field_label': 'Organizer',
-                'field_type': 'text',
-                'field_name': 'organizer',
-                'required': True,
-                'placeholder': 'e.g. SKIT',
-                'help_text': 'Organization that conducted the blood donation drive',
-                'field_validation': {
-                    'min_length': 3,
-                    'max_length': 150
-                }
-            },
-            {
-                'field_label': 'Venue',
-                'field_type': 'text',
-                'field_name': 'venue',
-                'required': True,
-                'placeholder': 'e.g. Civil block, SKIT, Jaipur',
-                'help_text': 'Location where blood donation took place',
-                'field_validation': {
-                    'min_length': 5,
-                    'max_length': 200
-                }
-            },
-            {
-                'field_label': 'Certificate / Proof',
-                'field_type': 'file',
-                'field_name': 'certificate',
-                'required': True,
-                'help_text': 'Upload your blood donor certificate or equivalent proof',
-                'validation': {
-                    'accepted_types': '.pdf',
-                    'max_size': '5MB'
-                }
-            }
-        ]
-    },
-
     'part_in_comp': {
         'title': 'Participation in Competition/Contest/ Activity',
         'description': [
-            "Certificate of participation for Cultural / Technical (e.g. Hackathon) / Sports / Non Technical events in any Competition/Contest/Activity organized by SKIT or any other Institute.", 
-            "It should be a participation certificate for a competition/contest or some significant events" ,
+            "Certificate of participation for Cultural / Technical (e.g. Hackathon) / Sports / Non Technical events in any Competition/Contest/Activity organized by SKIT or any other Institute.",
+            "It should be a participation certificate for a competition/contest or some significant events",
             "Event should be organized by SKIT or any other institute and you should represent SKIT.",
-            "Personal level participation certificate NOT allowed. Only participation in an activity as an SKIT student is valid.", 
+            "Personal level participation certificate NOT allowed. Only participation in an activity as an SKIT student is valid.",
             "Participation certificate should mention your name as student of SKIT. for e.g. Ajay Gupta of SKIT participated in xyz event.",
             "Certificate of completion (For e.g successfully completed an online assesment/course/training etc) is NOT allowed. Certificate for Appearing in or Clearing an online assesment/test is NOT allowed."
-            ],
-        'enctype': 'multipart/form-data',  # Important for file uploads
+        ],
+        'enctype': 'multipart/form-data',
         'fields': [
             {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
                 'required': True,
                 'options': [
                     {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
                 ]
             },
             {
                 'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                'field_hidden': True,
+                # Declarative Dependency Schema
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -340,17 +189,25 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'other_position_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
             {
                 'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'award_type',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -365,7 +222,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -375,7 +236,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'award_date',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
@@ -383,7 +248,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -400,15 +269,8 @@ FORM_DEFINITIONS = {
                 }
             },
             {
-                'field_label': 'Nature of the Event',
-                'field_type': 'text',
-                'field_name': 'event_nature',
-                'placeholder': 'e.g Dance Competition, Singing Competition, Quiz Competition, Tree Plantation Event',
-                'required': True,
-            },
-            {
                 'field_label': 'Team/Individual',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'participation_type',
                 'required': True,
                 'options': [
@@ -417,37 +279,8 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Event Level',
-                'field_type': 'radio',
-                'field_name': 'event_level',
-                'required': True,
-                'placeholder': 'e.g. SKIT',
-                'help_text': '''College Level: Event within SKIT only. No other college/university participated.
-                    University Level: Only RTU affiliated college participated.
-                    State Level: Different colleges/universities all over Rajasthan participated.
-                    National Level: Colleges/Universities outside the Rajasthan(all over from India) participated.
-                    International: Colleges/Universities outside India(all over the world) participated.''',
-                'options': [
-                    {'value': 'College', 'label': 'College'},
-                    {'value': 'University', 'label': 'University'},
-                    {'value': 'State', 'label': 'State'},
-                    {'value': 'National', 'label': 'National'},
-                    {'value': 'International', 'label': 'International'},
-                ]
-            },
-            {
-                'field_label': 'Event Type',
-                'field_type': 'radio',
-                'field_name': 'event_type',
-                'required': True,
-                'options': [
-                    {'value': 'Intra College', 'label': 'Intra College'},
-                    {'value': 'Inter College', 'label': 'Inter College'},
-                ]
-            },
-            {
                 'field_label': 'Event Category',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'event_category',
                 'required': True,
                 'options': [
@@ -458,8 +291,46 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
+                'field_label': 'Nature of the Event',
+                'field_type': 'select',
+                'field_name': 'event_nature',
+                'required': True,
+                'options': [
+                    {'value': 'dance', 'label': 'Dance Comp.'},
+                    {'value': 'singing', 'label': 'Singing Comp.'},
+                    {'value': 'hackathon', 'label': 'Hackathon/ Coding Comp.'},
+                    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
+                    {'value': 'blood_donor', 'label': 'Blood Donor'},
+                    {'value': 'Other', 'label': 'Other'}
+                ]
+            },
+            {
+                'field_label': 'Event Level',
+                'field_type': 'select',
+                'field_name': 'event_level',
+                'required': True,
+                'help_text': '<b>College Level:</b> Event within SKIT only.<br><b>University Level:</b> Only RTU affiliated college participated.<br><b>State Level:</b> Different colleges/universities all over Rajasthan participated.<br><b>National Level:</b> Colleges/Universities outside Rajasthan participated.<br><b>International Level:</b> Colleges/Universities outside India participated.',
+                'options': [
+                    {'value': 'College', 'label': 'College'},
+                    {'value': 'University', 'label': 'University'},
+                    {'value': 'State', 'label': 'State'},
+                    {'value': 'National', 'label': 'National'},
+                    {'value': 'International', 'label': 'International'},
+                ]
+            },
+            {
+                'field_label': 'Event Type',
+                'field_type': 'select',
+                'field_name': 'event_type',
+                'required': True,
+                'options': [
+                    {'value': 'Intra College', 'label': 'Intra College'},
+                    {'value': 'Inter College', 'label': 'Inter College'},
+                ]
+            },
+            {
                 'field_label': 'Mode of Event',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'event_mode',
                 'required': True,
                 'options': [
@@ -474,7 +345,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': 'Start date of the event',
                 'field_validation': {
-                    'max_date': 'today'  # Can't be future date
+                    'max_date': 'today'
                 }
             },
             {
@@ -485,7 +356,7 @@ FORM_DEFINITIONS = {
                 'help_text': 'End date of the event',
                 'field_validation': {
                     'max_date': 'today',
-                    'after_field': 'from_date'  # Must be after from_date
+                    'after_field': 'from_date'
                 }
             },
             {
@@ -506,7 +377,7 @@ FORM_DEFINITIONS = {
                 'field_name': 'venue',
                 'required': True,
                 'placeholder': 'e.g. Civil block, SKIT, Jaipur',
-                'help_text': 'Location where the event took place. Write "Online Activity" if evnet mode was online',
+                'help_text': 'Location where the event took place. Write "Online Activity" if event mode was online',
                 'field_validation': {
                     'min_length': 3,
                     'max_length': 200
@@ -525,629 +396,7 @@ FORM_DEFINITIONS = {
             }
         ]
     },
-    
-    'part_in_work': {
-        'title': 'Workshop/Seminar/ Webinar/Conference Attended',
-        'description': [
-            'Certificate of participation for attending any Workshop/ Seminar/ Webinar/ Symposium/ Conference organized by SKIT or any other Institute'
-            ],
-        'enctype': 'multipart/form-data',  # Important for file uploads
-        'fields': [
-            {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'field_hidden': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Event Name',
-                'field_type': 'text',
-                'field_name': 'event_title',
-                'required': True,  # Boolean instead of string
-                'placeholder': 'Name of the Event',
-                'help_text': 'e.g : Ten Days TEQIP-III Sponsored Student Workshop on Emerging Web Development Trends',
-                'field_validation': {
-                    'max_length': 50
-                }
-            },
-            {
-                'field_label': 'Event Type',
-                'field_type': 'radio',
-                'field_name': 'event_type',
-                'required': True,
-                'options': [
-                    {'value': 'workshop', 'label': 'Workshop'},
-                    {'value': 'seminar', 'label': 'Seminar'},
-                    {'value': 'webinar', 'label': 'Webinar'},
-                    {'value': 'conference', 'label': 'Conference'},
-                    {'value': 'symposium', 'label': 'Symposium'},
-                ]
-            },
-            {
-                'field_label': 'Level',
-                'field_type': 'radio',
-                'field_name': 'event_level',
-                'required': True,
-                'options': [
-                    {'value': 'national', 'label': 'National'},
-                    {'value': 'international', 'label': 'International'},
-                ]
-            },
-            {
-                'field_label': 'From Date',
-                'field_type': 'date',
-                'field_name': 'from_date',
-                'required': True,
-                'help_text': 'Start date of the event',
-                'field_validation': {
-                    'max_date': 'today'  # Can't be future date
-                }
-            },
-            {
-                'field_label': 'To Date',
-                'field_type': 'date',
-                'field_name': 'to_date',
-                'required': True,
-                'help_text': 'End date of the event',
-                'field_validation': {
-                    'max_date': 'today',
-                    'after_field': 'from_date'  # Must be after from_date                    
-                }
-            },
-            {
-                'field_label': 'Mode of Event',
-                'field_type': 'radio',
-                'field_name': 'mode',
-                'required': True,
-                'options': [
-                    {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'},
-                ]
-            },
-            {
-                'field_label': 'Sponsoring Agency',
-                'field_type': 'text',
-                'field_name': 'sponsor',
-                'required': True, 
-                'placeholder': 'NA if Non-Sponsored',
-                'help_text': 'e.g:TEQIP-III/RTU/AICTE/IEEE/Non-Sponsored/NA',
-                'field_validation': {
-                    'min_length': 2,
-                    'max_length': 50
-                }
-            },
-            {
-                'field_label': 'Organized By',
-                'field_type': 'text',
-                'field_name': 'organizer',
-                'required': True, 
-                'placeholder': 'Name of the organizers',
-                'help_text': 'e.g SKIT Jaipur',
-                'field_validation': {
-                    'min_length': 3,
-                    'max_length': 50
-                }
-            },
-            {
-                'field_label': 'Workshop/Seminar/ Webinar/Conference certificate/proof',
-                'field_type': 'file',
-                'field_name': 'certificate',
-                'required': True,
-                'help_text': 'Upload your participation certificate or equivalent proof. Max Size: 5MB',
-                'validation': {
-                    'accepted_types': '.pdf',
-                    'max_size': '5MB'
-                }
-            }
-        ]
-    },
 
-    'expert_lecture': {
-        'title': 'Expert Lecture Attended',
-        'description': [
-            'Certificate of participation for attending expert talk/guest lecture at SKIT or outside SKIT in any institute.',
-            'Certificate of participation for attending Key note or Invited Talk (in conference) is allowed.'
-        ],
-        'enctype': 'multipart/form-data',
-        'fields': [
-            {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'field_hidden': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Expert Speaker',
-                'field_type': 'text',
-                'field_name': 'expert_name',
-                'required': True,
-                'placeholder': 'e.g. Mr. J. Jegathesan',
-                'help_text': 'Full name and designation of the expert speaker, e.g., Mr.J.Jegathesan, Didactic Engineer, FESTO India, Bengaluru',
-                'field_validation': {
-                    'max_length': 150
-                }
-            },
-            {
-                'field_label': 'Topic',
-                'field_type': 'text',
-                'field_name': 'topic',
-                'required': True,
-                'placeholder': 'Enter the topic of the lecture',
-                'field_validation': {
-                    'max_length': 200
-                }
-            },
-            {
-                'field_label': 'In-house/Away',
-                'field_type': 'radio',
-                'field_name': 'location_type',
-                'required': True,
-                'help_text': '''In-house: Event held at SKIT outside
-                Away: Event held outside SKIT''',
-                'options': [
-                    {'value': 'in-house', 'label': 'In-house'},
-                    {'value': 'away', 'label': 'Away'},
-                ]
-            },
-            {
-                'field_label': 'Mode',
-                'field_type': 'radio',
-                'field_name': 'mode',
-                'required': True,
-                'options': [
-                    {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'},
-                ]
-            },
-            {
-                'field_label': 'From Date',
-                'field_type': 'date',
-                'field_name': 'from_date',
-                'required': True,
-                'field_validation': {
-                    'max_date': 'today'
-                }
-            },
-            {
-                'field_label': 'To Date',
-                'field_type': 'date',
-                'field_name': 'to_date',
-                'required': True,
-                'field_validation': {
-                    'max_date': 'today',
-                    'after_field': 'from_date'  # Must be after from_date
-                }
-            },
-            {
-                'field_label': 'Organizer',
-                'field_type': 'text',
-                'field_name': 'organizer',
-                'required': True,
-                'placeholder': 'e.g., ECE Department-SKIT Jaipur',
-                'help_text': 'The department or organization that arranged the event.',
-                'field_validation': {
-                    'max_length': 150
-                }
-            },
-            {
-                'field_label': 'Event Venue',
-                'field_type': 'text',
-                'field_name': 'venue',
-                'required': True,
-                'placeholder': 'e.g., CS Block Seminar Hall. Write "Online activity" if event mode was online.',
-                'field_validation': {
-                    'min_length': 3,
-                    'max_length': 200
-                }
-            },
-            {
-                'field_label': 'Expert Lecture Attended Certificate/other proof',
-                'field_type': 'file',
-                'field_name': 'certificate',
-                'required': True,
-                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
-                'validation': {
-                    'accepted_types': '.pdf',
-                    'max_size': '5MB'
-                }
-            }
-        ]
-    },
-
-    'event_organized': {
-        'title': 'Organized an Event',
-        'description': [
-            'Organizer/Volunteer/Coordinator etc certificate for any cultural/technical/ sports/non-technical event at SKIT'
-            ],
-        'enctype': 'multipart/form-data',
-        'fields': [
-            {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'field_hidden': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Name of the Event/Activity Organized',
-                'field_type': 'text',
-                'field_name': 'event_name',
-                'required': True,
-                'placeholder': 'e.g., SUR, Mayukh, Kill With Fire',
-                'help_text': 'Exactly as Mentioned in the Certificate.',
-                'field_validation': {
-                    'max_length': 100
-                }
-            },
-            {
-                'field_label': 'Nature of the Event',
-                'field_type': 'text',
-                'field_name': 'event_nature',
-                'required': True,
-                'placeholder': 'e.g. Dance Competition, Tree Plantation',
-                'help_text': 'e.g Dance Competition, Singing Competition, Quiz Competition, Tree Plantation Event',
-                'field_validation': {
-                    'max_length': 100
-                }
-            },
-            {
-                'field_label': 'Organizing Club/Body',
-                'field_type': 'text',
-                'field_name': 'organizing_club',
-                'required': True,
-                'placeholder': 'e.g., NSS Club SKIT',
-                'help_text': 'Write NA if not a club activity.',
-                'field_validation': {
-                    'max_length': 100
-                }
-            },
-            {
-                'field_label': 'Team/Individual',
-                'field_type': 'radio',
-                'field_name': 'participation_type',
-                'required': True,
-                'options': [
-                    {'value': 'individual', 'label': 'Individual'},
-                    {'value': 'team', 'label': 'Team'}
-                ]
-            },
-            {
-                'field_label': 'Event Level',
-                'field_type': 'radio',
-                'field_name': 'event_level',
-                'required': True,
-                'help_text': 'Select the highest level of participation for the event.',
-                'options': [
-                    {'value': 'college', 'label': 'College'},
-                    {'value': 'university', 'label': 'University'},
-                    {'value': 'state', 'label': 'State'},
-                    {'value': 'national', 'label': 'National'},
-                    {'value': 'international', 'label': 'International'}
-                ]
-            },
-            {
-                'field_label': 'Event Type',
-                'field_type': 'radio',
-                'field_name': 'event_type',
-                'required': True,
-                'options': [
-                    {'value': 'intra-college', 'label': 'Intra College'},
-                    {'value': 'inter-college', 'label': 'Inter College'}
-                ]
-            },
-            {
-                'field_label': 'Event Category',
-                'field_type': 'radio',
-                'field_name': 'event_category',
-                'required': True,
-                'options': [
-                    {'value': 'cultural', 'label': 'Cultural'},
-                    {'value': 'technical', 'label': 'Technical'},
-                    {'value': 'sports', 'label': 'Sports'},
-                    {'value': 'non-technical', 'label': 'Non-Technical'}
-                ]
-            },
-            {
-                'field_label': 'Mode of Event',
-                'field_type': 'radio',
-                'field_name': 'mode',
-                'required': True,
-                'options': [
-                    {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'}
-                ]
-            },
-            {
-                'field_label': 'From Date',
-                'field_type': 'date',
-                'field_name': 'from_date',
-                'required': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'To Date',
-                'field_type': 'date',
-                'field_name': 'to_date',
-                'required': True,
-                'field_validation': {
-                    'max_date': 'today',
-                    'after_field': 'from_date'  # Must be after from_date
-                }
-            },
-            {
-                'field_label': 'Role in event(as mentioned in certificate)',
-                'field_type': 'text',
-                'field_name': 'role',
-                'required': True,
-                'placeholder': 'e.g., Volunteer, Coordinator, Organizer',
-                'field_validation': {
-                    'max_length': 50
-                }
-            },
-            {
-                'field_label': 'No. of Participants in event(approx.)',
-                'field_type': 'number',
-                'field_name': 'participant_count',
-                'required': True,
-                'placeholder': 'e.g., 100',
-                'field_validation': {
-                    'min': 1
-                }
-            },
-            {
-                'field_label': 'Name of Sponsor Agency/Non Sponsored',
-                'field_type': 'text',
-                'field_name': 'sponsor',
-                'required': True,
-                'placeholder': 'Write Non Sponsored if not applicable',
-                'field_validation': {
-                    'max_length': 100
-                }
-            },
-            {
-                'field_label': 'Organizing Institute',
-                'field_type': 'text',
-                'field_name': 'organizing_institute',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur',
-                'field_validation': {
-                    'max_length': 150
-                }
-            },
-            {
-                'field_label': 'Event Venue',
-                'field_type': 'text',
-                'field_name': 'venue',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur. Write online if event mode was online',
-                'field_validation': {
-                    'min_length': 3,
-                    'max_length': 200
-                }
-            },
-            {
-                'field_label': 'Event Organizer Certificate/other proof',
-                'field_type': 'file',
-                'field_name': 'certificate',
-                'required': True,
-                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
-                'validation': {
-                    'accepted_types': '.pdf',
-                    'max_size': '5MB'
-                }
-            }
-        ]
-    },
-    
     'winner_achievement': {
         'title': 'Winner/Award/ Other Achievement',
         'description':[
@@ -1158,10 +407,10 @@ FORM_DEFINITIONS = {
             ],
         'enctype': 'multipart/form-data',
         'fields': [
-                        {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
+            {
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
                 'required': True,
                 'options': [
                     {'value': 'achievement', 'label': 'Achievement'}
@@ -1169,10 +418,15 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                'field_hidden': True,
+                # Declarative Dependency Schema
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1186,17 +440,25 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'other_position_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
             {
                 'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'award_type',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1211,7 +473,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1221,7 +487,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'award_date',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
@@ -1229,7 +499,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1243,17 +517,59 @@ FORM_DEFINITIONS = {
                 'field_validation': { 'max_length': 150 }
             },
             {
+                'field_label': 'Event Category',
+                'field_type': 'select',
+                'field_name': 'event_category',
+                'required': True,
+                'options': [
+                    {'value': 'Cultural', 'label': 'Cultural'},
+                    {'value': 'Technical', 'label': 'Technical'},
+                    {'value': 'Sports', 'label': 'Sports'},
+                    {'value': 'Non-Technical', 'label': 'Non-Technical'},
+                ]
+            },
+            {
                 'field_label': 'Nature of the Event',
-                'field_type': 'text',
+                'field_type': 'select',
                 'field_name': 'event_nature',
                 'required': True,
-                'placeholder': 'e.g., Coding Competition, Business Plan Contest',
-                'field_validation': { 'max_length': 150 }
+                'options': [
+                    {'value': 'dance', 'label': 'Dance Comp.'},
+                    {'value': 'singing', 'label': 'Singing Comp.'},
+                    {'value': 'hackathon', 'label': 'Hackathon/ Coding Comp.'},
+                    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
+                    {'value': 'blood_donor', 'label': 'Blood Donor'},
+                    {'value': 'Other', 'label': 'Other'}
+                ]
+            },
+            {
+                'field_label': 'Event Level',
+                'field_type': 'select',
+                'field_name': 'event_level',
+                'required': True,
+                'help_text': '<b>College Level:</b> Event within SKIT only.<br><b>University Level:</b> Only RTU affiliated college participated.<br><b>State Level:</b> Different colleges/universities all over Rajasthan participated.<br><b>National Level:</b> Colleges/Universities outside Rajasthan participated.<br><b>International Level:</b> Colleges/Universities outside India participated.',
+                'options': [
+                    {'value': 'College', 'label': 'College'},
+                    {'value': 'University', 'label': 'University'},
+                    {'value': 'State', 'label': 'State'},
+                    {'value': 'National', 'label': 'National'},
+                    {'value': 'International', 'label': 'International'},
+                ]
+            },
+            {
+                'field_label': 'Event Type',
+                'field_type': 'select',
+                'field_name': 'event_type',
+                'required': True,
+                'options': [
+                    {'value': 'Intra College', 'label': 'Intra College'},
+                    {'value': 'Inter College', 'label': 'Inter College'},
+                ]
             },
             {
                 'field_label': 'Team/Individual',
-                'field_type': 'radio',
-                'field_name': 'participation_type',
+                'field_type': 'select',
+                'field_name': 'team_individual',
                 'required': True,
                 'options': [
                     {'value': 'individual', 'label': 'Individual'},
@@ -1261,20 +577,15 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Is it a Hackathon Event?',
-                'field_type': 'radio',
-                'field_name': 'is_hackathon',
-                'required': True,
-                'options': [
-                    {'value': 'yes', 'label': 'Yes, It is a Hackathon event'},
-                    {'value': 'no', 'label': 'No, It is some other event'}
-                ]
-            },
-            {
                 'field_label': 'Name of the team(If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_name',
-                'required': True,
+                'required': False,
+                'depends_on': {
+                    'field': 'team_individual',
+                    'value': 'team'
+                },
+                'required_if_visible': True,
                 'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 100 }
             },
@@ -1282,54 +593,23 @@ FORM_DEFINITIONS = {
                 'field_label': 'Name of all team members (If it is Hackathon event)',
                 'field_type': 'text',
                 'field_name': 'team_members',
-                'required': True,
+                'required': False,
+                'depends_on': {
+                    'field': 'team_individual',
+                    'value': 'team'
+                },
+                'required_if_visible': True,
                 'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 500 }
             },
             {
-                'field_label': 'Event Level',
-                'field_type': 'radio',
-                'field_name': 'event_level',
-                'required': True,
-                'options': [
-                    {'value': 'college', 'label': 'College'},
-                    {'value': 'university', 'label': 'University'},
-                    {'value': 'state', 'label': 'State'},
-                    {'value': 'national', 'label': 'National'},
-                    {'value': 'international', 'label': 'International'}
-                ]
-            },
-            {
-                'field_label': 'Event Type',
-                'field_type': 'radio',
-                'field_name': 'event_type',
-                'required': True,
-                'options': [
-                    {'value': 'intra-college', 'label': 'Intra College'},
-                    {'value': 'inter-college', 'label': 'Inter College'},
-                    {'value': 'not-applicable', 'label': 'Not Applicable / Individual Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Event Category',
-                'field_type': 'radio',
-                'field_name': 'event_category',
-                'required': True,
-                'options': [
-                    {'value': 'cultural', 'label': 'Cultural'},
-                    {'value': 'technical', 'label': 'Technical'},
-                    {'value': 'sports', 'label': 'Sports'},
-                    {'value': 'non-technical', 'label': 'Non-Technical'}
-                ]
-            },
-            {
                 'field_label': 'Mode of Event',
-                'field_type': 'radio',
-                'field_name': 'mode',
+                'field_type': 'select',
+                'field_name': 'event_mode',
                 'required': True,
                 'options': [
-                    {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'}
+                    {'value': 'Online', 'label': 'Online'},
+                    {'value': 'Offline', 'label': 'Offline'},
                 ]
             },
             {
@@ -1350,14 +630,12 @@ FORM_DEFINITIONS = {
                 }
             },
             {
-                'field_label': 'Organized By',
-                'field_type': 'radio',
-                'field_name': 'organized_by',
+                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
+                'field_type': 'text',
+                'field_name': 'organizer_details',
                 'required': True,
-                'options': [
-                    {'value': 'skit', 'label': 'SKIT'},
-                    {'value': 'other', 'label': 'Other Institute/University/Organization'}
-                ]
+                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Event Venue',
@@ -1366,14 +644,6 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'placeholder': 'e.g., SKIT Jaipur / Write online if online',
                 'field_validation': { 'min_length': 3, 'max_length': 200 }
-            },
-            {
-                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
-                'field_type': 'text',
-                'field_name': 'organizer_details',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
-                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Award Certificate/other proof',
@@ -1386,17 +656,17 @@ FORM_DEFINITIONS = {
         ]
     },
 
-    'internship_stipend': {
-        'title': 'Internship/Training (Only with Stipend) before Placement',
+    'online_course': {
+        'title': 'Coursera / edX Certification',
         'description': [
-            'Submit details for a paid internship or training that occurred before any final job placement.'
+            "Only Upload Coursera/edX Certificates. Course certificates from other platforms such as Udemy are NOT allowed."
         ],
         'enctype': 'multipart/form-data',
         'fields': [
             {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
                 'required': True,
                 'options': [
                     {'value': 'participation', 'label': 'Participation'},
@@ -1405,10 +675,15 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                'field_hidden': True,
+                # Declarative Dependency Schema
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1422,17 +697,25 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'other_position_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
             {
                 'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'award_type',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1446,8 +729,12 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'field_hidden': True,
                 'required': False,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1457,7 +744,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'award_date',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
@@ -1465,7 +756,156 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
+                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
+                'field_validation': { 'max_length': 500 }
+            },
+            {
+                'field_label': 'Name of the Course',
+                'field_type': 'text',
+                'field_name': 'course_name',
+                'required': True,
+                'placeholder': 'e.g., Python for Everybody',
+                'field_validation': { 'max_length': 150 }
+            },
+            {
+                'field_label': 'Platform',
+                'field_type': 'text',
+                'field_name': 'platform',
+                'required': True,
+                'placeholder': 'e.g., Coursera, edX, Udemy',
+                'field_validation': { 'max_length': 100 }
+            },
+            {
+                'field_label': 'Date of Completion',
+                'field_type': 'date',
+                'field_name': 'completion_date',
+                'required': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Proof',
+                'field_type': 'file',
+                'field_name': 'certificate',
+                'required': True,
+                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
+                'validation': {
+                    'accepted_types': '.pdf',
+                    'max_size': '5MB'
+                }
+            }
+        ]
+    },
+    
+    'internship_stipend': {
+        'title': 'Internship/Training (Only with Stipend) before Placement',
+        'description': [
+            'Submit details for a paid internship or training that occurred before any final job placement.'
+        ],
+        'enctype': 'multipart/form-data',
+        'fields': [
+            {
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
+                'required': True,
+                'options': [
+                    {'value': 'participation', 'label': 'Participation'},
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
+            {
+                'field_label': 'Position/Place/Rank',
+                'field_type': 'select',
+                'field_name': 'position',
+                'required': False,
+                # Declarative Dependency Schema
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
+                'options': [
+                    {'value': 'I', 'label': 'I'},
+                    {'value': 'II', 'label': 'II'},
+                    {'value': 'III', 'label': 'III'},
+                    {'value': 'consolation', 'label': 'Consolation'},
+                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
+                ]
+            },
+            {
+                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_type': 'text',
+                'field_name': 'other_position_details',
+                'required': False,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
+                'placeholder': 'Write NA if position already mentioned',
+                'help_text': 'e.g., 28th Rank in National Level Coding Test',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Award Given (Other than Certificate)',
+                'field_type': 'select',
+                'field_name': 'award_type',
+                'required': False,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
+                'options': [
+                    {'value': 'medal', 'label': 'Medal'},
+                    {'value': 'trophy', 'label': 'Trophy'},
+                    {'value': 'cash_prize', 'label': 'Cash Prize'},
+                    {'value': 'scholarship', 'label': 'Scholarship'},
+                    {'value': 'other', 'label': 'Other Prize'},
+                    {'value': 'none', 'label': 'None'}
+                ]
+            },
+            {
+                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_type': 'text',
+                'field_name': 'prize_details',
+                'required': False,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
+                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
+                'help_text': 'Write NA if no prize',
+                'field_validation': {'max_length': 150}
+            },
+            {
+                'field_label': 'Date of Receiving Award/Certificate',
+                'field_type': 'date',
+                'field_name': 'award_date',
+                'required': False,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
+                'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
+                'field_type': 'text',
+                'field_name': 'award_agency_details',
+                'required': False,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1552,9 +992,9 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',
         'fields': [
             {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
                 'required': True,
                 'options': [
                     {'value': 'participation', 'label': 'Participation'},
@@ -1563,10 +1003,15 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                'field_hidden': True,
+                # Declarative Dependency Schema
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -1580,17 +1025,25 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'other_position_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
             {
                 'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'award_type',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -1605,7 +1058,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': False,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -1615,7 +1072,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'date',
                 'field_name': 'award_date',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'field_validation': { 'max_date': 'today' }
             },
             {
@@ -1623,7 +1084,11 @@ FORM_DEFINITIONS = {
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
                 'required': False,
-                'field_hidden': True,
+                'depends_on': {
+                    'field': 'certification_type',
+                    'value': 'achievement'
+                },
+                'required_if_visible': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -1723,82 +1188,6 @@ FORM_DEFINITIONS = {
         'enctype': 'multipart/form-data',
         'fields': [
             {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'field_hidden': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
                 'field_label': 'Funding Agency Name',
                 'field_type': 'text',
                 'field_name': 'agency_name',
@@ -1851,126 +1240,6 @@ FORM_DEFINITIONS = {
                 }
             }
         ]
-    },
-
-    'online_course': {
-        'title': 'Coursera / edX Certification',
-        'description': [
-            "Only Upload Coursera/edX Certificates. Course certificates from other platforms such as Udemy are NOT allowed."
-        ],
-        'enctype': 'multipart/form-data',
-        'fields': [
-            {
-                'field_label': ' Participation/ Achievement',
-                'field_type': 'radio',
-                'field_name': 'submission_category',
-                'required': True,
-                'options': [
-                    {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
-                ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'radio',
-                'field_name': 'position',
-                'field_hidden': True,
-                'required': False,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'radio',
-                'field_name': 'award_type',
-                'required': False,
-                'field_hidden': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'field_hidden': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'field_hidden': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Name of the Course',
-                'field_type': 'text',
-                'field_name': 'course_name',
-                'required': True,
-                'placeholder': 'e.g., Python for Everybody',
-                'field_validation': { 'max_length': 150 }
-            },
-            {
-                'field_label': 'Platform',
-                'field_type': 'text',
-                'field_name': 'platform',
-                'required': True,
-                'placeholder': 'e.g., Coursera, edX, Udemy',
-                'field_validation': { 'max_length': 100 }
-            },
-            {
-                'field_label': 'Date of Completion',
-                'field_type': 'date',
-                'field_name': 'completion_date',
-                'required': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Proof',
-                'field_type': 'file',
-                'field_name': 'certificate',
-                'required': True,
-                'help_text': 'Only PDF file format is acceptable. Max Size: 5MB',
-                'validation': {
-                    'accepted_types': '.pdf',
-                    'max_size': '5MB'
-                }
-            }
-        ]
     }
 }
 
@@ -1993,11 +1262,11 @@ for form in form_name_list:
             field_col_name = field_col["field_name"]
 
             # Defining form fields with dataype TEXT and is REQUIRED
-            try:
-                if field_col["field_hidden"]:
+            if field_col["required"] == False:
                     col_def = f"{field_col_name} TEXT NOT NULL DEFAULT 'NA'"
-            except KeyError:
+            else:
                 col_def = f"{field_col_name} TEXT NOT NULL"
+
             col_def_list.append(col_def)
 
         # SQL string
