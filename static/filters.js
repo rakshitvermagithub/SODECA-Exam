@@ -119,9 +119,6 @@ function fetchFilteredData() {
                         <td>${data["sem"]}${data["branch"]}-${data["section"]}</td>
                         <td>${data["category"]}</td>
                         <td>
-                            <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file=${baseFileUrl.replace('FILENAME_PLACEHOLDER', data['certificate'])}>Preview</a>
-                        </td>
-                        <td>
                             ${data["google_file_id"] === 'pending'
                         ? 'Pending'
                         : `<a href="https://drive.google.com/file/d/${data['google_file_id']}" target="_blank" class="btn btn-sm btn-outline-primary">
@@ -152,34 +149,7 @@ function fetchFilteredData() {
                             </button>
                         </td>
     
-                        <td>
-                            <div class="d-flex gap-2">
-                                <form action="${uploadUrl}" method="post">
-                                ${isDriveAuth ?
-                        `<input type="hidden" name="entry_id" value="${data['entry_id']}">
-                                        <input type="hidden" name="batch_str" value="${data['sem']}_${data['branch']}_${data['section']}">
-                                        <input type="hidden" name="form_name" value="${data['category']}">
-                                        <input type="hidden" name="filename" value="${data['certificate']}">
-                                        <input type="hidden" name="submission_category" value="${data['submission_category']}">
-                                        <button type="submit" class="btn btn-sm btn-outline-success"
-                                        ${data['status'] !== 'pending' ? 'disabled' : ''}>Accept</button>`
-                        :
-                        `<button type="submit" class="btn btn-sm btn-outline-success"
-                                    ${data['status'] !== 'pending' ? 'disabled' : ''}>Accept</button>
-                                </form>`
-                    }
-                                <form action="" method="POST">
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                        data-bs-target="#rejectionModal" data-entry-id="${data['entry_id']}}"
-                                        data-form-name="${data['category']}"
-                                        ${data['status'] !== 'pending' ? 'disabled' : ''}>
-                                        Reject
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
                         <td>${data["submitted_at"]}</td>
-                        <td>${data["withdrawn_at"]}</td>
                     </tr>
                 `).join('');
             }

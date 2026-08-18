@@ -3599,12 +3599,13 @@ def student_report():
     if user_role != 'admin' and user_role != 'coordinator':
         abort(404)
 
-    current_session_row = db.execute("SELECT academic_session FROM drive_settings")
+    current_session_row = db.execute("SELECT academic_session, academic_term FROM drive_settings")
     if not current_session_row:
         flash("Configure batch settings in batch management","warning")
         return redirect(request.referrer)
 
     current_session = current_session_row[0]['academic_session']
+    current_term = current_session_row[0]['academic_term']
 
     # Queries as per the number of forms selected
     base_queries = []
@@ -3702,12 +3703,13 @@ def student_report():
         for form in form_name_list:
             base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no,
-                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate,
+                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.status,
                 f.sem, f.branch, f.section, f.academic_session, f.academic_term
-                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE academic_session='{current_session}'"""
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id 
+                WHERE f.academic_session='{current_session}' AND f.academic_term='{current_term}' AND f.status='accepted'"""
                 )
 
-        complete_query = " UNION ALL ".join(base_queries) 
+        complete_query = " UNION ALL ".join(base_queries)
         final_query = f"{complete_query} ORDER BY submitted_at DESC"
         filtered_data = db.execute(final_query)
 
