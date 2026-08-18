@@ -129,7 +129,6 @@ function fetchFilteredData() {
                                    </a>`
                     }
                         </td>
-                        <td>${data["submission_category"]}</td>
                         ${(() => {
                         if (data['status'] === 'accepted') {
                             return '<td><span class="badge rounded-pill text-bg-success">Accepted</span></td>';

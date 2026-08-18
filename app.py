@@ -3652,7 +3652,7 @@ def student_report():
         submission_category = received_json_data.get('submission_type_data')
         print("Submission categories are: ",submission_category)
         if submission_category:
-            where_params.append(f"f.submission_category IN ('{submission_category}')")
+            where_params.append(f"f.certification_type IN ('{submission_category}')")
 
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
