@@ -2345,6 +2345,19 @@ def fill_form():
     form_to_show = FORM_DEFINITIONS[current_form]
 
     if request.method == "POST":
+        if request.is_json:
+            data = request.get_json() or {}
+            
+            print("Received JSON:", data)
+            if data.get('skip') is True:
+                # Increment index stored in session
+                session['current_form_index'] += 1
+                
+                # Send back redirect URL for the GET request
+                return jsonify({
+                    "success": True,
+                    "redirect_url": url_for('fill_form')  # Triggers GET /fill_form
+                }), 200
 
         # Initialise dict for text and radio inputs
         form_inputs = {}

@@ -118,8 +118,15 @@
                     
                     <div class="card card-minimalist position-relative border-top border-primary border-5">
                         <div class="card-body p-4 p-md-5">
-                            <h4 class="text-center mb-5 form-title">{{ form_to_show["title"] }}</h4>
-                            
+                            <div class="d-flex justify-content-between align-items-center mb-5 position-relative">
+                                <!-- Invisible placeholder to balance flex spacing and center title -->
+                                <div style="width: 75px;"></div> 
+
+                                <h4 class="form-title mb-0 text-center">{{ form_to_show["title"] }}</h4>
+
+                                <button type="button" id="skipBtn" class="btn btn-outline-secondary btn-sm" style="width: 75px;">Skip</a>
+                            </div>
+
                             <form id="fillForm" action="/fill_form" method="post" enctype="{{ form_to_show.enctype | default('application/x-www-form-urlencoded') }}" novalidate>       
                                 <div class="row g-3">
                                 {% for field in form_to_show["fields"] %}
@@ -417,6 +424,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial state setup on page load
     applyDependencies();
+
+    const skipButton = document.getElementById('skipBtn');
+    skipButton.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/fill_form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ skip: true })
+            });
+
+            // Verify if backend returned JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('Expected JSON, but received HTML/Text:', text);
+                throw new TypeError("Server did not return JSON.");
+            }
+
+            const data = await response.json();
+
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            }
+        } catch (error) {
+            console.error('Error skipping form:', error);
+        }
+    });
 });
 </script>
 {% endblock %}
