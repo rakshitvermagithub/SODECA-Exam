@@ -2509,19 +2509,41 @@ def fill_form():
     return render_template("fill_form.html", success=False, form_to_show=form_to_show, count=current_form_index, progress_width = percentage, total=total_count)
 
 # View user submissions route
-@app.route("/your_submissions", methods=["GET"])
+@app.route("/your_submissions", methods=["GET", "POST"])
 @login_required
 def your_submissions():
     student_id = session.get("user_id")
+    # Get current session and term
+    curr_settings_rows = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if not curr_settings_rows:
+        flash("System settings not configured yet, please contact Admin", "danger")
+        return redirect(url_for("sodeca_forms"))
+    
+    curr_academic_session = curr_settings_rows[0]["academic_session"]
+    curr_academic_term = curr_settings_rows[0]["academic_term"]
+    selected_academic_session = curr_academic_session
+    selected_academic_term = curr_academic_term 
+
+    session_term_list = db.execute("SELECT DISTINCT academic_session, academic_term FROM batch_structure ORDER BY academic_session DESC, academic_term")
+    if not session_term_list:
+        flash("System settings not configured yet, please contact Admin", "danger")
+        return redirect(url_for("sodeca_forms"))
+
     base_queries = []
-    params = {'sid': student_id}
+    params = {'sid': student_id, 'cas': curr_academic_session, 'cat': curr_academic_term}
+
+    if request.method == "POST":
+        selected_academic_session = request.form.get("academic_session")
+        selected_academic_term = request.form.get("academic_term")
+        params['cas'] = selected_academic_session
+        params['cat'] = selected_academic_term
 
     for key, value in FORM_DEFINITIONS.items():
         base_queries.append(
-                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS form_title, 
-                certificate, status, submitted_at, withdrawn_at, rejection_note
-                FROM {key} WHERE student_id = :sid"""
-                )
+            f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS form_title, 
+            certificate, status, submitted_at, withdrawn_at, rejection_note
+            FROM {key} WHERE student_id = :sid AND academic_session = :cas AND academic_term = :cat"""
+        )
     if base_queries:
         complete_query = " UNION ALL ".join(base_queries)
         final_sql = f"{complete_query} ORDER BY submitted_at DESC"
@@ -2534,9 +2556,12 @@ def your_submissions():
             flash("An error occurred while fetching your submissions.", "danger")
             return redirect(url_for('sodeca_forms'))
 
-        # For loops on sessions
-
-    return render_template("your_submissions.html", submissions=submissions)
+    return render_template("your_submissions.html", 
+        submissions=submissions,
+        session_term_list=session_term_list,
+        selected_academic_session=selected_academic_session,
+        selected_academic_term=selected_academic_term
+    )
 
 @app.route("/view_details", methods=["POST"])
 @login_required

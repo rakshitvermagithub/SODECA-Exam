@@ -83,12 +83,12 @@
 
 <div class="page-wrapper">
     <div class="container">
-        <h3 class="text-center mb-5 form-title">Your Submissions</h3>
+        <h3 class="text-center mb-5 form-title">Your Submissions ({{ selected_academic_session }} {{ selected_academic_term }})</h3>
         
-        <div class="card card-minimalist shadow">
-             <div class="card-body p-4">
+        <div class="card card-minimalist mb-2">
+             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover table-submissions">
+                    <table class="table table-hover table-submissions" {% if submissions %}id="submissionsTable"{% endif %}>
                         <thead>
                             <tr>
                                 <th scope="col" style="width: 5%;">#</th>
@@ -175,7 +175,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted p-5">
+                                    <td colspan="6" class="text-center text-muted p-2">
                                         <i class="bi bi-inbox fs-1 d-block mb-3"></i>
                                         You haven't submitted any forms yet.
                                     </td>
@@ -186,6 +186,23 @@
                 </div>
             </div>
         </div>
+
+        {% for session_term in session_term_list %}
+        {% set academic_session = session_term["academic_session"] %}
+        {% set academic_term = session_term["academic_term"] %}
+        {% if academic_session != selected_academic_session or academic_term != selected_academic_term %}
+        <div class="px-4 py-2 bg-white mb-2 border border-secondary-subtle rounded-2 text-primary">
+            <form action="/your_submissions" method="post">
+                <div class="d-flex justify-content-between">
+                    <h4>{{ session_term["academic_session"] }} {{ session_term["academic_term"] }}</h4>
+                    <input name="academic_session" type="text" value="{{ session_term['academic_session'] }}" hidden>
+                    <input name="academic_term" type="text" value="{{ session_term['academic_term'] }}" hidden>
+                    <button type="submit" class="btn btn-primary">View</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        {% endfor %}
     </div>
 </div>
 
@@ -310,6 +327,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 modalBody.innerHTML = '<p class="text-danger text-center py-3">Could not load details. Please try again.</p>';
             });
         });
+    }
+
+    submissionsTable = document.getElementById("submissionsTable")
+    if (submissionsTable) {
+        try { 
+            $('#submissionsTable').DataTable({
+                paging: true,
+                pageLength: 5,       // Disables pagination
+                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
+                scrollX: true,       // Enables horizontal scrolling
+                scrollCollapse: true,
+                lengthChange: false
+            });
+        } catch (e) {
+            console.error("Error initializing DataTable:", e);
+        }
     }
 });
 </script>
