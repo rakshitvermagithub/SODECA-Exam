@@ -13,7 +13,8 @@
         padding-bottom: 2rem;
     }
     .card-minimalist {
-        border: none;
+        border-color: var(--bs-dark-border-subtle);
+        border-top: 5px solid var(--college-blue);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
         border-radius: 0.5rem;
     }
@@ -99,7 +100,7 @@
                     <div class="d-flex align-items-center mb-4 mx-auto" style="max-width: 95%;">
                         
                         <div class="d-flex justify-content-start" style="flex: 1;">
-                            <button type="button" class="btn btn-outline-danger p-1 px-2" data-bs-toggle="modal" data-bs-target="#exitConfirmModal" title="Exit">
+                            <button type="button" class="btn btn-danger p-1 px-2" data-bs-toggle="modal" data-bs-target="#exitConfirmModal" title="Exit">
                                 <i class="bi bi-box-arrow-left me-1"></i> <span class="d-none d-sm-inline">Exit</span>
                             </button>
                         </div>
@@ -116,7 +117,7 @@
                         
                     </div>
                     
-                    <div class="card card-minimalist position-relative border-top border-primary border-5">
+                    <div class="card card-minimalist position-relative">
                         <div class="card-body p-4 p-md-5">
                             <div class="d-flex justify-content-between align-items-center mb-5 position-relative">
                                 <!-- Invisible placeholder to balance flex spacing and center title -->

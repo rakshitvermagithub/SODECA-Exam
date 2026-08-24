@@ -523,6 +523,8 @@
 <script id = "filtered-data" type="application/json">
     {{ filtered_data|tojson }}
 </script>
+<script src="/static/dynamic_form_rendering.js"></script>
+<script src="/static/filters.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof updateChart === 'function') {
@@ -848,6 +850,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<script src="/static/dynamic_form_rendering.js"></script>
-<script src="/static/filters.js"></script>
 {% endblock %}
