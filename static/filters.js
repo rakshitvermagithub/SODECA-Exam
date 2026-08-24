@@ -82,82 +82,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function fetchFilteredData() {
     const academic_session_data = document.querySelector('input[name="academic_sessions"]:checked')?.value || null;
-    const form_type_data = Array.from(document.querySelectorAll('input[name="forms[]"]:checked')).map(cb => cb.value) || null;
+    const form_type_data = Array.from(document.querySelectorAll('input[name="forms[]"]:checked')).map(cb => cb.value);
     const even_odd_data = document.querySelector('input[name="academic_terms"]:checked')?.value || null;
-    const semester_data = Array.from(document.querySelectorAll('input[name="semesters[]"]:checked')).map(cb => cb.value) || null;
-    const branch_data = Array.from(document.querySelectorAll('input[name="branches[]"]:checked')).map(cb => cb.value) || null;
-    const section_data = Array.from(document.querySelectorAll('input[name="sections[]"]:checked')).map(cb => cb.value) || null;
+    const semester_data = Array.from(document.querySelectorAll('input[name="semesters[]"]:checked')).map(cb => cb.value);
+    const branch_data = Array.from(document.querySelectorAll('input[name="branches[]"]:checked')).map(cb => cb.value);
+    const section_data = Array.from(document.querySelectorAll('input[name="sections[]"]:checked')).map(cb => cb.value);
     const submission_type_data = document.querySelector('input[name="submission_categories"]:checked')?.value || null;
 
     fetch('/student_report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            academic_session_data: academic_session_data,
-            form_type_data: form_type_data,
-            even_odd_data: even_odd_data,
-            semester_data: semester_data,
-            branch_data: branch_data,
-            section_data: section_data,
-            submission_type_data: submission_type_data
+            academic_session_data,
+            form_type_data,
+            even_odd_data,
+            semester_data,
+            branch_data,
+            section_data,
+            submission_type_data
         })
     })
-        .then(response => response.json())
-        .then(payload => {
-            const tableBody = document.getElementById('data-table-body-report');
-            const tbody = document.getElementById('data-table-body-report');
-            const isDriveAuth = tbody.dataset.driveAuth === 'true';
-            const uploadUrl = tbody.dataset.uploadUrl;
-            const baseFileUrl = tbody.dataset.viewFileUrl;
-            if (payload.data.length === 0) { tableBody.innerHTML = noDataAvailableTableStructure; }
-            else {
-                tableBody.innerHTML = payload.data.map((data, index) => `
-                    <tr data-certificate=${data['certificate']}>
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server returned HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(payload => {
+        const tableBody = document.getElementById('data-table-body-report');
+        
+        // Safe check for data array existence
+        const reports = Array.isArray(payload?.data) ? payload.data : [];
+
+        if (reports.length === 0) { 
+            tableBody.innerHTML = typeof noDataAvailableTableStructure !== 'undefined' 
+                ? noDataAvailableTableStructure 
+                : '<tr><td colspan="8" class="text-center">No data available</td></tr>';
+        } else {
+            tableBody.innerHTML = reports.map((data, index) => {
+                let statusBadge = '';
+                if (data.status === 'accepted') {
+                    statusBadge = '<td><span class="badge rounded-pill text-bg-success">Accepted</span></td>';
+                } else if (data.status === 'rejected') {
+                    statusBadge = '<td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>';
+                } else if (data.status === 'pending') {
+                    statusBadge = '<td><span class="badge rounded-pill text-bg-warning">Pending</span></td>';
+                } else {
+                    statusBadge = '<td></td>';
+                }
+
+                const driveLink = data.google_file_id === 'pending'
+                    ? 'Pending'
+                    : `<a href="https://drive.google.com/file/d/${data.google_file_id}" target="_blank" class="btn btn-sm btn-outline-primary">
+                         <i class="bi bi-file-earmark-text"></i> Drive link
+                       </a>`;
+
+                return `
+                    <tr data-certificate="${data.certificate || ''}">
                         <td>${index + 1}</td>
-                        <td>${data["student_name"]}</td>
-                        <td>${data["university_roll_no"]}</td>
-                        <td>${data["sem"]}${data["branch"]}-${data["section"]}</td>
-                        <td>${data["category"]}</td>
-                        <td>
-                            ${data["google_file_id"] === 'pending'
-                        ? 'Pending'
-                        : `<a href="https://drive.google.com/file/d/${data['google_file_id']}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                     <i class="bi bi-file-earmark-text"></i> Drive link
-                                   </a>`
-                    }
-                        </td>
-                        ${(() => {
-                        if (data['status'] === 'accepted') {
-                            return '<td><span class="badge rounded-pill text-bg-success">Accepted</span></td>';
-                        }
-                        if (data['status'] === 'rejected') {
-                            return '<td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>';
-                        }
-                        if (data['status'] === 'pending') {
-                            return '<td><span class="badge rounded-pill text-bg-warning">Pending</span></td>';
-                        }
-                        return ''; // Good practice: handle unexpected status values
-                    })()}
-    
+                        <td>${data.student_name || ''}</td>
+                        <td>${data.university_roll_no || ''}</td>
+                        <td>${data.sem || ''}${data.branch || ''}-${data.section || ''}</td>
+                        <td>${data.category || ''}</td>
+                        <td>${driveLink}</td>
+                        ${statusBadge}
                         <td>
                             <button type="button" class="btn btn-outline-primary"
                                     data-bs-toggle="modal"
                                     data-bs-target="#submissionDetailsModal"
-                                    data-entry-id="${data['entry_id']}"
-                                    data-form-name="${data['category']}">
+                                    data-entry-id="${data.entry_id || ''}"
+                                    data-form-name="${data.category || ''}">
                                 Open
                             </button>
                         </td>
-    
-                        <td>${data["submitted_at"]}</td>
+                        <td>${data.submitted_at || ''}</td>
                     </tr>
-                `).join('');
-            }
-            updateChart(payload.data);
-        })
-        .catch(error => {
-            console.error('Error fetching details:', error);
-        })
+                `;
+            }).join('');
+        }
+
+        // Pass the safely parsed array into updateChart
+        updateChart(reports);
+    })
+    .catch(error => {
+        console.error('Error fetching details:', error);
+        // Fallback to update chart safely on error
+        updateChart([]);
+    });
 }
-
-

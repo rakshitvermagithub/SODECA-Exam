@@ -2630,25 +2630,34 @@ def withdraw_entry():
         flash(f"An unexpected error occured, please contact Admin", "danger")
     return redirect(url_for("your_submissions"))
 
-def student_submission_stats(batch_details):
+import sys
+
+def student_submission_stats(batch_details, curr_academic_session, curr_academic_term):
     """
     Fetches ALL students for the batch with 'Smart Sorting' applied.
-    Data is passed to the frontend for client-side JavaScript pagination
-    and Python-side Grand Total calculation.
+    Parameters for session and term are now safely bound to prevent SQL Injection.
     """
-    
-    # 1. Build the Activity Stream
+    if not form_name_list:
+        return []
+
     subqueries = []
+    query_params = []
+
+    # 1. Build parameterized Activity Stream
     for form in form_name_list:
+        # Note: Ensure `form` table names come from a trusted white-list
         subqueries.append(f"""
             SELECT student_id, status, submitted_at 
             FROM {form} 
             WHERE withdrawn_at IS NULL
+            AND academic_session = ?
+            AND academic_term = ?
         """)
-    
+        query_params.extend([curr_academic_session, curr_academic_term])
+
     master_union = " UNION ALL ".join(subqueries)
 
-    # 2. Build the Master Query WITHOUT Limits
+    # 2. Build Master Query with latest_pending_date explicitly selected
     final_sql = f"""
         WITH FormActivities AS (
             {master_union}
@@ -2659,7 +2668,7 @@ def student_submission_stats(batch_details):
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
                 SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) AS accepted_count,
                 SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
-                MAX(CASE WHEN status = 'pending' THEN submitted_at ELSE NULL END) as latest_pending_date
+                MAX(CASE WHEN status = 'pending' THEN submitted_at ELSE NULL END) AS latest_pending_date
             FROM FormActivities
             GROUP BY student_id
         )
@@ -2669,7 +2678,8 @@ def student_submission_stats(batch_details):
             s.university_roll_no,
             COALESCE(c.pending_count, 0) AS pending_count,
             COALESCE(c.accepted_count, 0) AS accepted_count,
-            COALESCE(c.rejected_count, 0) AS rejected_count
+            COALESCE(c.rejected_count, 0) AS rejected_count,
+            c.latest_pending_date
         FROM student_details s
         LEFT JOIN StudentFormCounts c ON s.student_user_id = c.student_id
         WHERE s.semester = ? 
@@ -2681,22 +2691,20 @@ def student_submission_stats(batch_details):
             s.university_roll_no ASC
     """
 
-    # Base parameters for the batch
-    base_params = [
+    # Combine query parameters: [session, term, session, term, ..., semester, branch, section]
+    query_params.extend([
         batch_details["semester"], 
         batch_details["branch"], 
-        batch_details["section"], 
-    ]
+        batch_details["section"]
+    ])
 
     try:
-        # Execute the main query and return the full list of students
-        students = db.execute(final_sql, *base_params)
+        students = db.execute(final_sql, *query_params)
         return students
-        
     except Exception as e:
         print(f"Error fetching student stats: {e}", file=sys.stderr)
         return []
-    
+   
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
 @app.route("/faculty_dashboard", methods=["GET"])
@@ -2704,7 +2712,16 @@ def student_submission_stats(batch_details):
 def faculty_dashboard():
     if request.method == "GET":
 
-        if role(session.get("user_id")) != 'faculty' and role(session.get("user_id")) != 'tester':
+        # Fetch current session and term
+        curr_settings_rows = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+        if not curr_settings_rows:
+            flash("System settings not configured yet, please contact Admin", "danger")
+            return redirect(url_for("sodeca_forms"))
+        
+        curr_academic_session = curr_settings_rows[0]["academic_session"]
+        curr_academic_term = curr_settings_rows[0]["academic_term"]
+
+        if role(session.get("user_id")) != 'faculty':
             return "Access Denied!", 400
         
         # Initialize count of all student's pending, accepted and rejected 
@@ -2720,11 +2737,13 @@ def faculty_dashboard():
         
         # If batch is not assigned by admin
         if not batch:
-            return render_template("faculty_dashboard.html",
-                                batch_is="No Batch Assgined...",
-                                submission_counts=submission_counts,
-                                students=None,
-                                )
+            return render_template(
+                "faculty_dashboard.html",
+                batch_is="No Batch Assgined...",
+                submission_counts=submission_counts,
+                students=None,
+            )
+
         batch_details = batch[0]
         # Extract and sanitize details (defaulting to empty strings/None)
         sem = batch_details.get('semester')
@@ -2749,7 +2768,7 @@ def faculty_dashboard():
             session["batch_details"] = batch_details
     
         # Submission requests stats of individual student in the batch
-        students = student_submission_stats(batch_details)
+        students = student_submission_stats(batch_details, curr_academic_session, curr_academic_term)
         print(students)
         for student in students:
             submission_counts["pending"] += student["pending_count"]
@@ -2798,7 +2817,30 @@ def batch_report():
         return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': col_labels})
 
     if request.method == "GET":
-        result = db.execute(f"""SELECT * FROM blood_donor as f
+        union_parts = []
+
+        for form_name in form_name_list:
+            union_parts.append(f"""
+                SELECT '{form_name}' as category, COUNT(*) as cnt
+                FROM {form_name} as f
+                INNER JOIN student_details as s ON f.student_id = s.student_user_id
+                WHERE s.branch=? AND s.semester=? AND s.section=?
+            """)
+
+        union_query = " UNION ALL ".join(union_parts)
+
+        params = []
+        for _ in form_name_list:
+            params.extend([batch_details["branch"], batch_details["semester"], batch_details["section"]])
+
+        count_results = db.execute(union_query, *params)
+
+        category_counts = [
+            {"category": form_dict[row["category"]], "count": row["cnt"]}
+            for row in count_results if row["cnt"] > 0
+        ]
+        print(category_counts)
+        result = db.execute(f"""SELECT * FROM {form_name_list[0]} as f
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
                             WHERE f.withdrawn_at IS NULL 
@@ -2806,7 +2848,12 @@ def batch_report():
                             batch_details["branch"], batch_details["semester"],
                             batch_details["section"])
                 
-        return render_template("batch_report.html", form_dict=form_dict, rows=result)
+        return render_template(
+            "batch_report.html", 
+            form_dict=form_dict, 
+            rows=result, 
+            category_counts=category_counts
+        )
 
 @app.route("/review_student", methods=["GET"])
 @login_required
@@ -2848,26 +2895,39 @@ def review_student():
 
     # Fetch all form submissions without any JOINs
     submissions = []
-    
-    for form in form_name_list:
-        try:
-            # Simple, direct index lookup. Blazingly fast.
-            # We fetch f.* as requested to get all specific details.
-            form_data = db.execute(f"""
-                SELECT *,
-                '{form}' as form_name 
-                FROM {form}
-                WHERE student_id = ? 
-                AND withdrawn_at IS NULL
-                ORDER BY submitted_at DESC
-            """, student_user_id)
-            
-            # Only add to our dictionary if they actually have submissions for this form
-            if form_data:
-                submissions.extend(form_data)
 
-        except Exception as e:
-            print(f"Error fetching data from {form} for student {student_user_id}: {e}", file=sys.stderr)
+    # Fetch current session and term
+    curr_settings_rows = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if not curr_settings_rows:
+        flash("System settings not configured yet, please contact Admin", "danger")
+        return redirect(url_for("sodeca_forms"))
+    
+    curr_academic_session = curr_settings_rows[0]["academic_session"]
+    curr_academic_term = curr_settings_rows[0]["academic_term"]
+    
+    query_parts = []
+    params = []
+
+    for form in form_name_list:
+        query_parts.append(f"""
+            SELECT entry_id, '{form}' as form_name, 
+            status, certificate, submitted_at
+            FROM {form}
+            WHERE student_id = ? 
+            AND withdrawn_at IS NULL
+            AND academic_session = ?
+            AND academic_term = ?
+        """)
+        params.extend([student_user_id, curr_academic_session, curr_academic_term])
+
+    full_query = " UNION ALL ".join(query_parts) + " ORDER BY submitted_at DESC"
+
+    try:
+        submissions = db.execute(full_query, *params)
+    except Exception as e:
+        print(f"Error fetching data from {form} for student {student_user_id}: {e}", file=sys.stderr)
+        flash(f"Error: {e}", "danger")
+        return redirect(url_for("faculty_dashboard"))
 
     # Creating data for summary table
     summary_dict = {}
@@ -2884,14 +2944,15 @@ def review_student():
         summary_dict[form_name][status] += 1
         total_dict[status] += 1
 
-    return render_template("review_student.html", 
-                            form_dict=form_dict,                   
-                            summary_dict=summary_dict, 
-                            submissions=submissions, 
-                            total_dict=total_dict,
-                            student_profile=student_profile,
-                            batch_str=batch_str
-                            )
+    return render_template(
+        "review_student.html", 
+        form_dict=form_dict,                   
+        summary_dict=summary_dict, 
+        submissions=submissions, 
+        total_dict=total_dict,
+        student_profile=student_profile,
+        batch_str=batch_str
+    )
 
 @app.route('/view_submission/<path:filename>') 
 @login_required
@@ -3014,26 +3075,19 @@ def upload_to_drive():
         return redirect(request.referrer)
 
     # Get participation and achievement folder ids
-    submission_category = request.form.get('submission_category')
-    if not submission_category:
-        flash("Error: Submission category is null", "danger")
-        return redirect(request.referrer)
-
     submission_folder_id = None
 
-    if (submission_category == "achievement"):
-        achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
-        if (achievement_folder_list):
-            submission_folder_id = achievement_folder_list[0].get("achievement_folder_id")
+    certification_type = request.form.get('certification_type')
+    if certification_type:
+        if (certification_type == "achievement"):
+            achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
+            if (achievement_folder_list):
+                submission_folder_id = achievement_folder_list[0].get("achievement_folder_id")
 
-    elif (submission_category == "participation"):
-        participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
-        if (participation_folder_list):
-            submission_folder_id = participation_folder_list[0].get("participation_folder_id")
-
-    if (not submission_folder_id):
-        flash("Error: Submission category is NULL", "danger")
-        return redirect(request.referrer)
+        elif (certification_type == "participation"):
+            participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
+            if (participation_folder_list):
+                submission_folder_id = participation_folder_list[0].get("participation_folder_id")
     
     try:
         # 1. Safely extract the tokens from your session dictionary
@@ -3072,25 +3126,26 @@ def upload_to_drive():
 
         google_file_id = uploaded_file.get('id')
 
-        # Upload file to either achievement or participation folder
-        media_submission_category = MediaFileUpload(full_path, resumable=False)
-        try:
-            submission_category_file = drive_service.files().create(
-                body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
-            ).execute()
-
-            if not submission_category_file.get('id'):
-                raise Exception("Category folder upload returned no file ID")
-
-        except Exception as category_upload_error:
-            # First upload succeeded but second failed - clean up to avoid an orphaned file
+        if submission_folder_id:
+            # Upload file to either achievement or participation folder
+            media_submission_category = MediaFileUpload(full_path, resumable=False)
             try:
-                drive_service.files().delete(fileId=google_file_id).execute()
-            except Exception as cleanup_error:
-                print(
-                    f"Failed to clean up orphaned file {google_file_id} after category upload failure: {cleanup_error}"
-                )
-            raise
+                submission_category_file = drive_service.files().create(
+                    body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
+                ).execute()
+
+                if not submission_category_file.get('id'):
+                    raise Exception("Category folder upload returned no file ID")
+
+            except Exception as category_upload_error:
+                # First upload succeeded but second failed - clean up to avoid an orphaned file
+                try:
+                    drive_service.files().delete(fileId=google_file_id).execute()
+                except Exception as cleanup_error:
+                    print(
+                        f"Failed to clean up orphaned file {google_file_id} after category upload failure: {cleanup_error}"
+                    )
+                raise
 
         sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
         db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
@@ -4052,11 +4107,13 @@ def create_drive_structure():
     try:
         # 1. Open the transaction manually
         db.execute("BEGIN TRANSACTION")
-        
+
         # 2. Track what we insert so we don't clear the structure table prematurely
         structures_to_insert = []
         sem_list = set()
         branch_list = set()
+
+        db.execute("DELETE FROM drive_folder_map")
         
         for batch in batch_structure:
             sem = batch["sem"]
@@ -4086,8 +4143,6 @@ def create_drive_structure():
                                     db.execute("""
                                             INSERT INTO drive_folder_map (id, drive_folder_id, semester, branch, section, form_name) 
                                             VALUES (?, ?, ?, ?, ?, ?) 
-                                            ON CONFLICT (id) DO UPDATE SET
-                                                drive_folder_id = excluded.drive_folder_id 
                                         """, folder_map_id, form_folder_id, sem, branch, section, form_name)
 
         # 3. Apply the layout changes at the very end

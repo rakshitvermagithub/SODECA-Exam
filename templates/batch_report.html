@@ -317,6 +317,9 @@
     <script id="my-table-ids" type="application/json">
         {{ form_dict.keys()|list|tojson|safe }}
     </script>
+    <script id="category-counts-data" type="application/json">
+        {{ category_counts|tojson|safe }}
+    </script>
     <script>
         const selectAllUI = document.getElementById('radio');
         const allChildCheckboxes = document.querySelectorAll('input[name="optradio"]');
@@ -331,7 +334,8 @@
             })
         })
         document.addEventListener('DOMContentLoaded', () => {
-            updateChart();
+            const categoryData = JSON.parse(document.getElementById('category-counts-data').textContent);
+            updateChart(categoryData);
         });
         // PDF Preview script
         const bsModal = document.getElementById('pdfPreviewModal');
