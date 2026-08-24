@@ -35,6 +35,10 @@
         left: 50%;
         transform: translateX(-50%);
     }
+
+    .form-label {
+        color: var(--college-blue);
+    }
     
     .btn-admin {
         background-color: var(--bs-admin-purple);
@@ -144,7 +148,7 @@
 
                             <!-- 1. Academic Session (modal) -->
                             <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Session</label>
+                                <label class="form-label fw-bold small mb-1 d-block">Session</label>
                                 <div class="dropdown">
                                     <button type="button" id="session_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         Select...
@@ -166,7 +170,7 @@
 
                             <!-- 2. Form (modal) -->
                             <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block" for="form_type">Form Category</label>
+                                <label class="form-label fw-bold small mb-1 d-block" for="form_type">Form Category</label>
                                 <div class="dropdown">
                                     <button type="button" id="form_type_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         Select...
@@ -186,7 +190,7 @@
 
                             <!-- 3. Academic Term (dropdown) -->
                             <div class="col-auto" style="min-width:100px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Even/Odd</label>
+                                <label class="form-label fw-bold small mb-1 d-block">Even/Odd</label>
                                 <div class="dropdown">
                                     <button id="even_odd_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         <span>Select...</span>
@@ -210,7 +214,7 @@
 
                             <!-- 4. Semester (modal) -->
                             <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Semester</label>
+                                <label class="form-label fw-bold small mb-1 d-block">Semester</label>
                                 <div class="dropdown">
                                     <button type="button" id="semester_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         Select...
@@ -272,7 +276,7 @@
 
                             <!-- 5. Branch (modal) -->
                             <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Branch</label>
+                                <label class="form-label fw-bold small mb-1 d-block">Branch</label>
                                 <div class="dropdown">
                                     <button type="button" id="branch_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         Select...
@@ -295,7 +299,7 @@
 
                             <!-- 6. Section (modal) -->
                             <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Section/ Group</label>
+                                <label class="form-label fw-bold small mb-1 d-block">Section/ Group</label>
                                 <div class="dropdown">
                                     <button type="button" id="section_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         Select...
@@ -320,7 +324,7 @@
 
                             <!-- 7. Participation / Achievement (dropdown) -->
                             <div class="col-auto" style="min-width:170px;">
-                                <label class="form-label fw-bold text-secondary small mb-1 d-block">Participation/Achievement</label>
+                                <label class="form-label fw-bold small mb-1 d-block">Participation/Achievement</label>
                                 <div class="dropdown">
                                     <button id="par_ach_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                                         <span>Select...</span>
@@ -388,8 +392,8 @@
                                 {% if data["google_file_id"] == "pending" %}
                                 Pending
                                 {% else %}
-                                <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-file-earmark-text"></i> Drive link
+                                <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">
+                                    https://drive.google.com/file/d/{{ data['google_file_id'] }}
                                 </a>
                                 {% endif %}
                             </td>

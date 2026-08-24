@@ -3797,7 +3797,7 @@ def student_report():
             base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no,
                 '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.status,
-                f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                f.sem, f.branch, f.section, f.academic_session, f.academic_term, f.certificate
                 FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id 
                 WHERE f.academic_session='{current_session}' AND f.academic_term='{current_term}' AND f.status='accepted'"""
                 )
@@ -4210,49 +4210,6 @@ def update_master_folder():
 
     flash("Master folder link updated!", "success")
     return redirect(url_for("batch_management"))    
-
-@app.route("/dev_management", methods=["GET","POST"])
-@login_required
-def dev_management():
-    # Add an email
-    if request.method == "POST":
-        dev_email = request.form.get("dev_email")
-        if not dev_email:
-            flash("Email is required.", "danger")
-            return redirect(url_for("dev_management"))
-        
-        row = db.execute("SELECT email FROM users WHERE email=?", dev_email)
-        if len(row) == 1:
-            flash("Email already exists as a developer.", "info")
-            return redirect(url_for("dev_management"))
-        
-        try:
-            # Add email in users table and assign role = "dev"
-            db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
-            flash(f"Successfully added {dev_email} as a developer", "success")
-
-        except Exception as e:
-            flash(f"An unexpected database error occured.", "danger")
-            print(f"Error at updating dev emails: {e}")
-        
-        return redirect(url_for("dev_management"))
-    else:
-        dev_emails = db.execute("SELECT email FROM users WHERE role='dev'")
-        return render_template("dev_management.html", dev_emails=dev_emails)
-
-@app.route("/remove_dev", methods=["POST"])
-def remove_dev():
-    if request.method == "POST":
-        dev_email = request.form.get("dev_email")
-
-        try:
-            db.execute("DELETE FROM users WHERE email=?", dev_email)
-
-        except Exception as e:
-            flash(f"Removal failed, an unexpected error occured.", "danger")
-            print(f"Error at updating dev emails: {e}")
-
-        return redirect(url_for("dev_management"))
 
 @app.route("/visual_report", methods=["POST"])
 def visual_report():
