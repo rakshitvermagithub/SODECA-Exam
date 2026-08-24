@@ -75,7 +75,7 @@
                                 {% endif %}
                                 {% if request.path != '/faculty_dashboard' %}
                                     <li class="ms-2">
-                                        <span class="btn"> 
+                                        <span class="btn" style="background-color: white; color: var(--college-blue);"> 
                                             {% if session.get("batch_details") %}
                                                 {{ session["batch_details"]["semester"] }}{{ session["batch_details"]["branch"] }}-{{ session["batch_details"]["section"] }}
                                             {% endif %}
@@ -83,7 +83,7 @@
                                     </li> 
                                 {% endif %}                             
                                 <li class="ms-2">
-                                    <a href="/logout" class="btn btn-outline-danger">Logout</a>
+                                    <a href="/logout" class="btn btn-danger">Logout</a>
                                 </li>
 
                             {% elif user_role == 'admin' or user_role == 'coordinator' %}
