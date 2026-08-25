@@ -42,10 +42,10 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--college-blue);
+    background-color: var(--college-blue) !important;
 }
 .btn-primary:hover {
-    background-color: var(--college-blue-hover);
+    background-color: var(--college-blue-hover) !important;
     transform: translateY(-2px);
 }
 
