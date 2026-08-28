@@ -84,10 +84,11 @@ function fetchFilteredData() {
     const academic_session_data = document.querySelector('input[name="academic_sessions"]:checked')?.value || null;
     const form_type_data = Array.from(document.querySelectorAll('input[name="forms[]"]:checked')).map(cb => cb.value);
     const even_odd_data = document.querySelector('input[name="academic_terms"]:checked')?.value || null;
+    const event_nature_data = Array.from(document.querySelectorAll('input[name="event_natures[]"]:checked')).map(cb => cb.value);
     const semester_data = Array.from(document.querySelectorAll('input[name="semesters[]"]:checked')).map(cb => cb.value);
     const branch_data = Array.from(document.querySelectorAll('input[name="branches[]"]:checked')).map(cb => cb.value);
     const section_data = Array.from(document.querySelectorAll('input[name="sections[]"]:checked')).map(cb => cb.value);
-    const submission_type_data = document.querySelector('input[name="submission_categories"]:checked')?.value || null;
+    const certification_type_data = document.querySelector('input[name="certification_type"]:checked')?.value || null;
 
     fetch('/student_report', {
         method: 'POST',
@@ -99,7 +100,8 @@ function fetchFilteredData() {
             semester_data,
             branch_data,
             section_data,
-            submission_type_data
+            certification_type_data,
+            event_nature_data
         })
     })
     .then(response => {
@@ -119,17 +121,7 @@ function fetchFilteredData() {
                 ? noDataAvailableTableStructure 
                 : '<tr><td colspan="8" class="text-center">No data available</td></tr>';
         } else {
-            tableBody.innerHTML = reports.map((data, index) => {
-                let statusBadge = '';
-                if (data.status === 'accepted') {
-                    statusBadge = '<td><span class="badge rounded-pill text-bg-success">Accepted</span></td>';
-                } else if (data.status === 'rejected') {
-                    statusBadge = '<td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>';
-                } else if (data.status === 'pending') {
-                    statusBadge = '<td><span class="badge rounded-pill text-bg-warning">Pending</span></td>';
-                } else {
-                    statusBadge = '<td></td>';
-                }
+            tableBody.innerHTML = reports.map((data) => {
 
                 const driveLink = data.google_file_id === 'pending'
                     ? 'Pending'
@@ -139,19 +131,21 @@ function fetchFilteredData() {
 
                 return `
                     <tr data-certificate="${data.certificate || ''}">
-                        <td>${index + 1}</td>
+                        <td>${data.entry_id}</td>
+                        <td>${data.academic_session}</td>
+                        <td>${data.academic_term}</td>
                         <td>${data.student_name || ''}</td>
                         <td>${data.university_roll_no || ''}</td>
-                        <td>${data.sem || ''}${data.branch || ''}-${data.section || ''}</td>
+                        <td>${data.sem || ''}-${data.branch || ''}-${data.section || ''}</td>
                         <td>${data.category || ''}</td>
                         <td>${driveLink}</td>
-                        ${statusBadge}
                         <td>
-                            <button type="button" class="btn btn-outline-primary"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#submissionDetailsModal"
-                                    data-entry-id="${data.entry_id || ''}"
-                                    data-form-name="${data.category || ''}">
+                            <button type="button" 
+                                class="btn btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#submissionDetailsModal"
+                                data-entry-id="${data.entry_id || ''}"
+                                data-form-name="${data.category || ''}">
                                 Open
                             </button>
                         </td>

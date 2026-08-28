@@ -142,6 +142,15 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+event_nature_options = [
+    {'value': 'hackathon', 'label': 'Hackathon/ Coding'},
+    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
+    {'value': 'dance', 'label': 'Dance'},
+    {'value': 'singing', 'label': 'Singing'},
+    {'value': 'blood_donor', 'label': 'Blood Donation'},
+    {'value': 'other', 'label': 'Other'}
+]
+
 # Form Fields Defined
 FORM_DEFINITIONS = {
     'part_in_comp': {
@@ -166,97 +175,6 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'select',
-                'field_name': 'position',
-                'required': False,
-                # Declarative Dependency Schema
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'select',
-                'field_name': 'award_type',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
                 'field_label': 'Name of the Competition/Event/Activity',
                 'field_type': 'text',
                 'field_name': 'event_title',
@@ -274,8 +192,8 @@ FORM_DEFINITIONS = {
                 'field_name': 'participation_type',
                 'required': True,
                 'options': [
-                    {'value': 'Team', 'label': 'Team'},
-                    {'value': 'Individual', 'label': 'Individual'},
+                    {'value': 'team', 'label': 'Team'},
+                    {'value': 'individual', 'label': 'Individual'},
                 ]
             },
             {
@@ -284,10 +202,10 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_category',
                 'required': True,
                 'options': [
-                    {'value': 'Cultural', 'label': 'Cultural'},
-                    {'value': 'Technical', 'label': 'Technical'},
-                    {'value': 'Sports', 'label': 'Sports'},
-                    {'value': 'Non-Technical', 'label': 'Non-Technical'},
+                    {'value': 'cultural', 'label': 'Cultural'},
+                    {'value': 'technical', 'label': 'Technical'},
+                    {'value': 'sports', 'label': 'Sports'},
+                    {'value': 'non-technical', 'label': 'Non-Technical'},
                 ]
             },
             {
@@ -295,14 +213,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'event_nature',
                 'required': True,
-                'options': [
-                    {'value': 'dance', 'label': 'Dance Comp.'},
-                    {'value': 'singing', 'label': 'Singing Comp.'},
-                    {'value': 'hackathon', 'label': 'Hackathon/ Coding Comp.'},
-                    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
-                    {'value': 'blood_donor', 'label': 'Blood Donor'},
-                    {'value': 'Other', 'label': 'Other'}
-                ]
+                'options': event_nature_options
             },
             {
                 'field_label': 'Event Level',
@@ -311,11 +222,11 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': '<b>College Level:</b> Event within SKIT only.<br><b>University Level:</b> Only RTU affiliated college participated.<br><b>State Level:</b> Different colleges/universities all over Rajasthan participated.<br><b>National Level:</b> Colleges/Universities outside Rajasthan participated.<br><b>International Level:</b> Colleges/Universities outside India participated.',
                 'options': [
-                    {'value': 'College', 'label': 'College'},
-                    {'value': 'University', 'label': 'University'},
-                    {'value': 'State', 'label': 'State'},
-                    {'value': 'National', 'label': 'National'},
-                    {'value': 'International', 'label': 'International'},
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'university', 'label': 'University'},
+                    {'value': 'state', 'label': 'State'},
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'},
                 ]
             },
             {
@@ -324,8 +235,8 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_type',
                 'required': True,
                 'options': [
-                    {'value': 'Intra College', 'label': 'Intra College'},
-                    {'value': 'Inter College', 'label': 'Inter College'},
+                    {'value': 'intra_college', 'label': 'Intra College'},
+                    {'value': 'inter_college', 'label': 'Inter College'},
                 ]
             },
             {
@@ -334,8 +245,9 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_mode',
                 'required': True,
                 'options': [
-                    {'value': 'Online', 'label': 'Online'},
-                    {'value': 'Offline', 'label': 'Offline'},
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'},
                 ]
             },
             {
@@ -420,13 +332,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'select',
                 'field_name': 'position',
-                'required': False,
-                # Declarative Dependency Schema
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -439,12 +345,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
+                'required': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -453,12 +354,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'select',
                 'field_name': 'award_type',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -472,12 +368,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
+                'required': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -486,24 +377,22 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
+                'field_type': 'text',
+                'field_name': 'organizer_details',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -522,10 +411,10 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_category',
                 'required': True,
                 'options': [
-                    {'value': 'Cultural', 'label': 'Cultural'},
-                    {'value': 'Technical', 'label': 'Technical'},
-                    {'value': 'Sports', 'label': 'Sports'},
-                    {'value': 'Non-Technical', 'label': 'Non-Technical'},
+                    {'value': 'cultural', 'label': 'Cultural'},
+                    {'value': 'technical', 'label': 'Technical'},
+                    {'value': 'sports', 'label': 'Sports'},
+                    {'value': 'non-technical', 'label': 'Non-Technical'},
                 ]
             },
             {
@@ -533,14 +422,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'event_nature',
                 'required': True,
-                'options': [
-                    {'value': 'dance', 'label': 'Dance Comp.'},
-                    {'value': 'singing', 'label': 'Singing Comp.'},
-                    {'value': 'hackathon', 'label': 'Hackathon/ Coding Comp.'},
-                    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
-                    {'value': 'blood_donor', 'label': 'Blood Donor'},
-                    {'value': 'Other', 'label': 'Other'}
-                ]
+                'options': event_nature_options
             },
             {
                 'field_label': 'Event Level',
@@ -549,11 +431,11 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': '<b>College Level:</b> Event within SKIT only.<br><b>University Level:</b> Only RTU affiliated college participated.<br><b>State Level:</b> Different colleges/universities all over Rajasthan participated.<br><b>National Level:</b> Colleges/Universities outside Rajasthan participated.<br><b>International Level:</b> Colleges/Universities outside India participated.',
                 'options': [
-                    {'value': 'College', 'label': 'College'},
-                    {'value': 'University', 'label': 'University'},
-                    {'value': 'State', 'label': 'State'},
-                    {'value': 'National', 'label': 'National'},
-                    {'value': 'International', 'label': 'International'},
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'university', 'label': 'University'},
+                    {'value': 'state', 'label': 'State'},
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'},
                 ]
             },
             {
@@ -562,8 +444,8 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_type',
                 'required': True,
                 'options': [
-                    {'value': 'Intra College', 'label': 'Intra College'},
-                    {'value': 'Inter College', 'label': 'Inter College'},
+                    {'value': 'intra_college', 'label': 'Intra College'},
+                    {'value': 'inter_college', 'label': 'Inter College'},
                 ]
             },
             {
@@ -577,7 +459,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Name of the team(If it is Hackathon event)',
+                'field_label': 'Name of the team',
                 'field_type': 'text',
                 'field_name': 'team_name',
                 'required': False,
@@ -586,11 +468,10 @@ FORM_DEFINITIONS = {
                     'value': 'team'
                 },
                 'required_if_visible': True,
-                'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 100 }
             },
             {
-                'field_label': 'Name of all team members (If it is Hackathon event)',
+                'field_label': 'Name of all team members',
                 'field_type': 'text',
                 'field_name': 'team_members',
                 'required': False,
@@ -599,7 +480,6 @@ FORM_DEFINITIONS = {
                     'value': 'team'
                 },
                 'required_if_visible': True,
-                'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 500 }
             },
             {
@@ -608,9 +488,18 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_mode',
                 'required': True,
                 'options': [
-                    {'value': 'Online', 'label': 'Online'},
-                    {'value': 'Offline', 'label': 'Offline'},
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'},
                 ]
+            },
+            {
+                'field_label': 'Event Venue',
+                'field_type': 'text',
+                'field_name': 'venue',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
+                'field_validation': { 'min_length': 3, 'max_length': 200 }
             },
             {
                 'field_label': 'From Date',
@@ -628,22 +517,6 @@ FORM_DEFINITIONS = {
                     'max_date': 'today',                     
                     'after_field': 'from_date'  # Must be after from_date
                 }
-            },
-            {
-                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
-                'field_type': 'text',
-                'field_name': 'organizer_details',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Event Venue',
-                'field_type': 'text',
-                'field_name': 'venue',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
-                'field_validation': { 'min_length': 3, 'max_length': 200 }
             },
             {
                 'field_label': 'Award Certificate/other proof',
@@ -678,7 +551,6 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                # Declarative Dependency Schema
                 'depends_on': {
                     'field': 'certification_type',
                     'value': 'achievement'
@@ -693,21 +565,20 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_label': 'Other Position/Rank/Title(not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
                 'required': False,
                 'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
+                    'field': 'position',
+                    'value': 'other'
                 },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
+                'required_if_visible': True,
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
             {
-                'field_label': 'Award Given (Other than Certificate)',
+                'field_label': 'Award Given(Other than Certificate)',
                 'field_type': 'select',
                 'field_name': 'award_type',
                 'required': False,
@@ -726,7 +597,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_label': 'Cash Prize/Other Prize(if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
@@ -815,99 +686,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'options': [
                     {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
                 ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'select',
-                'field_name': 'position',
-                'required': False,
-                # Declarative Dependency Schema
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'select',
-                'field_name': 'award_type',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Name of the Company',
@@ -919,12 +698,12 @@ FORM_DEFINITIONS = {
                 'field_validation': { 'max_length': 150 }
             },
             {
-                'field_label': 'Location/Address',
+                'field_label': 'Job Role Offered',
                 'field_type': 'text',
-                'field_name': 'location',
+                'field_name': 'job_role',
                 'required': True,
-                'placeholder': 'e.g., Bengaluru, Karnataka. Write "Online" if mode was online',
-                'field_validation': { 'min_length': 5, 'max_length': 300 }
+                'placeholder': 'e.g. Software Engineer I',
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Stipend Amount',
@@ -946,6 +725,14 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
+                'field_label': 'Location/Address',
+                'field_type': 'text',
+                'field_name': 'location',
+                'required': True,
+                'placeholder': 'e.g., Bengaluru, Karnataka. Write "Online" if mode was online',
+                'field_validation': { 'min_length': 5, 'max_length': 300 }
+            },
+            {
                 'field_label': 'From Date',
                 'field_type': 'date',
                 'field_name': 'from_date',
@@ -961,12 +748,23 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Mode',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'mode',
                 'required': True,
                 'options': [
                     {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'}
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'}
+                ]
+            },
+            {
+                'field_label': 'Received Offer through',
+                'field_type': 'select',
+                'field_name': 'offer_through',
+                'required': True,
+                'options': [
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'self', 'label': 'Self'},
                 ]
             },
             {
@@ -1006,7 +804,6 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                # Declarative Dependency Schema
                 'depends_on': {
                     'field': 'certification_type',
                     'value': 'achievement'
@@ -1026,11 +823,10 @@ FORM_DEFINITIONS = {
                 'field_name': 'other_position_details',
                 'required': False,
                 'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
+                    'field': 'position',
+                    'value': 'other'
                 },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
+                'required_if_visible': True,
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
@@ -1054,7 +850,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_label': 'Cash Prize/Other Prize(if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
@@ -1102,7 +898,7 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'National/International',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'conference_level',
                 'required': True,
                 'options': [
@@ -1142,12 +938,13 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Mode of Conference',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'mode',
                 'required': True,
                 'options': [
                     {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'}
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'}
                 ]
             },
             {
@@ -1187,6 +984,15 @@ FORM_DEFINITIONS = {
         ],
         'enctype': 'multipart/form-data',
         'fields': [
+            {
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
+                'required': True,
+                'options': [
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
             {
                 'field_label': 'Funding Agency Name',
                 'field_type': 'text',
@@ -3743,28 +3549,43 @@ def student_report():
             joined_sections = ",".join(quoted_sections)
             where_params.append(f"f.section IN ({joined_sections})")
 
-        submission_category = received_json_data.get('submission_type_data')
-        print("Submission categories are: ",submission_category)
-        if submission_category:
-            where_params.append(f"f.certification_type IN ('{submission_category}')")
+        certification_type_data = received_json_data.get('certification_type_data')
+        print("Certification type is: ", certification_type_data)
+        if certification_type_data:
+            where_params.append(f"f.certification_type IN ('{certification_type_data}')")
+        
+        event_nature_data = received_json_data.get('event_nature_data')
+        print("Event nature type is: ", event_nature_data)
+        if event_nature_data:
+            quoted_event_nature = [f"'{event_nature}'" for event_nature in event_nature_data]
+            joined_event_nature = ",".join(quoted_event_nature)
+            where_params.append(f"f.event_nature IN ({joined_event_nature})")
 
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
         forms = received_json_data.get('form_type_data')
-        print("Forms are: ",forms)
-        if forms:
+        print("Forms are: ", forms)
+        
+        if event_nature_data:
+            for form in ['part_in_comp', 'winner_achievement']:
+                base_queries.append(
+                    f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
+                    f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
+                    )
+        elif forms:
             for form in forms:
                 base_queries.append(
                     f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
-                    f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                    f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
                     FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
                     )
         else:
             for form in form_name_list:
                 base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
-                f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
                 FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
                 )
 
@@ -3818,7 +3639,8 @@ def student_report():
         sem_options_list=sem_options_list,
         branch_options_list=branch_options_list,
         section_options_list=section_options_list,
-        current_session=current_session
+        current_session=current_session,
+        event_nature_options=event_nature_options
     )
 
 @app.route("/download_proof_files", methods=["POST"])

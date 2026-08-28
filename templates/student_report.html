@@ -352,27 +352,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. Form Category -->
-                        <div class="filter-field">
-                            <label class="form-label d-block" for="form_type">Form Category</label>
-                            <div class="dropdown">
-                                <button type="button" id="form_type_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                    Select...
-                                </button>
-                                <ul class="dropdown-menu p-2 shadow-sm" id="form_dropdown">
-                                    <li>
-                                        {% for key, value in form_dict.items() %}
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
-                                                <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
-                                            </div>
-                                        {% endfor %}
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- 3. Even/Odd -->
+                        <!-- 2. Even/Odd -->
                         <div class="filter-field">
                             <label class="form-label d-block">Even/Odd</label>
                             <div class="dropdown">
@@ -396,7 +376,71 @@
                             </div>
                         </div>
 
-                        <!-- 4. Semester -->
+                        <!-- 3. Form Category -->
+                        <div class="filter-field">
+                            <label class="form-label d-block" for="form_type">Form Category</label>
+                            <div class="dropdown">
+                                <button type="button" id="form_type_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="form_dropdown">
+                                    <li>
+                                        {% for key, value in form_dict.items() %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
+                                                <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 5. Participation / Achievement -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Certification Type</label>
+                            <div class="dropdown">
+                                <button id="par_ach_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="certification_type" value="participation" id="typePart">
+                                            <label class="form-check-label small" for="typePart">Participation</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="certification_type" value="achievement" id="typeAch">
+                                            <label class="form-check-label small" for="typeAch">Achievement</label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 4. Event Nature -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Event Nature</label>
+                            <div class="dropdown">
+                                <button id="par_ach_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
+                                    {% for option in event_nature_options %}
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="event_natures[]" value="{{ option['value'] }}" id="{{ option['value'] }}">
+                                            <label class="form-check-label small" for="{{ option['value'] }}">{{ option['label'] }}</label>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 6. Semester -->
                         <div class="filter-field">
                             <label class="form-label d-block">Semester</label>
                             <div class="dropdown">
@@ -458,7 +502,7 @@
                             </div>
                         </div>
 
-                        <!-- 5. Branch -->
+                        <!-- 7. Branch -->
                         <div class="filter-field">
                             <label class="form-label d-block">Branch</label>
                             <div class="dropdown">
@@ -481,7 +525,7 @@
                             </div>
                         </div>
 
-                        <!-- 6. Section -->
+                        <!-- 8. Section -->
                         <div class="filter-field">
                             <label class="form-label d-block">Section/ Group</label>
                             <div class="dropdown">
@@ -501,30 +545,6 @@
                                                 </div>
                                             {% endfor %}
                                         {% endif %}
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- 7. Participation / Achievement -->
-                        <div class="filter-field">
-                            <label class="form-label d-block">Participation/Achievement</label>
-                            <div class="dropdown">
-                                <button id="par_ach_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                    <span>Select...</span>
-                                </button>
-                                <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
-                                    <li>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="submission_categories" value="participation" id="typePart">
-                                            <label class="form-check-label small" for="typePart">Participation</label>
-                                        </div>
-                                    </li>
-                                    <li>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="submission_categories" value="achievement" id="typeAch">
-                                            <label class="form-check-label small" for="typeAch">Achievement</label>
-                                        </div>
                                     </li>
                                 </ul>
                             </div>
@@ -565,6 +585,8 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
+                                        <th>Academic Session</th>
+                                        <th>Academic Term</th>
                                         <th>Student's Name</th>
                                         <th>Roll Number</th>
                                         <th>Batch</th>
@@ -577,35 +599,30 @@
                                 </thead>
                                 <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
                                     {% for data in filtered_data %}
-                                    {% set status = data['status'] %}
                                     <tr data-certificate="{{ data['certificate'] }}">
-                                        <td>{{ loop.index }}</td>
+                                        <td>{{ data["entry_id"] }}</td>
+                                        <td>{{ data["academic_session"] }}</td>
+                                        <td>{{ data["academic_term"] }}</td>
                                         <td>{{ data["student_name"] }}</td>
                                         <td>{{ data["university_roll_no"] }}</td>
-                                        <td>{{ data["sem"] }}{{ data["branch"] }}-{{ data["section"] }}</td>
+                                        <td>{{ data["sem"] }}-{{ data["branch"] }}-{{ data["section"] }}</td>
                                         <td>{{ data["category"] }}</td>
                                         <td>
                                             {% if data["google_file_id"] == "pending" %}
-                                            Pending
+                                                Pending
                                             {% else %}
                                             <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">
                                                 https://drive.google.com/file/d/{{ data['google_file_id'] }}
                                             </a>
                                             {% endif %}
                                         </td>
-                                        {% if status == 'accepted' %}
-                                        <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
-                                        {% elif status == 'rejected' %}
-                                        <td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>
-                                        {% elif status == 'pending' %}
-                                        <td><span class="badge rounded-pill text-bg-warning">Pending</span></td>
-                                        {% endif %}
                                         <td>
-                                            <button type="button" class="btn btn-outline-admin btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#submissionDetailsModal"
-                                                    data-entry-id="{{ data['entry_id'] }}"
-                                                    data-form-name="{{ data['category'] }}">
+                                            <button type="button" 
+                                                class="btn btn-outline-admin btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#submissionDetailsModal"
+                                                data-entry-id="{{ data['entry_id'] }}"
+                                                data-form-name="{{ data['category'] }}">
                                                 Open
                                             </button>
                                         </td>
