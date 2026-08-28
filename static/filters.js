@@ -133,8 +133,8 @@ function fetchFilteredData() {
 
                 const driveLink = data.google_file_id === 'pending'
                     ? 'Pending'
-                    : `<a href="https://drive.google.com/file/d/${data.google_file_id}" target="_blank" class="btn btn-sm btn-outline-primary">
-                         <i class="bi bi-file-earmark-text"></i> Drive link
+                    : `<a href="https://drive.google.com/file/d/${data.google_file_id}" target="_blank">
+                            https://drive.google.com/file/d/${data.google_file_id}
                        </a>`;
 
                 return `

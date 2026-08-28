@@ -8,19 +8,33 @@
 <link href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap5.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 <style>
+    :root {
+        --admin-navy: #1e293b;
+        --admin-navy-light: #334155;
+        --admin-accent: #0385c7;
+        --admin-border: #e2e8f0;
+        --admin-bg-light: #f8fafc;
+        --admin-text-dark: #0f172a;
+        --admin-text-muted: #64748b;
+    }
+
     .page-wrapper {
         min-height: calc(100vh - 140px);
-        background-color: #f0f2f5;
-        padding-top: 3rem;
-        padding-bottom: 2.5rem;
-        padding-left: 3rem;
-        padding-right: 3rem;
+        background-color: #f1f5f9;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
 
     .form-title-admin {
         position: relative;
         padding-bottom: 0.75rem;
         font-weight: 700;
+        color: var(--admin-navy);
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+        font-size: 1.75rem;
     }
 
     .form-title-admin::after {
@@ -29,7 +43,7 @@
         display: block;
         width: 60px;
         height: 4px;
-        background: var(--bs-admin-purple);
+        background: var(--admin-accent);
         border-radius: 2px;
         bottom: 0;
         left: 50%;
@@ -37,56 +51,62 @@
     }
 
     .form-label {
-        color: var(--college-blue);
+        color: var(--admin-navy-light);
     }
-    
+
+    /* ---------- Buttons ---------- */
     .btn-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-accent);
         color: white;
-        font-weight: 500;
+        font-weight: 600;
+        border: none;
     }
     .btn-admin:hover {
-        background-color: #4338ca;
+        background-color: #0369a1;
         color: white;
+        box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3);
     }
     .btn-outline-admin {
-        color: black;
+        color: var(--admin-navy);
         background-color: white;
-        border-color: var(--bs-admin-purple);
+        border-color: var(--admin-border);
+        font-weight: 600;
     }
     .btn-outline-admin:hover {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
+        border-color: var(--admin-navy);
     }
     .btn-more-details {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-accent);
         color: white;
     }
     .btn-more-details:hover {
-        color: black;
-        background-color: white;
-        border-color: var(--bs-admin-purple);
+        color: white;
+        background-color: #0369a1;
+        border-color: #0369a1;
     }
 
     /* Custom Green Style for Download Excel Button */
     .btn-excel-green {
-        background-color: #198754 !important;
+        background-color: #15803d !important;
         color: #ffffff !important;
-        border-color: #198754 !important;
+        border-color: #15803d !important;
+        font-weight: 600;
     }
     .btn-excel-green:hover {
-        background-color: #157347 !important;
-        border-color: #146c43 !important;
+        background-color: #166534 !important;
+        border-color: #166534 !important;
         color: #ffffff !important;
     }
 
-    /* Fixed Scrollable Container for Unstyled Table */
+    /* Fixed Scrollable Container for Unstyled Table (legacy, kept for compatibility) */
     .table-scroll-container {
         max-height: 500px;
         overflow: auto;
     }
 
-    /* Filter bar trigger buttons - wrap evenly across all screen sizes */
+    /* Filter bar trigger buttons - wrap evenly across all screen sizes (legacy, kept for compatibility) */
     .filter-trigger-btn {
         flex: 1 1 150px;
         white-space: nowrap;
@@ -97,33 +117,204 @@
         }
     }
 
-    /* Fluid pie-chart sizing so the fixed-pixel canvas never overflows small screens */
-    .chart-container {
-        position: relative;
-        width: 100%;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-    .chart-container canvas {
-        width: 100% !important;
-        height: auto !important;
-        max-height: 440px;
+    /* ---------- Shared dashboard card shell (filter bar, chart, table) ---------- */
+    .card-dashboard {
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 0.5rem;
+        background: white;
+        overflow: visible;   /* was: hidden — this was clipping the dropdown menus */
     }
 
-    /* Responsive tweaks for small screens */
+    .card-dashboard-body {
+        padding: 1.25rem;
+    }
+
+    /* ---------- Filter bar ---------- */
+    .filter-bar-body {
+        padding: 1.1rem 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.25rem;
+        align-items: flex-end;
+    }
+
+    .filter-field {
+        flex: 0 0 auto;
+        min-width: 130px;
+    }
+
+    .filter-field .form-label {
+        color: var(--admin-navy-light);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.35rem;
+    }
+
+    /* ---------- Row 2: chart + table inside ONE unified card ---------- */
+    .dashboard-panel-header {
+        background-color: var(--admin-bg-light);
+        border-bottom: 1px solid var(--admin-border);
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 2rem;
+    }
+
+    .dashboard-panel-header .panel-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--admin-navy);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        display: flex;
+        align-items: center;
+    }
+
+    .dashboard-panel-body {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch; 
+    }
+
+    .chart-pane {
+        flex: 0 0 33.3333%;
+        max-width: 33.3333%;
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem;
+        border-right: 1px solid var(--admin-border);
+        border-bottom-left-radius: 0.5rem;
+    }
+    .chart-pane .panel-subtitle {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        color: var(--admin-navy);
+        height: 1rem;           /* match .table-toolbar's effective row height */
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .chart-canvas-wrap {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+    }
+
+    .chart-canvas-wrap canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .table-pane {
+        flex: 1 1 0;
+        max-width: 100%;
+        padding: 0;
+        border-bottom-right-radius: 0.5rem;
+    }
+
+    .table-pane .dataTables_wrapper {
+        border-bottom-right-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .table-pane table.dataTable {
+        margin: 0 !important;
+    }
+
+    .table-pane thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    #report-table thead {
+        background-color: var(--admin-navy);
+        color: white;
+    }
+
+    #report-table tbody td {
+        color: var(--admin-text-dark);
+        vertical-align: middle;
+    }
+
+    .table-toolbar {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .chart-pane { min-width: 0; }
+    .table-pane { min-width: 0; }
+    .chart-canvas-wrap { aspect-ratio: 1 / 1; max-width: 100%; max-height: 100%; margin: 0 auto; }
+
+    /* ---------- Responsive: stack chart above table below desktop width ---------- */
+
+    /* Badges */
+    .badge.text-bg-success { background-color: #15803d !important; }
+    .badge.text-bg-danger  { background-color: #b91c1c !important; }
+    .badge.text-bg-warning { background-color: #b45309 !important; color: white !important; }
+
+    /* Modal header */
+    .modal-header-admin {
+        background-color: var(--admin-navy);
+        color: white;
+    }
+    .modal-header-admin .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1199.98px) {
+        .chart-pane {
+            flex: 0 0 100%;
+            max-width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--admin-border);
+            border-bottom-left-radius: 0;
+            height: 260px;
+        }
+        .table-pane {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+
     @media (max-width: 767.98px) {
         .page-wrapper {
-            padding-top: 1.5rem;
-            padding-bottom: 1.5rem;
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
-        .chart-container {
-            margin-top: 1.5rem !important;
+        .filter-bar-body {
+            gap: 0.75rem 1rem;
+        }
+        .filter-field {
+            min-width: 45%;
+            flex: 1 1 45%;
         }
         .dropdown-menu.w-100 {
             min-width: 100%;
         }
     }
 
+    @media (max-width: 575.98px) {
+        .filter-field {
+            min-width: 100%;
+            flex: 1 1 100%;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -133,380 +324,321 @@
 <div class="page-wrapper">
     <div class="container-fluid px-3 px-lg-4">
 
-        <div class="row justify-content-center g-5">
-            <div class="col-12 col-xl-3 mt-4 mt-xl-5 d-flex flex-wrap align-items-start justify-content-center">
-                <div class="chart-container border border-secondary-subtle py-3" style="background-color: #f8f9fa; border-radius: 10px;" id="chart-container">
-                    <canvas id="categoryPieChart"></canvas>
-                </div>
-            </div>
-            <div class="col-12 col-xl-9">
-                
-                <!-- Filter Bar Above Table -->
-                <div class="card mb-4 bg-light border border-secondary-subtle py-2">
-                    <div class="card-body p-2 rounded-3">
-                        <div class="row g-2 align-items-end flex-wrap">
+        <!-- Row 1: Filter Bar — full width, boxed like the other panels -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card-dashboard">
+                    <div class="filter-bar-body">
 
-                            <!-- 1. Academic Session (modal) -->
-                            <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold small mb-1 d-block">Session</label>
-                                <div class="dropdown">
-                                    <button type="button" id="session_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        Select...
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="session_dropdown">
-                                        <li>
-                                            {% if academic_session_list %}
-                                                {% for academic_session in academic_session_list %}
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="radio" name="academic_sessions" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}" {% if academic_session['academic_session'] == current_session %}checked{% endif %}>
-                                                        <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
-                                                    </div>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- 2. Form (modal) -->
-                            <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold small mb-1 d-block" for="form_type">Form Category</label>
-                                <div class="dropdown">
-                                    <button type="button" id="form_type_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        Select...
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="form_dropdown">
-                                        <li>
-                                            {% for key, value in form_dict.items() %}
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
-                                                    <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
+                        <!-- 1. Academic Session -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Session</label>
+                            <div class="dropdown">
+                                <button type="button" id="session_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="session_dropdown">
+                                    <li>
+                                        {% if academic_session_list %}
+                                            {% for academic_session in academic_session_list %}
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="radio" name="academic_sessions" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}" {% if academic_session['academic_session'] == current_session %}checked{% endif %}>
+                                                    <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
                                                 </div>
                                             {% endfor %}
-                                        </li>
-                                    </ul>
-                                </div>
+                                        {% endif %}
+                                    </li>
+                                </ul>
                             </div>
+                        </div>
 
-                            <!-- 3. Academic Term (dropdown) -->
-                            <div class="col-auto" style="min-width:100px;">
-                                <label class="form-label fw-bold small mb-1 d-block">Even/Odd</label>
-                                <div class="dropdown">
-                                    <button id="even_odd_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        <span>Select...</span>
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="even_odd">
-                                        <li>
+                        <!-- 2. Form Category -->
+                        <div class="filter-field">
+                            <label class="form-label d-block" for="form_type">Form Category</label>
+                            <div class="dropdown">
+                                <button type="button" id="form_type_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="form_dropdown">
+                                    <li>
+                                        {% for key, value in form_dict.items() %}
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="academic_terms" value="Odd" id="termOdd">
-                                                <label class="form-check-label small" for="termOdd">Odd</label>
+                                                <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
+                                                <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
                                             </div>
-                                        </li>
-                                        <li>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="academic_terms" value="Even" id="termEven">
-                                                <label class="form-check-label small" for="termEven">Even</label>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
+                                        {% endfor %}
+                                    </li>
+                                </ul>
                             </div>
+                        </div>
 
-                            <!-- 4. Semester (modal) -->
-                            <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold small mb-1 d-block">Semester</label>
-                                <div class="dropdown">
-                                    <button type="button" id="semester_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        Select...
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="semester_dropdown">
-                                        <li>
-                                            <div class="col">
-                                                <div class="odd_sem form-check">
-                                                    <input class="form-check-input" type="checkbox" name="semesters[]" value="1" id="odd_1">
-                                                    <label class="form-check-label" for="odd_1"> 1</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="even_sem form-check">
-                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="2" id="even_2">
-                                                    <label class="form-check-label" for="even_2"> 2</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="odd_sem form-check">
-                                                    <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="3" id="odd_3">
-                                                    <label class="form-check-label" for="odd_3"> 3</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="even_sem form-check">
-                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="4" id="even_4">
-                                                    <label class="form-check-label" for="even_4"> 4</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="odd_sem form-check">
-                                                    <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="5" id="odd_5">
-                                                    <label class="form-check-label" for="odd_5"> 5</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="even_sem form-check">
-                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="6" id="even_6">
-                                                    <label class="form-check-label" for="even_6"> 6</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="odd_sem form-check">
-                                                    <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="7" id="odd_7">
-                                                    <label class="form-check-label" for="odd_7"> 7</label>
-                                                </div>
-                                            </div>
-                                            <div class="col">
-                                                <div class="even_sem form-check">
-                                                    <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="8" id="even_8">
-                                                    <label class="form-check-label" for="even_8"> 8</label>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
+                        <!-- 3. Even/Odd -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Even/Odd</label>
+                            <div class="dropdown">
+                                <button id="even_odd_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="even_odd">
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="academic_terms" value="Odd" id="termOdd">
+                                            <label class="form-check-label small" for="termOdd">Odd</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="academic_terms" value="Even" id="termEven">
+                                            <label class="form-check-label small" for="termEven">Even</label>
+                                        </div>
+                                    </li>
+                                </ul>
                             </div>
+                        </div>
 
-                            <!-- 5. Branch (modal) -->
-                            <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold small mb-1 d-block">Branch</label>
-                                <div class="dropdown">
-                                    <button type="button" id="branch_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        Select...
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="branch_dropdown">
-                                        <li>
-                                            {% if branch_options_list %}
-                                                {% for options in branch_options_list %}
-                                                    {% set branch = options['branch'] %}
-                                                    <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
-                                                        <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
+                        <!-- 4. Semester -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Semester</label>
+                            <div class="dropdown">
+                                <button type="button" id="semester_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="semester_dropdown">
+                                    <li>
+                                        <div class="col">
+                                            <div class="odd_sem form-check">
+                                                <input class="form-check-input" type="checkbox" name="semesters[]" value="1" id="odd_1">
+                                                <label class="form-check-label" for="odd_1"> 1</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="even_sem form-check">
+                                                <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="2" id="even_2">
+                                                <label class="form-check-label" for="even_2"> 2</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="odd_sem form-check">
+                                                <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="3" id="odd_3">
+                                                <label class="form-check-label" for="odd_3"> 3</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="even_sem form-check">
+                                                <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="4" id="even_4">
+                                                <label class="form-check-label" for="even_4"> 4</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="odd_sem form-check">
+                                                <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="5" id="odd_5">
+                                                <label class="form-check-label" for="odd_5"> 5</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="even_sem form-check">
+                                                <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="6" id="even_6">
+                                                <label class="form-check-label" for="even_6"> 6</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="odd_sem form-check">
+                                                <input class="odd_sem form-check-input" type="checkbox" name="semesters[]" value="7" id="odd_7">
+                                                <label class="form-check-label" for="odd_7"> 7</label>
+                                            </div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="even_sem form-check">
+                                                <input class="even_sem form-check-input" type="checkbox" name="semesters[]" value="8" id="even_8">
+                                                <label class="form-check-label" for="even_8"> 8</label>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 5. Branch -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Branch</label>
+                            <div class="dropdown">
+                                <button type="button" id="branch_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="branch_dropdown">
+                                    <li>
+                                        {% if branch_options_list %}
+                                            {% for options in branch_options_list %}
+                                                {% set branch = options['branch'] %}
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
+                                                    <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 6. Section -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Section/ Group</label>
+                            <div class="dropdown">
+                                <button type="button" id="section_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="section_dropdown">
+                                    <li>
+                                        {% if section_options_list %}
+                                            {% for options in section_options_list %}
+                                                {% set section = options['section'] %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="{{ section }}">
+                                                        <label class="form-check-label" for="{{ section }}">{{ section }}</label>
                                                     </div>
-                                                {% endfor %}
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 7. Participation / Achievement -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Participation/Achievement</label>
+                            <div class="dropdown">
+                                <button id="par_ach_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="submission_categories" value="participation" id="typePart">
+                                            <label class="form-check-label small" for="typePart">Participation</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="submission_categories" value="achievement" id="typeAch">
+                                            <label class="form-check-label small" for="typeAch">Achievement</label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Actions: join the same flex row, wrap only if no room -->
+                        <div class="filter-field">
+                            <button type="button" class="btn btn-admin btn-sm fw-bold" onclick="fetchFilteredData()" id="apply_filter">
+                                <i class="bi bi-funnel-fill me-1"></i> Apply Filter
+                            </button>
+                            <a href="{{ url_for('student_report') }}">
+                                <button type="button" class="btn btn-outline-admin btn-sm fw-bold">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                                </button>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Chart + Table inside ONE unified card, separated by a divider -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card-dashboard">
+                    <div class="table-toolbar">
+                        <!-- Havea excel and download proof buttons, don't remove -->
+                    </div>
+                    <div class="dashboard-panel-body">
+                        <div class="chart-pane">
+                            <div class="chart-canvas-wrap" id="chart-container">
+                                <canvas id="categoryPieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="table-pane">
+                            <table id="report-table" class="display nowrap border-0 w-100">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Student's Name</th>
+                                        <th>Roll Number</th>
+                                        <th>Batch</th>
+                                        <th>Category</th>
+                                        <th>Proof(G-Drive)</th>
+                                        <th>Status</th>
+                                        <th>More Details</th>
+                                        <th>Submitted at</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
+                                    {% for data in filtered_data %}
+                                    {% set status = data['status'] %}
+                                    <tr data-certificate="{{ data['certificate'] }}">
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ data["student_name"] }}</td>
+                                        <td>{{ data["university_roll_no"] }}</td>
+                                        <td>{{ data["sem"] }}{{ data["branch"] }}-{{ data["section"] }}</td>
+                                        <td>{{ data["category"] }}</td>
+                                        <td>
+                                            {% if data["google_file_id"] == "pending" %}
+                                            Pending
+                                            {% else %}
+                                            <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">
+                                                https://drive.google.com/file/d/{{ data['google_file_id'] }}
+                                            </a>
                                             {% endif %}
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- 6. Section (modal) -->
-                            <div class="col-auto" style="min-width:120px;">
-                                <label class="form-label fw-bold small mb-1 d-block">Section/ Group</label>
-                                <div class="dropdown">
-                                    <button type="button" id="section_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        Select...
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="section_dropdown">
-                                        <li>
-                                            {% if section_options_list %}
-                                                {% for options in section_options_list %}
-                                                    {% set section = options['section'] %}
-                                                    <div class="col">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="{{ section }}">
-                                                            <label class="form-check-label" for="{{ section }}">{{ section }}</label>
-                                                        </div>
-                                                    </div>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- 7. Participation / Achievement (dropdown) -->
-                            <div class="col-auto" style="min-width:170px;">
-                                <label class="form-label fw-bold small mb-1 d-block">Participation/Achievement</label>
-                                <div class="dropdown">
-                                    <button id="par_ach_btn" class="btn btn-white btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center bg-white" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                        <span>Select...</span>
-                                    </button>
-                                    <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
-                                        <li>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="submission_categories" value="participation" id="typePart">
-                                                <label class="form-check-label small" for="typePart">Participation</label>
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="submission_categories" value="achievement" id="typeAch">
-                                                <label class="form-check-label small" for="typeAch">Achievement</label>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <div class="d-flex justify-content-start">
-                                <div class="m-2">
-                                    <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" onclick="fetchFilteredData()" id="apply_filter">
-                                        <i class="bi bi-funnel-fill me-1"></i> Apply Filter
-                                    </button>
-                                </div>
-                                <div class="m-2">
-                                    <a href="{{ url_for('student_report') }}">
-                                        <button type="button" class="btn btn-secondary btn-sm w-100 fw-bold">
-                                            <i class="bi bi-arrow-clockwise me-1"></i> Reset
-                                        </button>
-                                    </a>
-                                </div>
-                            </div>
-
+                                        </td>
+                                        {% if status == 'accepted' %}
+                                        <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
+                                        {% elif status == 'rejected' %}
+                                        <td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>
+                                        {% elif status == 'pending' %}
+                                        <td><span class="badge rounded-pill text-bg-warning">Pending</span></td>
+                                        {% endif %}
+                                        <td>
+                                            <button type="button" class="btn btn-outline-admin btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#submissionDetailsModal"
+                                                    data-entry-id="{{ data['entry_id'] }}"
+                                                    data-form-name="{{ data['category'] }}">
+                                                Open
+                                            </button>
+                                        </td>
+                                        <td>{{ data["submitted_at"] }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>                
-                <table id="report-table" class="display nowrap border">
-                    <thead class="bg-dark text-white ">
-                        <tr>
-                            <th>#</th>
-                            <th>Student's Name</th>
-                            <th>Roll Number</th>
-                            <th>Batch</th>
-                            <th>Category</th>
-                            <th>Proof(G-Drive)</th>
-                            <th>Status</th>
-                            <th>More Details</th>
-                            <th>Submitted at</th>
-                        </tr>
-                    </thead>
-                    <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
-                        {% for data in filtered_data %}
-                        {% set status = data['status'] %}
-                        <tr data-certificate="{{ data['certificate'] }}">
-                            <td>{{ loop.index }}</td>
-                            <td>{{ data["student_name"] }}</td>
-                            <td>{{ data["university_roll_no"] }}</td>
-                            <td>{{ data["sem"] }}{{ data["branch"] }}-{{ data["section"] }}</td>
-                            <td>{{ data["category"] }}</td>
-                            <td>
-                                {% if data["google_file_id"] == "pending" %}
-                                Pending
-                                {% else %}
-                                <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">
-                                    https://drive.google.com/file/d/{{ data['google_file_id'] }}
-                                </a>
-                                {% endif %}
-                            </td>
-                            {% if status == 'accepted' %}
-                            <td><span class="badge rounded-pill text-bg-success">Accepted</span></td>
-                            {% elif status == 'rejected' %}
-                            <td><span class="badge rounded-pill text-bg-danger">Rejected</span></td>
-                            {% elif status == 'pending' %}
-                            <td><span class="badge rounded-pill text-bg-warning">Pending</span></td>
-                            {% endif %}
-
-                            <td>
-                                <button type="button" class="btn btn-outline-primary"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#submissionDetailsModal"
-                                        data-entry-id="{{ data['entry_id'] }}"
-                                        data-form-name="{{ data['category'] }}">
-                                    Open
-                                </button>
-                            </td>
-
-                            <td>{{ data["submitted_at"] }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-    
-    <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
-      
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="submissionDetailsModalLabel">
-            <i class="bi bi-file-earmark-text me-2"></i>Loading...
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      
-      <div class="modal-body p-4" id="submissionDetailsModalBody">
         
-        <!-- This is the default loading state that your JS will replace -->
-        <div class="text-center py-4" id="modal-loading-state">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3 text-muted">Loading details...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal to add a note when rejecting an entry -->
-<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-3 border-0 shadow">
-            
-            <!-- Header -->
-            <div class="modal-header bg-primary text-white border-bottom-0">
-                <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <form action="{{ url_for('reject_entry') }}" method="post" id="rejectionForm">
-                <div class="modal-body">
-                    <!-- Hidden Inputs for logic -->
-                    <input type="hidden" name="entry_id" id="reject_entry_id">
-                    <input type="hidden" name="form_name" id="reject_form_name">
-                    <input type="hidden" name="full_path" id="reject_full_path">
-                
-                    <!-- Standard Label (Simple/Official Style) -->
-                    <div class="mb-1">
-                        <label for="rejected_note" class="form-label text-secondary fw-bold small text-uppercase">Reason for Rejection</label>
-                        <input type="text" class="form-control bg-light" id="rejected_note" name="rejection_note" rows="4" placeholder="Type your note here...">
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer border-top-0 pt-0">
-                    <!-- Skip button rejects entry without a reason -->
-                    <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted">
-                        Skip (Reject without Note)
-                    </button>
-
-                    <!-- Submit Button: Aligned with design language (Primary Blue) -->
-                    <button type="submit" class="btn btn-primary px-4">Submit</button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
 
-<div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+<!-- Submission details box -->
+<div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content custom-modal">
+
             <div class="modal-header">
-                <h5 class="modal-title" id="chartModalLabel">Category Breakdown</h5>
+                <h5 class="modal-title" id="submissionDetailsModalLabel">Submission Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
-                <div class="chart-container">
-                    <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
-                        <canvas id="categoryPieChart"></canvas>
-                    </div>
-                </div>
+                <div class="row g-3" id="dynamicModalDetails"></div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light border fw-medium" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -567,29 +699,21 @@ document.addEventListener('DOMContentLoaded', function() {
         try { 
             $('#report-table').DataTable({
                 paging: false,
-                pageLength: 5,       // Disables pagination
-                info: false,         // Hides table info text (e.g. "Showing 1 to N entries")
-                scrollX: true,       // Enables horizontal scrolling
+                info: false,         
+                scrollX: true,   
+                scrollY: '500px',
                 scrollCollapse: true,
-                layout: {
-                    topStart: {
-                        buttons: [
-                            { 
-                                extend: 'excel', 
-                                text: '<i class="bi bi-file-earmark-spreadsheet-fill"></i> Download Excel', 
-                                className: 'btn-sm btn-excel-green' 
-                            },
-                            { 
-                                text: '<i class="bi bi-file-earmark-arrow-down-fill"></i> Download Proof files', 
-                                className: 'btn-sm',
-                                action: function (e, dt, node, config) {
-                                    downloadFromCurrentDom();
-                                }
-                            }
-                        ]
-                    }
-                }
+                dom: 't'
             });
+
+            const tableInstance = $('#report-table').DataTable();
+            new $.fn.dataTable.Buttons(tableInstance, {
+                buttons: [
+                    { extend: 'excel', text: '<i class="bi bi-file-earmark-spreadsheet-fill"></i> Download Excel', className: 'btn-sm btn-excel-green' },
+                    { text: '<i class="bi bi-file-earmark-arrow-down-fill"></i> Download Proof files', className: 'btn-sm', action: function (e, dt, node, config) { downloadFromCurrentDom(); } }
+                ]
+            });
+            tableInstance.buttons().container().appendTo('.table-toolbar');
         } catch (e) {
             console.error("Error initializing DataTable:", e);
         }
@@ -597,81 +721,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const detailsModal = document.getElementById('submissionDetailsModal');
     if (!detailsModal) return;
-    
+
     detailsModal.addEventListener('show.bs.modal', function(event) {
         const button = event.relatedTarget;
         const entryId = button.dataset.entryId;
         const formName = button.dataset.formName;
 
         const modalTitle = detailsModal.querySelector('.modal-title');
-        const modalBody = detailsModal.querySelector('.modal-body');
+        const detailsContainer = detailsModal.querySelector('#dynamicModalDetails');
 
-        // 1. Set loading state
-        modalTitle.textContent = 'Loading Submission Details...';
-        modalBody.innerHTML = `<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
+        modalTitle.textContent = 'Submission Details';
+        detailsContainer.innerHTML = `<div class="col-12 text-center py-4"><div class="spinner-border" role="status" style="color: var(--admin-accent);"><span class="visually-hidden">Loading...</span></div></div>`;
 
-        // 2. Fetch data from the backend
         fetch('/view_details', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                entry_id: entryId,
-                form_name: formName
-            })
+            body: JSON.stringify({ entry_id: entryId, form_name: formName })
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                modalTitle.textContent = 'Error';
-                modalBody.innerHTML = `<p class="text-danger">${data.error}</p>`;
-            } else {
-                // 3. Build the HTML with the frontend filter
-                const details = data.details;
-                modalTitle.textContent = `Details for: ${details.event_title || formName.replace('_', ' ')}`;
-                
-                let html = '<dl class="row">';
-                
-                // Define the keys you DON'T want to show.
-                // Add any column name to this list to hide it from the modal.
-                const keysToHide = [ 
-                    'proof',
-                    'full_path', 
-                    'google_file_id',
-                ];
-
-                for (const [key, value] of Object.entries(details)) {
-                    // If the key is in our hide list, skip this loop iteration
-                    if (keysToHide.includes(key)) {
-                        continue; 
-                    }
-                    
-                    // Format the key for display (e.g., 'event_title' -> 'Event Title')
-                    let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    
-                    html += `<dt class="col-sm-4">${cleanKey}</dt>`;
-                    
-                    // Special formatting for 'status'
-                    if (key === 'status') {
-                        let badgeClass = 'bg-secondary';
-                        if (value === 'approved') badgeClass = 'bg-success';
-                        if (value === 'rejected') badgeClass = 'bg-danger';
-                        if (value === 'pending') badgeClass = 'bg-warning text-dark';
-                        html += `<dd class="col-sm-8"><span class="badge ${badgeClass}">${value}</span></dd>`;
-                    } else {
-                        html += `<dd class="col-sm-8">${value || 'N/A'}</dd>`;
-                    }
-                }
-                
-                html += '</dl>';
-                modalBody.innerHTML = html;
+                detailsContainer.innerHTML = `<div class="col-12"><p class="text-danger mb-0">${data.error}</p></div>`;
+                return;
             }
+
+            const details = data.details;
+            modalTitle.textContent = `Details: ${details.event_title || formName.replace('_', ' ')}`;
+
+            const keysToHide = ['proof', 'full_path', 'google_file_id'];
+            let html = '';
+
+            for (const [key, value] of Object.entries(details)) {
+                if (keysToHide.includes(key)) continue;
+
+                let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                let valueHtml;
+
+                if (key === 'status') {
+                    let badgeClass = 'bg-secondary';
+                    if (value === 'approved' || value === 'accepted') badgeClass = 'text-bg-success';
+                    if (value === 'rejected') badgeClass = 'text-bg-danger';
+                    if (value === 'pending') badgeClass = 'text-bg-warning';
+                    valueHtml = `<span class="badge rounded-pill ${badgeClass}">${value}</span>`;
+                } else {
+                    valueHtml = value || 'N/A';
+                }
+
+                html += `
+                    <div class="col-md-6">
+                        <div class="data-label">${cleanKey}</div>
+                        <div class="data-value">${valueHtml}</div>
+                    </div>`;
+            }
+
+            detailsContainer.innerHTML = html;
         })
         .catch(error => {
             console.error('Error fetching details:', error);
-            modalTitle.textContent = 'Error';
-            modalBody.innerHTML = '<p class="text-danger">Could not load details. Please try again.</p>';
+            detailsContainer.innerHTML = `<div class="col-12"><p class="text-danger mb-0">Could not load details. Please try again.</p></div>`;
         });
     });
+
 
     // Handle modal data population
     const rejectedModal = document.getElementById('rejectionModal');

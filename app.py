@@ -3758,14 +3758,14 @@ def student_report():
                 base_queries.append(
                     f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
                     f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
-                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
+                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
                     )
         else:
             for form in form_name_list:
                 base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
                 f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
-                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
                 )
 
         if base_queries:

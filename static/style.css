@@ -196,3 +196,57 @@ body {
     background-color: var(--college-blue-hover);
 }
 #scrollTopBtn.show { display: block; }
+
+thead {
+    color: white;
+    background-color: var(--bs-dark);
+}
+
+/* --- Details Modal Styling --- */
+.custom-modal {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+.custom-modal .modal-header {
+    background-color: var(--admin-bg-light);
+    border-top-left-radius: calc(0.5rem - 1px);
+    border-top-right-radius: calc(0.5rem - 1px);
+    padding: 1rem 1.5rem;
+}
+.custom-modal .modal-title {
+    font-weight: 700;
+    color: var(--college-blue);
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.custom-modal .modal-body {
+    padding: 1.5rem;
+    color: var(--college-blue);
+}
+.custom-modal .modal-footer {
+    border-top: 1px solid var(--bs-border-color);
+    padding: 1rem 1.5rem;
+    background-color: var(--admin-bg-light);
+    border-bottom-left-radius: calc(0.5rem - 1px);
+    border-bottom-right-radius: calc(0.5rem - 1px);
+}
+.data-label {
+    font-size: 0.75rem;
+    color: var(--college-blue-hover);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+    font-weight: 700;
+}
+.data-value {
+    font-size: 0.95rem;
+    color: var(--bs-dark);
+    margin-bottom: 1rem;
+    background-color: var(--admin-bg-light);
+    border: 1px solid var(--admin-border);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 38px;
+}
