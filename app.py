@@ -156,12 +156,12 @@ FORM_DEFINITIONS = {
     'part_in_comp': {
         'title': 'Participation in Competition/Contest/ Activity',
         'description': [
-            "Certificate of participation for Cultural / Technical (e.g. Hackathon) / Sports / Non Technical events in any Competition/Contest/Activity organized by SKIT or any other Institute.",
-            "It should be a participation certificate for a competition/contest or some significant events",
+            "Certificate of participation for Cultural/ Technical (e.g. Hackathon)/ Sports/ Non-Technical events in any Competition/ Contest/ Activity organized by SKIT or any other Institute.",
+            "It should be a participation certificate for a competition/ contest or some significant events",
             "Event should be organized by SKIT or any other institute and you should represent SKIT.",
             "Personal level participation certificate NOT allowed. Only participation in an activity as an SKIT student is valid.",
             "Participation certificate should mention your name as student of SKIT. for e.g. Ajay Gupta of SKIT participated in xyz event.",
-            "Certificate of completion (For e.g successfully completed an online assesment/course/training etc) is NOT allowed. Certificate for Appearing in or Clearing an online assesment/test is NOT allowed."
+            "Certificate of completion (For e.g successfully completed an online assesment/ course/ training etc) is NOT allowed. Certificate for Appearing in or Clearing an online assesment/ test is NOT allowed."
         ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -312,10 +312,10 @@ FORM_DEFINITIONS = {
     'winner_achievement': {
         'title': 'Winner/Award/ Other Achievement',
         'description':[
-            'Winner/Runner Up/ Consolation/Good Rank or Position/award/prize in some high level Cultural/Technical(e.g. Hackathon)/ Sports/Non Technical competition/contest organized by SKIT or any other Institute/university/organization.',
-            'For e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as google code Jam / Player of the tournament award in state level cricket league etc'
-            'Certificate should mention some Rank/Place/Position in a competition or some high level achievement like man of the match/player of the tournament etc.'
-            'Non Competition certificates for e.g. Certificate of clearing some exam/test/assessment(with some score) but without a rank/position/place is NOT allowed. It should be a certificate for only a "competition/contest" activity.'
+            'Winner/ Runner Up/ Consolation/ Good Rank or Position/ Award/ Prize in some high level Cultural/ Technical(e.g. Hackathon)/ Sports/ Non-Technical competition/ contest organized by SKIT or any other Institute/ University/ Organization.',
+            'For e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as Google Code Jam/ Player of the tournament award in state level cricket league etc',
+            'Certificate should mention some Rank/ Place/ Position in a competition or some high level achievement like man of the match/ player of the tournament etc.',
+            'Non-Competition certificates for e.g. Certificate of clearing some exam/ test/ assessment (with some score) but without a rank/ position/ place is NOT allowed. It should be a certificate for only a "Competition/ Contest" activity.'
             ],
         'enctype': 'multipart/form-data',
         'fields': [

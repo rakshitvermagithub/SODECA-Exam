@@ -107,9 +107,20 @@
     /* --- Summary Box Enhancements --- */
     .summary-box {
         background-color: #f8f9fa;
-        border-top: 1px solid #dee2e6;
+        border: 0.05rem solid var(--college-blue-hover);
         border-radius: 0.375rem;
+        box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.251);
+
+        position: fixed;
+        bottom: 2rem;         /* the gap from the bottom edge */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 85%;
+        max-width: 1200px;
+        z-index: 1030;
+        padding: 1rem 1.5rem;
     }
+
     #selectedSummary .badge {
         font-size: 0.9em;
         padding: 0.5em 0.75em;
@@ -118,6 +129,7 @@
         text-align: left; 
         max-width: 100%; 
     }
+
     .accordion-item {
         border: 1px solid #dee2e6;
         border-left: 5px solid #dee2e6; /* Default gray left border */
@@ -140,15 +152,6 @@
     .accordion-button:focus {
         box-shadow: none;
         border-color: transparent;
-    }
-    .summary-box {
-        background-color: #f8f9fa;
-        border-top: 1px solid #dee2e6;
-        border-radius: 0.375rem;
-    }
-    #selectedSummary .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.75em;
     }
 
     /* --- NEW: Form Color & Icon Styles --- */
@@ -180,44 +183,39 @@
 <div class="page-wrapper d-flex justify-content-center align-items-center">
     <div class="card card-minimalist p-3" style="max-width: 1200px; width: 85%;">
         <div class="card-body">
-            <p class="text-secondary-emphasis fs-4 mb-2">
-                SODECA Form Categories <span class="fs-5 text-black text-opacity-75">(Ensure you have valid Proof/Certificate for your selections<span class="text-danger">*</span>)</span>
+            <p class="fs-4 mb-3" style="color: var(--college-blue);">
+                Form Categories <span class="fs-6 text-opacity-75">(Select multiple forms as required, maximum 5 forms can be submitted at once.)</span>
+                <br>
+                <span class="fs-6">Ensure you have valid Proof/Certificate for your selections<span class="text-danger">*</span></span>
             </p>
-            <small>You may select multiple forms as required. Maximum 5 forms can be submitted at once.</small>
 
             <form action="{{ url_for('sodeca_forms') }}" method="post" id="college-form">
                 
                 <div class="row row-cols-1 row-cols-md-2 g-3 mt-1">
                     {% for key, form in FORM_DEFINITIONS.items() %}
                     {% set form_style = namespace(css_class='', icon='') %}
-                    {% if key == 'blood_donor' %}
-                        {% set form_style.css_class = 'form-blood' %}
-                        {% set form_style.icon = 'bi-droplet-fill' %}
-                    {% elif key == 'part_in_comp' %}
+                    {% if key == 'part_in_comp' %}
                         {% set form_style.css_class = 'form-participant' %}
                         {% set form_style.icon = 'bi-people-fill' %}
-                    {% elif key == 'part_in_work' %} {# Adjust key #}
+                    {% elif key == 'part_in_work' %}
                         {% set form_style.css_class = 'form-workshop' %}
                         {% set form_style.icon = 'bi-mortarboard-fill' %}
-                    {% elif key == 'expert_lecture' %} {# Adjust key #}
-                        {% set form_style.css_class = 'form-lecture' %}
-                        {% set form_style.icon = 'bi-person-video3' %}
-                    {% elif key == 'organized_event' %} {# Adjust key #}
+                    {% elif key == 'organized_event' %}
                         {% set form_style.css_class = 'form-organizer' %}
                         {% set form_style.icon = 'bi-megaphone-fill' %}
-                    {% elif key == 'winner_award' %} {# Adjust key #}
+                    {% elif key == 'winner_achievement' %}
                         {% set form_style.css_class = 'form-winner' %}
                         {% set form_style.icon = 'bi-trophy-fill' %}
-                    {% elif key == 'internship' %} {# Adjust key #}
+                    {% elif key == 'internship_stipend' %}
                         {% set form_style.css_class = 'form-internship' %}
                         {% set form_style.icon = 'bi-briefcase-fill' %}
-                    {% elif key == 'paper_presented' %} {# Adjust key #}
+                    {% elif key == 'paper_presented' %}
                         {% set form_style.css_class = 'form-paper' %}
                         {% set form_style.icon = 'bi-journal-text' %}
-                    {% elif key == 'financial_grant' %} {# Adjust key #}
+                    {% elif key == 'financial_grant' %}
                         {% set form_style.css_class = 'form-grant' %}
                         {% set form_style.icon = 'bi-cash-coin' %}
-                    {% elif key == 'coursera_edx' %} {# Adjust key #}
+                    {% elif key == 'online_course' %}
                         {% set form_style.css_class = 'form-certification' %}
                         {% set form_style.icon = 'bi-patch-check-fill' %}
                     {% endif %}
@@ -225,13 +223,13 @@
                         <div class="form-item h-100 border-dark-subtle" id="form-item-{{ key }}">
                             
                             <div class="selection-area px-3 py-2 d-flex flex-column align-items-start flex-sm-row justify-content-sm-between align-items-sm-center gap-2">
-                                <label class="form-check-label fw-medium" style="font-size: 1rem;">
+                                <label class="form-check-label fw-medium" style="font-size: 1rem; color: var(--college-blue-hover);">
                                     <i class="bi {{ form_style.icon }} form-icon"></i>{{ form["title"] }}
                                 </label>
                                 
                                 <div class="stepper-control flex-shrink-0 align-self-sm-auto">
                                     <button class="btn stepper-btn btn-stepper btn-dec" type="button" data-form-id="{{ key }}">
-                                        <i class="bi bi-dash"></i>
+                                        <i class="bi bi-dash" style="color: var(--college-red)"></i>
                                     </button>
                                     <span class="stepper-count" id="count-{{ key }}">0</span>
                                     <button class="btn stepper-btn btn-stepper btn-inc" type="button" data-form-id="{{ key }}" data-form-title="{{ form['title'] }}">
@@ -245,8 +243,9 @@
                                  data-bs-trigger="hover focus"
                                  data-bs-placement="top"
                                  data-bs-html="true"
-                                 data-bs-content-id="#popover-content-{{ key }}">
-                                <i class="fas fa-info-circle me-2"></i>View Requirements
+                                 data-bs-content-id="#popover-content-{{ key }}"
+                                 >
+                                <i class="fas fa-info-circle me-2"></i><span style="color: var(--college-red)">View Requirements</span>
                             </div>
 
                             <!-- This is the hidden content for the popover -->
@@ -263,7 +262,7 @@
                     {% endfor %}
                 </div>
 
-                <div class="mt-3 p-3 summary-box">
+                <div class="p-3 summary-box">
                     <div class="row g-3 align-items-center">
                         <div class="col-lg col-12" style="min-width: 0; overflow: hidden;">
                             <div id="selectedSummary" class="d-flex flex-wrap align-items-center gap-2">
@@ -356,7 +355,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (item && item.count > 0) {
                 totalCount += item.count;
                 const badge = document.createElement('span');
-                badge.className = 'badge text-bg-primary';
+                badge.className = 'badge';
+                badge.style = 'background-color: var(--college-blue)'
                 badge.textContent = `${item.title} x${item.count}`;
                 summaryDiv.appendChild(badge);
             }
