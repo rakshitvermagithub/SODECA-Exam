@@ -3117,7 +3117,7 @@ def get_branch_options(academic_session=None, academic_term=None, semester=None)
     print(query)
     return db.execute(query)
 
-def get_section_options(academic_session=None, academic_term=None, semester=None):
+def get_section_options(academic_session=None, academic_term=None, semester=None, branch=None):
     query = "SELECT DISTINCT section FROM batch_structure"
     conditions = []
     
@@ -3130,13 +3130,17 @@ def get_section_options(academic_session=None, academic_term=None, semester=None
         conditions.append(f"academic_term IN ({terms})")
 
     if semester:
-        semesters = ", ".join(f"'{sem}'" for sem in semester)
+        semesters = ", ".join(f"{sem}" for sem in semester)
         conditions.append(f"sem IN ({semesters})")
+
+    if branch:
+        branches = ", ".join(f"'{b}'" for b in branch)
+        conditions.append(f"branch IN ({branches})")
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
 
-    query += " ORDER BY branch"
+    query += " ORDER BY section"
 
     print(query)
     return db.execute(query)
@@ -3642,6 +3646,21 @@ def student_report():
         current_session=current_session,
         event_nature_options=event_nature_options
     )
+
+@app.route("/api/get_sections", methods=["POST"])
+@login_required
+def admin_get_sections():
+    data = request.get_json()
+
+    semesters = data.get('semester', [])
+    branches = data.get('branch', [])
+    academic_term = data.get('academic_term', [])
+    academic_session = data.get('academic_session', [])
+
+    rows = get_section_options(academic_session, academic_term, semesters, branches)
+
+    section_list = [row['section'] for row in rows]
+    return jsonify(section_list), 200    
 
 @app.route("/download_proof_files", methods=["POST"])
 @login_required
