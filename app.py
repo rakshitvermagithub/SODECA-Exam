@@ -3746,6 +3746,7 @@ def student_management_page():
                 f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
                 "danger")
             return redirect(url_for("student_management_page"))
+            
         rows_to_insert = df.to_dict(orient="records")
         for data in rows_to_insert:
             email = data.get("email")
