@@ -437,6 +437,11 @@
         font-size: 0.95rem; 
         font-family: 'Poppins', sans-serif;
     }
+    /* Increase dimness of the Bootstrap backdrop */
+    .modal-backdrop.show {
+        opacity: 0.85; /* Default is usually 0.5 */
+        background-color: #000;
+    }
 </style>
 {% endblock %}
 
@@ -578,18 +583,7 @@
                             <td>{{ submission["submitted_at"] }}</td>
                             <td>{{ form_dict[form_name] }}</td>
                             <td>
-                                <a href="{{ url_for('view_submission', filename=submission['certificate']) }}" 
-                                target="_blank" 
-                                class="text-primary d-inline-flex align-items-center"
-                                title="{{ submission['certificate'] }}">
-                                    
-                                    <i class="bi bi-file-earmark-pdf me-2 flex-shrink-0"></i>
-                                    
-                                    <span class="d-inline-block text-truncate" style="max-width: 150px;">
-                                        {{ submission['certificate'] }}
-                                    </span>
-                                    
-                                </a>
+                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=submission['certificate']) }}>Preview</a>
                             </td>
                             <td><span class="status-pill" 
                             {% if status == 'accepted' %}
@@ -604,8 +598,8 @@
                                 <button class="btn-details" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#entryDetailsModal"
-                                        data-category="{{ form_dict[form_name] }}"
-                                        data-details="{{ submission | tojson | forceescape }}">
+                                        data-entry-id="{{ submission.entry_id }}"
+                                        data-form-name="{{ form_name }}">
                                     Details
                                 </button>
                             </td>
@@ -619,6 +613,7 @@
                                         <input type="hidden" name="batch_str" value="{{ batch_str }}">
                                         <input type="hidden" name="form_name" value="{{ form_name }}">
                                         <input type="hidden" name="filename" value="{{ submission['certificate'] }}">
+                                        <input type="hidden" name="certification_type" value="{{ submission['certification_type'] }}">
                                         <button type="submit" class="btn-action-accept" id="btnAcceptEntry" title="Accept"><i class="bi bi-check-lg"></i></button>
                                     </form>
                                     <button type="button" 
@@ -675,6 +670,7 @@
                         <input type="hidden" name="batch_str" value="{{ batch_str }}"> 
                         <input type="hidden" name="form_name" id="acceptHiddenFormName" value="">
                         <input type="hidden" name="filename" id="acceptHiddenFilename" value="">
+                        <input type="hidden" name="submission_category" id="submissionCategory" value="">
                         
                         <button type="submit" id="btnAcceptEntry" class="btn btn-modal-accept">
                             <i class="bi bi-check-lg me-1"></i> Accept
@@ -721,6 +717,19 @@
         <div class="custom-spinner"></div>
         <h4 class="processing-title">Uploading to Drive</h4>
         <p class="processing-text">Securely transferring files. Please wait...</p>
+    </div>
+</div>
+
+<!-- File Preview Modal Begins -->
+<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-labelledby="pdfPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
+
+            <div class="modal-body p-0" id="pdfPreviewModalBody" style="height: 92vh;">
+                <embed id="bsPdfEmbed" src="" type="application/pdf" style="width: 100%; height: 100%;">
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -810,28 +819,59 @@
     }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const detailsModal = document.getElementById('entryDetailsModal');
+const detailsModal = document.getElementById('entryDetailsModal');
+
+if (detailsModal) {
+    detailsModal.addEventListener('show.bs.modal', async function (event) {
+        const button = event.relatedTarget;
+        const entryId = button.getAttribute('data-entry-id');
+        const formName = button.getAttribute('data-form-name');
+
+        const dynamicContainer = document.getElementById('dynamicModalDetails');
         
-    if (detailsModal) {
-        detailsModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const rawData = button.getAttribute('data-details');
-            const detailsObj = JSON.parse(rawData);
-            
-            const dynamicContainer = document.getElementById('dynamicModalDetails');
-            dynamicContainer.innerHTML = ''; // Clear previous data
-            
-            // REMOVED 'entry_id', 'form_category', 'submitted_at' from here
-            // so they automatically get generated as boxes by the loop!
+        // Show loading state while fetching
+        dynamicContainer.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading details...</span>
+                </div>
+            </div>
+        `;
+
+        try {
+            // 1. Send POST fetch request to /view_details
+            const response = await fetch('/view_details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    entry_id: entryId,
+                    form_name: formName
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Failed to fetch details');
+            }
+
+            const data = await response.json();
+            const detailsObj = data.details;
+
+            // 2. Clear loader and populate fields
+            dynamicContainer.innerHTML = '';
+
             const hiddenColumns = [
                 'student_id', 'withdrawn_at', 'status', 'certificate', 'full_path'
             ];
 
             for (const [key, value] of Object.entries(detailsObj)) {
                 if (hiddenColumns.includes(key) || value === null || value === '') continue;
-                
+
                 const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                
+
                 dynamicContainer.innerHTML += `
                     <div class="col-12 col-md-4">
                         <div class="data-label">${formattedKey}</div>
@@ -839,27 +879,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             }
-            
-            // Fill the hidden inputs for the Accept form
-            document.getElementById('acceptHiddenEntryId').value = detailsObj.entry_id;
-            document.getElementById('acceptHiddenFilename').value = detailsObj.certificate;
-            
-            // If form_name is inside the submission dict, use it. 
-            // Otherwise, grab it from the button's data-category attribute.
-            const currentFormName = detailsObj.form_name || button.getAttribute('data-category');
-            document.getElementById('acceptHiddenFormName').value = currentFormName;
 
-            // 2. Dynamically set the Reject button's onclick action
+            // 3. Populate hidden inputs for Accept/Reject forms
+            document.getElementById('acceptHiddenEntryId').value = detailsObj.entry_id || entryId;
+            document.getElementById('acceptHiddenFilename').value = detailsObj.certificate || '';
+            document.getElementById('submissionCategory').value = detailsObj.submission_category || '';
+            document.getElementById('acceptHiddenFormName').value = formName;
+
+            // 4. Attach Reject action dynamically
             const rejectBtn = document.getElementById('btnRejectEntry');
-            rejectBtn.setAttribute('onclick', `openRejectionModal('${detailsObj.entry_id}', '${currentFormName}')`);
-            
-            // Optional UX enhancement: Close this Details modal if they click Reject
             rejectBtn.onclick = function() {
                 bootstrap.Modal.getInstance(detailsModal).hide();
-                openRejectionModal(detailsObj.entry_id, currentFormName);
+                openRejectionModal(detailsObj.entry_id || entryId, formName);
             };
-        });
-    }
+
+        } catch (error) {
+            console.error('Error fetching details:', error);
+            dynamicContainer.innerHTML = `
+                <div class="col-12 text-center text-danger py-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i> ${error.message}
+                </div>
+            `;
+        }
+    });
+}
 
     // 1. Grab the elements
     const acceptForm = document.getElementById('acceptForm'); // <-- Ensure your <form> has this ID!
@@ -1032,5 +1075,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 2000);
     }
+    // PDF Preview script
+    const bsModal = document.getElementById('pdfPreviewModal');
+    const bsPdfPreview = document.getElementById('bsPdfEmbed');
+    bsModal.addEventListener('show.bs.modal', function(event){
+        const trigger = event.relatedTarget;
+        const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+        bsPdfPreview.setAttribute('src', pdfPath);
+    });
+    // Triggered when modal is fully hidden
+    bsModal.addEventListener('hidden.bs.modal', function () {
+        bsPdfPreview.setAttribute('src', '');
+    });
 </script>
 {% endblock %}

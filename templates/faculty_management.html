@@ -1,0 +1,688 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Faculty Management
+{% endblock %}
+
+{% block css %}
+<style>
+    :root {
+        --admin-navy: #1e293b;
+        --admin-navy-light: #334155;
+        --admin-accent: #0385c7;
+        --admin-border: #e2e8f0;
+        --admin-bg-light: #f8fafc;
+        --admin-text-dark: #0f172a;
+        --admin-text-muted: #64748b;
+    }
+
+    .page-wrapper {
+        min-height: calc(100vh - 140px);
+        background-color: #f1f5f9;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .form-title-admin {
+        font-weight: 700;
+        color: var(--admin-navy);
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+        font-size: 1.75rem;
+    }
+
+    /* Main Container Card */
+    .card-dashboard {
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 0.5rem;
+        background: white;
+        overflow: hidden;
+    }
+
+    /* View toggle buttons at top */
+    .view-toggle-bar {
+        background-color: var(--admin-bg-light);
+        border-bottom: 1px solid var(--admin-border);
+        padding: 1rem 1.5rem;
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-view-toggle {
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 0.375rem;
+        padding: 0.55rem 1.1rem;
+        border: 1px solid var(--admin-border);
+        background: white;
+        color: var(--admin-navy-light);
+        transition: all 0.15s;
+    }
+
+    .btn-view-toggle:hover {
+        border-color: var(--admin-navy);
+        color: var(--admin-navy);
+    }
+
+    .btn-view-toggle.active {
+        background-color: var(--admin-navy);
+        border-color: var(--admin-navy);
+        color: white;
+    }
+
+    .btn-admin {
+        background-color: var(--admin-accent);
+        color: white;
+        font-weight: 500;
+        border: none;
+    }
+
+    .btn-admin:hover {
+        background-color: #0369a1;
+        color: white;
+        box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3);
+    }
+
+    .table-admin td {
+        vertical-align: middle;
+    }
+
+    .coordinator-row {
+        background-color: rgba(2, 132, 199, 0.06);
+    }
+
+    .badge-coordinator {
+        background-color: var(--admin-accent);
+        color: white;
+        font-weight: 500;
+        font-size: 0.72rem;
+        letter-spacing: 0.02em;
+    }
+
+    .modal-header-admin {
+        background-color: var(--admin-navy);
+        color: white;
+    }
+    .modal-header-admin .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+{% include "message.html" %}
+{% set user_role = session.get("user_role") %}
+<div class="page-wrapper">
+    <div class="container">
+        <h2 class="text-center mb-4 form-title-admin">Faculty Management</h2>
+
+        <div class="card-dashboard">
+            <!-- Top 3-button view toggle -->
+            <div class="view-toggle-bar">
+                <button class="btn btn-view-toggle active" type="button" id="btn-view-faculty-list">
+                    <i class="bi bi-people-fill me-1"></i> Faculty List
+                </button>
+                <button class="btn btn-view-toggle" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+                    <i class="bi bi-diagram-3-fill me-1"></i> Assign Batch
+                </button>
+
+                {% if user_role == 'admin' %}
+                <button class="btn btn-view-toggle" type="button" data-bs-toggle="modal" data-bs-target="#addCoordinatorModal">
+                    <i class="bi bi-person-badge-fill me-1"></i> Assing Coordinator
+                </button>
+                {% endif %}
+
+                <div class="ms-auto">
+                    <button class="btn btn-admin dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-fill-add me-2"></i> Add New Faculty
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addFacultyModal">Single Entry</a></li>
+                        <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadExcel">Upload Excel</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Faculty List (default view) -->
+            <div class="card-body p-4" id="faculty-list-section">
+                <div class="table-responsive">
+                    <table id="faculty-list-table" class="display border text-center align-middle dt-head-center">
+                        <thead class="text-white" style="background-color: var(--admin-navy);">
+                            <tr>
+                                <th scope="col" style="width: 40px;">#</th>
+                                <th scope="col">Full Name</th>
+                                <th scope="col">College Email</th>
+                                <th scope="col" style="width: 180px;">Assigned Batch</th>
+                                <th scope="col">Designation</th>
+                                <th scope="col">Department</th>
+                                <th scope="col">Contact</th>
+                                <th scope="col" style="width: 150px;">Operation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for faculty in faculty_data if faculty.is_coordinator %}
+                            <tr class="coordinator-row">
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    {{ faculty["full_name"] }}
+                                    <span class="badge badge-coordinator ms-1">SODECA Coordinator</span>
+                                </td>
+                                <td>{{ faculty["college_email"] }}</td>
+                                <td>
+                                    <span class="text-muted">&mdash;</span>
+                                </td>
+                                <td>{{ faculty["designation"] }}</td>
+                                <td>{{ faculty["department"] }}</td>
+                                <td>{{ faculty["contact"] }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm flex-wrap">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}"
+                                            data-bs-designation="{{ faculty['designation'] }}"
+                                            data-bs-department="{{ faculty['department'] }}"
+                                            data-bs-contact="{{ faculty['contact'] }}">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                        {% if user_role == 'admin' %}
+                                        <form action="{{ url_for('discharge_coordinator') }}" method="post" class="d-inline">
+                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
+                                            <button class="btn btn-outline-dark" type="submit" title="Remove SODECA Coordinator role">
+                                                <i class="bi bi-person-dash-fill"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                            {% for faculty in faculty_data if not faculty.is_coordinator%}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ faculty["full_name"] }}</td>
+                                <td>{{ faculty["college_email"] }}</td>
+                                <td>
+                                    {% if faculty.branch and faculty.semester and faculty.section %}
+                                        <span class="border px-2 border-2 rounded box-shadow">{{ faculty["semester"] }}-{{ faculty["branch"] }}-{{ faculty["section"] }}</span>
+                                        <form action="{{ url_for('discharge_faculty') }}" method="post" class="d-inline">
+                                            <input type="hidden" name="college_email" value="{{ faculty['college_email'] }}">
+                                            <button class="btn btn-sm rounded-circle btn-outline-danger" type="submit" title="Discharge from batch">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-muted">&mdash;</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ faculty["designation"] }}</td>
+                                <td>{{ faculty["department"] }}</td>
+                                <td>{{ faculty["contact"] }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm flex-wrap">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#editFacultyModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}"
+                                            data-bs-designation="{{ faculty['designation'] }}"
+                                            data-bs-department="{{ faculty['department'] }}"
+                                            data-bs-contact="{{ faculty['contact'] }}">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal"
+                                            data-bs-email="{{ faculty['college_email'] }}"
+                                            data-bs-fullname="{{ faculty['full_name'] }}">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Assign Batch -->
+<div class="modal fade" id="assignmentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="assignmentModalLabel">Add/Update Assigned Batch</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('assign_batch') }}" method="post">
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="college_email" id="collegeEmail" required>
+                                    <option value="" selected disabled>Select Faculty Email</option>
+                                    {% for faculty in faculty_data %}
+                                        {% if not faculty.is_coordinator %}
+                                        <option value="{{ faculty['college_email'] }}" data-name="{{ faculty['full_name'] }}">
+                                            {{ faculty['college_email'] }}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <label for="collegeEmail">Faculty Email</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input class="form-control" id="fullName" placeholder="Faculty Name" disabled>
+                                <label for="fullName">Faculty Name</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                             <div class="form-floating">
+                                <select class="form-select" id="semester" name="semester_option" required>
+                                     <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for sem_dict in semester %}
+                                    {% set sem = sem_dict["sem"] %}
+                                    <option value="{{sem}}" {% if details and details.semester == sem %}selected{% endif %}>{{sem}}</option>
+                                    {% endfor %}
+                                </select>
+                                <label>Semester</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                             <div class="form-floating">
+                                <select class="form-select" id="branch" name="branch_option" required>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for branch_dict in branches %}
+                                    {% set branch = branch_dict["branch"] %}
+                                    <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{branch}}</option>
+                                    {% endfor %}
+                                </select>
+                                <label>Branch</label>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="row">
+                        <div class="col-md-6 mb-3">
+                             <div class="form-floating">
+                                <select class="form-select" id="section" name="section_option" required>
+                                    <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                    {% for section_dict in sections %}
+                                    {% set section = section_dict["section"] %}
+                                    <option value="{{ section }}" {% if details and details.batch == batch %}selected{% endif %}>{{ section }}</option>
+                                    {% endfor %}
+                                </select>
+                                <label>Section</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-admin">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if user_role == 'admin' %}
+<!-- Modal: Add SODECA Coordinator -->
+<div class="modal fade" id="addCoordinatorModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addCoordinatorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="addCoordinatorModalLabel">Add SODECA Coordinator</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('add_coordinator') }}" method="post">
+                <div class="modal-body p-4">
+                    <div class="form-floating">
+                        <select class="form-select" name="college_email" id="coordinatorEmail" required>
+                            <option value="" selected disabled>Select Faculty Email</option>
+                            {% for faculty in faculty_data %}
+                                <option value="{{ faculty['college_email'] }}">
+                                    {{ faculty['college_email'] }} &mdash; {{ faculty['full_name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <label for="coordinatorEmail">Faculty Email</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-admin">Add Coordinator</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal for Add New Faculty -->
+<div class="modal fade" id="addFacultyModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="addFacultyModalLabel">Add New Faculty Details</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('faculty_management') }}" method="post">
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="full_name" id="add-full-name" class="form-control" placeholder="Full Name" required>
+                                <label for="add-full-name">Full Name</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="email" name="college_email" id="add-college-email" class="form-control" placeholder="College E-mail" required>
+                                <label for="add-college-email">College E-mail</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="designation" id="add-designation" required>
+                                    <option value="" selected disabled>Select Designation</option>
+                                    <option value="Assistant Professor-1">Assistant Professor-1</option>
+                                    <option value="Assistant Professor-2">Assistant Professor-2</option>
+                                    <option value="Associate Professor-1">Associate Professor-1</option>
+                                    <option value="Associate Professor-2">Associate Professor-2</option>
+                                    <option value="Professor">Professor</option>
+                                </select>
+                                <label for="add-designation">Designation</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="department" id="add-department" required>
+                                    <option value="" selected disabled>Select Department</option>
+                                    <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                                    <option value="Computer Science & Engineering(AI)">Computer Science & Engineering(AI)</option>
+                                    <option value="Computer Science & Engineering(DS)">Computer Science & Engineering(DS)</option>
+                                    <option value="Computer Science & Engineering(IOT)">Computer Science & Engineering(IOT)</option>
+                                    <option value="Civil Engineering">Civil Engineering</option>
+                                    <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                                    <option value="Electrical Engineering">Electrical Engineering</option>
+                                    <option value="Information Technology">Information Technology</option>
+                                    <option value="Mechnical Engineering">Mechanical Engineering</option>
+                                </select>
+                                <label for="add-department">Department</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-floating">
+                        <input type="tel" name="contact" id="add-contact" class="form-control" placeholder="Contact Details">
+                        <label for="add-contact">Contact Details</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-admin">Add New Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Edit -->
+<div class="modal fade" id="editFacultyModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="editFacultyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin">
+                <h1 class="modal-title fs-5" id="editFacultyModalLabel">Edit Faculty Details</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-faculty-form" action="/faculty_management" method="post">
+                <div class="modal-body p-4">
+                    <div class="form-floating mb-3">
+                        <input type="email" name="college_email" id="edit-college-email" class="form-control" placeholder="College E-Mail" readonly>
+                        <label for="edit-college-email">College E-Mail (Cannot be changed)</label>
+                    </div>
+                    <div class="row">
+                         <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="full_name" id="edit-full-name" class="form-control" placeholder="Full Name" required>
+                                <label for="edit-full-name">Full Name</label>
+                            </div>
+                        </div>
+                         <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input type="tel" name="contact" id="edit-contact" class="form-control" placeholder="Contact">
+                                <label for="edit-contact">Contact</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="designation" id="edit-designation" required>
+                                    <option value="" disabled>Select Designation</option>
+                                    <option value="Assistant Professor-1">Assistant Professor-1</option>
+                                    <option value="Assistant Professor-2">Assistant Professor-2</option>
+                                    <option value="Associate Professor-1">Associate Professor-1</option>
+                                    <option value="Associate Professor-2">Associate Professor-2</option>
+                                    <option value="Professor">Professor</option>
+                                </select>
+                                <label for="edit-designation">Designation</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select class="form-select" name="department" id="edit-department" required>
+                                    <option value="" disabled>Select Department</option>
+                                    <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                                    <option value="Computer Science & Engineering(AI)">Computer Science & Engineering(AI)</option>
+                                    <option value="Computer Science & Engineering(DS)">Computer Science & Engineering(DS)</option>
+                                    <option value="Computer Science & Engineering(IOT)">Computer Science & Engineering(IOT)</option>
+                                    <option value="Civil Engineering">Civil Engineering</option>
+                                    <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                                    <option value="Electrical Engineering">Electrical Engineering</option>
+                                    <option value="Information Technology">Information Technology</option>
+                                    <option value="Mechnical Engineering">Mechanical Engineering</option>
+                                </select>
+                                <label for="edit-department">Department</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-admin">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Delete Confirmation -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the following faculty member? This action cannot be undone.</p>
+                <p><strong>Name:</strong> <span id="deleteFacultyName"></span></p>
+                <p><strong>Email:</strong> <span id="deleteFacultyEmail"></span></p>
+            </div>
+            <div class="modal-footer">
+                <form id="delete-faculty-form" action="/delete_user/faculty" method="post">
+                    <input type="hidden" name="college_email" id="delete-college-email">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Faculty Member</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for upload excel -->
+ <div class="modal fade" id="uploadExcel" tabindex="-1" aria-labelledby="uploadExcel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-admin text-white">
+                <h5 class="modal-title" id="uploadExcelFile">Upload Excel File</h5>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" action="{{ url_for('uploadExcel') }}" method="post">
+                    <input type = "file" name = "uploadedExcelFile" accept = ".xlsx">
+                    <button class = "btn btn-admin" type = "submit">Upload File</button>
+                </form>
+            </div>
+            <div class = "modal-footer" style = "justify-content: space-between;">
+                <button class = 'btn btn-success' type = "button" onclick="window.location.href='/static/faculty_details_format.xlsx'">Download Sample Format</button>
+            </div>  
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+        // --- DataTable Initialization ---
+    if (document.getElementById('faculty-list-table')) {
+        try { 
+            $('#faculty-list-table').DataTable({
+                paging: true,
+                pageLength: 4,       // Disables pagination
+                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
+                scrollX: true,       // Enables horizontal scrolling
+                scrollCollapse: true,
+            });
+        } catch (e) {
+            console.error("Error initializing DataTable:", e);
+        }
+    }
+
+    // Edit modal population
+    const editModal = document.getElementById('editFacultyModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const email = button.getAttribute('data-bs-email');
+            const fullName = button.getAttribute('data-bs-fullname');
+            const designation = button.getAttribute('data-bs-designation');
+            const department = button.getAttribute('data-bs-department');
+            const contact = button.getAttribute('data-bs-contact');
+
+            editModal.querySelector('#edit-college-email').value = email;
+            editModal.querySelector('#edit-full-name').value = fullName;
+            editModal.querySelector('#edit-designation').value = designation;
+            editModal.querySelector('#edit-department').value = department;
+            editModal.querySelector('#edit-contact').value = contact;
+        });
+    }
+
+    // Delete modal population
+    const deleteModal = document.getElementById('deleteConfirmationModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const email = button.getAttribute('data-bs-email');
+            const fullName = button.getAttribute('data-bs-fullname');
+
+            deleteModal.querySelector('#deleteFacultyName').textContent = fullName;
+            deleteModal.querySelector('#deleteFacultyEmail').textContent = email;
+            deleteModal.querySelector('#delete-college-email').value = email;
+        });
+    }
+
+    // Assign Batch modal: name autofill + section fetch logic
+    const fullNameInput = document.getElementById('fullName');
+    const emailSelect = document.getElementById('collegeEmail');
+
+    function updateSectionDropdown(sections) {
+        const sectionSelect = document.getElementById('section');
+        if (!sectionSelect) return;
+
+        const currentValue = sectionSelect.value || sectionSelect.dataset.initialValue || '';
+
+        while (sectionSelect.options.length > 1) {
+            sectionSelect.remove(1);
+        }
+
+        sections.forEach(sec => {
+            const option = document.createElement('option');
+            option.value = sec;
+            option.textContent = sec;
+            if (sec === currentValue) {
+                option.selected = true;
+            }
+            sectionSelect.appendChild(option);
+        });
+
+        sectionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const sectionCache = {}; // Form: { "5_CSE": ["A-G1", "A-G2"] }
+
+    async function checkAndFetchSections() {
+        const semSelect = document.getElementById('semester');
+        const branchSelect = document.getElementById('branch');
+
+        if (!semSelect || !branchSelect) return;
+
+        const semValue = semSelect.value;
+        const branchValue = branchSelect.value;
+
+        if (!semValue || !branchValue) return;
+
+        const cacheKey = `${semValue}_${branchValue}`;
+
+        if (sectionCache[cacheKey]) {
+            updateSectionDropdown(sectionCache[cacheKey]);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/sections?sem=${encodeURIComponent(semValue)}&branch=${encodeURIComponent(branchValue)}`);
+            if (!response.ok) throw new Error("Network response error");
+
+            const sections = await response.json();
+
+            sectionCache[cacheKey] = sections;
+            updateSectionDropdown(sections);
+        } catch (error) {
+            console.error("Failed to fetch matching sections:", error);
+        }
+    }
+
+    const semSelect = document.getElementById('semester');
+    const branchSelect = document.getElementById('branch');
+
+    if (semSelect) semSelect.addEventListener('change', checkAndFetchSections);
+    if (branchSelect) branchSelect.addEventListener('change', checkAndFetchSections);
+
+    if (semSelect?.value && branchSelect?.value) {
+        checkAndFetchSections();
+    }
+
+    if (emailSelect && fullNameInput) {
+        emailSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const correspondingName = selectedOption.getAttribute('data-name');
+            fullNameInput.value = correspondingName || '';
+        });
+    }
+});
+</script>
+{% endblock %}

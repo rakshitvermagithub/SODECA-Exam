@@ -31,7 +31,7 @@
         display: block;
         width: 50px;
         height: 3px;
-        background: var(--bs-primary);
+        background: var(--college-red);
         border-radius: 2px;
         bottom: 0;
         left: 50%;
@@ -73,10 +73,25 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
+                            <select class="form-select" id="semester" name="semester_option" required>
+                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
+                                {% for sem_dict in semester %}
+                                {% set sem = sem_dict["sem"] %}
+                                <option value="{{sem}}" {% if details and details.semester|string == sem|string %}selected{% endif %}>{{sem}}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="semester">Semester</label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="form-floating">
                             <select class="form-select" id="branch" name="branch_option" required>
                                 <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                {% for branch in branches %}
-                                <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{branch}}</option>
+                                {% for branch_dict in branches %}
+                                {% set branch = branch_dict["branch"] %}
+                                <option value="{{branch}}" {% if details and details.branch == branch %}selected{% endif %}>{{ branch }}</option>
                                 {% endfor %}
                             </select>
                             <label for="branch">Branch</label>
@@ -85,40 +100,12 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <div class="form-floating">
-                            <select class="form-select" id="semester" name="semester_option" required>
-                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                {% for sem in semester %}
-                                <option value="{{sem}}" {% if details and details.semester|string == sem|string %}selected{% endif %}>{{sem}}</option>
-                                {% endfor %}
-                            </select>
-                            <label for="semester">Semester</label>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="form-floating">
-                            <select class="form-select" id="section" name="section_option" required>
-                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                {% for batch in batch_list %}
-                                <option value="{{batch}}" {% if details and details.section == batch %}selected{% endif %}>{{batch}}</option>
-                                {% endfor %}
+                            <select class="form-select" id="section" name="section_option" 
+                            data-initial-value="{{ details.section if details and details.section else '' }}" 
+                            required>
+                                <option value="">Choose...</option>
                             </select>
                             <label for="section">Section</label>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                     <div class="col-md-6 mb-3">
-                        <div class="form-floating">
-                            <select class="form-select" id="group" name="group_option" required>
-                                <option value="" {% if not details %}selected{% endif %}>Choose...</option>
-                                {% for group in group_list %}
-                                <option value="{{group}}" {% if details and details.class_group == group %}selected{% endif %}>{{group}}</option>
-                                {% endfor %}
-                            </select>
-                            <label for="group">Group</label>
                             <div class="invalid-feedback"></div>
                         </div>
                     </div>
@@ -156,9 +143,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Define the valid options for each dropdown ---
     const validOptions = {
         branch: ["CSE", "CSE(AI)", "CSE(DS)", "CSE(IOT)"],
-        semester: ["3", "4", "5", "6", "7", "8"],
-        section: ["A", "B", "C", "D", "E", "F"],
-        group: ["G1", "G2"],
+        semester: ["1", "2", "3", "4", "5", "6", "7", "8"],
+        section: ["A-G1", "B-G1", "E-E1" ,"E-G1", "E-G2", "B-G2", "A-G2"],
+
         // This array is dynamically created by Jinja to validate against
         batchCounselor: [
             {% for faculty in faculty_list %}
@@ -219,6 +206,95 @@ document.addEventListener('DOMContentLoaded', function() {
     const toTitleCase = (str) => {
         return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
     };
+
+    function updateSectionDropdown(sections) {
+        const sectionSelect = document.getElementById('section');
+        if (!sectionSelect) return;
+
+        // 1. Save the currently selected value (useful for initial page load edits)
+        const currentValue = sectionSelect.value || sectionSelect.dataset.initialValue || '';
+
+        // 2. Clear all existing options except the first "Choose..." placeholder
+        // We keep index 0 intact to preserve the layout structure
+        while (sectionSelect.options.length > 1) {
+            sectionSelect.remove(1);
+        }
+
+        // 3. Loop through the fetched sections array and append new option elements
+        sections.forEach(sec => {
+            const option = document.createElement('option');
+            option.value = sec;
+            option.textContent = sec;
+
+            // If this option matches the user's previous selection, keep it selected
+            if (sec === currentValue) {
+                option.selected = true;
+            }
+
+            sectionSelect.appendChild(option);
+        });
+
+        // 4. Force Bootstrap floating label layout engine to recalculate state
+        sectionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const sectionCache = {}; // Form: { "5_CSE": ["A-G1", "A-G2"] }
+
+    // Dedicated function to handle dropdown adjustments
+    async function checkAndFetchSections() {
+        const semSelect = document.getElementById('semester');
+        const branchSelect = document.getElementById('branch');
+
+        if (!semSelect || !branchSelect) return;
+
+        const semValue = semSelect.value;
+        const branchValue = branchSelect.value;
+
+        // 1. Ensure both fields are filled
+        if (!semValue || !branchValue) return;
+
+        // 2. Validate values against your validOptions object
+        const isSemValid = validOptions.semester.includes(semValue);
+        const isBranchValid = validOptions.branch.includes(branchValue);
+
+        if (!isSemValid || !isBranchValid) {
+            console.warn("Invalid semester or branch selected.");
+            return;
+        }
+
+        // 3. Values are verified; proceed with caching/fetching logic
+        const cacheKey = `${semValue}_${branchValue}`;
+
+        if (sectionCache[cacheKey]) {
+            updateSectionDropdown(sectionCache[cacheKey]);
+            return;
+        }
+
+        try {
+            // Safe to fetch now because inputs match your server's expected validation rules
+            const response = await fetch(`/api/sections?sem=${encodeURIComponent(semValue)}&branch=${encodeURIComponent(branchValue)}`);
+            if (!response.ok) throw new Error("Network response error");
+            
+            const sections = await response.json();
+            
+            sectionCache[cacheKey] = sections; 
+            updateSectionDropdown(sections);
+        } catch (error) {
+            console.error("Failed to fetch matching sections:", error);
+        }
+    }
+
+    // 4. Attach event listeners when the DOM mounts
+    const semSelect = document.getElementById('semester');
+    const branchSelect = document.getElementById('branch');
+
+    if (semSelect) semSelect.addEventListener('change', checkAndFetchSections);
+    if (branchSelect) branchSelect.addEventListener('change', checkAndFetchSections);
+
+    // Run immediately on page load to catch pre-filled backend values
+    if (semSelect?.value && branchSelect?.value) {
+        checkAndFetchSections();
+    }
 
     // --- REAL-TIME Roll Number uppercase & special character check ---
     rollNoInput.addEventListener('input', function(e) {

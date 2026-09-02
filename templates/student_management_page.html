@@ -12,6 +12,15 @@
         padding-top: 2rem;
         padding-bottom: 2rem;
     }
+    hr.rounded {
+      margin: 0;
+      border: none;
+      height: 4px;
+      width: 60px;
+      border-radius: 4px;       /* Adds smooth, rounded edges */
+      opacity: 1;
+    }
+
 </style>
 {% endblock %}
 
@@ -19,6 +28,12 @@
 {% include "message.html" %}
 <link rel="stylesheet" href="/static/dataTable.css">
 <div class="page-wrapper">
+    <div class="container text-center">
+        <h2 style="font-weight: 700">Student Data Directory</h2>
+        <div class="d-flex justify-content-center">
+            <hr class="rounded"/>
+        </div>
+    </div>
     <div class="container d-flex justify-content-center">
         <button type="button" class="btn btn-success mt-2" data-bs-toggle="modal"
             data-bs-target="#add_email" style="width: 117px;"><i
@@ -27,7 +42,7 @@
     <div class="container d-flex justify-content-center">
         <script src="/static/dataTables.js"></script>
         <script src="/static/dataTables.bootstrap5.js"></script>
-        <table class="table table-hover mt-3" id="student_directory1">
+        <table class="table table-hover nowrap display" id="student_directory1">
         <thead class="table-dark">
             <tr>
                 <th>Email</th>
@@ -81,7 +96,7 @@
                             <button type="submit" class="btn btn-primary rounded-pill">Upload File</button>
                         </div>
                         <div>
-                            <a href="/static/student_dir_execl.png" target="_blank">Click here to view the excel
+                            <a href="/static/sodeca_student_excel_format.xlsx" target="_blank">Click here to view the excel
                                 format to upload</a>
                         </div>
                     </div>
@@ -93,7 +108,7 @@
             </div>
         </div>
     </form>
-    <form action="add_email" method="POST" enctype="multipart/form-data">
+    <form action="/add_email" method="POST" enctype="multipart/form-data" id="addEmailForm">
         <div class="modal fade" id="add_email" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -183,6 +198,20 @@
             modal.find('#modal-email').text(email);
             modal.find('#college_email').val(email);
         });
+    });
+    // Basic Validation Logic
+    const myAddEmailForm = document.getElementById('addEmailForm');
+    const new_email_input_tag = document.getElementById('new_email');
+
+    myAddEmailForm.addEventListener('submit', (e) => {
+        let isValid = true;
+
+        if (!new_email_input_tag.value.endsWith('@skit.ac.in')) {
+            showFlashMessage("Only institutional Mails are allowed!", 'danger', 5000);
+            isValid = false;
+        }
+
+        if (!isValid) e.preventDefault();
     });
 </script>
 

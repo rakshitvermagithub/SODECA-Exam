@@ -14,22 +14,14 @@ const loadingTableStructure = `
     </div>
 `;
 
-const noDataAvailableTableStructure = `
-    <div class="table-responsive pt-2" id="dynamic_table">
-        <table class = "table table-striped table-bordered display nowrap" id="empty_table">
-            <thead class = "table-dark">
-                    <tr>
-                        <th class="text-center">No Data Available</th>
-                    </tr>
-
-            </thead>
-            <tbody>
-                 <tr>
-                    <td class="text-center">No Data Available</td>
-                 </tr>
-            </tbody>
-        </table>
-    </div>
+const noDataAvailableTableStructure = `   
+     <tr>
+        <td class="noDataClass" style="width: 100%">
+            <div class="d-flex justify-content-center">
+                No Data Available
+            </div>
+        </td> 
+     </tr>   
 `
 
 new DataTable(`#tb_blood_donor`, {
@@ -118,9 +110,9 @@ function openTab(evt, containerId) {
             'form_id': containerId
         })
     })
-    .then(response=>response.json())
+    .then(response => response.json())
     .then(responseData => {
-        if(responseData.success) {
+        if (responseData.success) {
             updateTable(responseData.row_values, responseData.sql_col, responseData.column_name, containerId);
         } else {
             updateTable('', '', '', 'empty-table');
@@ -135,8 +127,77 @@ function openTab(evt, containerId) {
     const activeContainer = document.getElementById(containerId);
     activeContainer.classList.add("active");
     evt.currentTarget.classList.add("active");
+}
 
-    // const downloadButton = document.querySelector('[id^="download-button"]');
-    // downloadButton.disabled = true;
-    // downloadButton.id = 'download-button-'+containerId;
+Chart.register(ChartDataLabels);
+
+// Keep track of the Chart instance globally or in outer scope
+let myPieChart = null;
+
+function updateChart(filtered_data = []) {
+    const records = Array.isArray(filtered_data) ? filtered_data : [];
+
+    const chartContainer = document.getElementById('chart-container');
+    if (!chartContainer) return;
+
+    if (records.length === 0) {
+        chartContainer.innerHTML = `<h5 class="text-center">No data Available</h5>`;
+        if (myPieChart) { myPieChart.destroy(); myPieChart = null; }
+        return;
+    }
+
+    chartContainer.innerHTML = `<canvas id="categoryPieChart"></canvas>`;
+
+    let labels, values;
+
+    // Pre-aggregated shape: [{category, count}, ...] (batch_report)
+    if (records[0] && Object.prototype.hasOwnProperty.call(records[0], 'count')) {
+        labels = records.map(r => r.category);
+        values = records.map(r => r.count);
+    } else {
+        // Raw rows shape: [{category: 'x', ...}, ...] (student_report) — aggregate client-side
+        const dataMap = new Map();
+        records.forEach((row) => {
+            const category = row?.category || 'Uncategorized';
+            dataMap.set(category, (dataMap.get(category) || 0) + 1);
+        });
+        labels = [...dataMap.keys()];
+        values = [...dataMap.values()];
+    }
+
+    const canvasElement = document.getElementById('categoryPieChart');
+    if (!canvasElement) return;
+    const ctx = canvasElement.getContext('2d');
+
+    if (myPieChart) myPieChart.destroy();
+
+    myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    'rgba(44, 127, 184, 0.7)', '#3498db', '#2ecc71', '#f1c40f', '#e74c3c',
+                    'rgba(255, 152, 150, 0.7)', 'rgba(158, 218, 229, 0.7)',
+                    'rgba(140, 86, 75, 0.7)', 'rgba(247, 182, 210, 0.7)', 'rgba(255, 215, 0, 0.7)'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { font: { family: "'Poppins', sans-serif", size: 11 }, color: '#1a1a1a', padding: 12, boxWidth: 12 }
+                },
+                tooltip: { callbacks: { label: (context) => ` ${context.label}: ${context.raw}` } },
+                datalabels: { formatter: (v) => v, color: '#444', font: { weight: 'bold', size: 14 }, anchor: 'center', align: 'center' }
+            }
+        }
+    });
 }

@@ -86,13 +86,13 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <div class="form-floating">
-                        <input class="form-control" type="text" id="section" value="{{ details.section | default('') }}" disabled readonly>
+                        <input class="form-control" type="text" id="section" value="{{ details.section.split('-')[0] | default('') }}" disabled readonly>
                         <label for="section">Section</label>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <div class="form-floating">
-                        <input class="form-control" type="text" id="groupNo" value="{{ details.class_group | default('') }}" disabled readonly>
+                        <input class="form-control" type="text" id="groupNo" value="{{ details.section.split('-')[1] | default('') }}" disabled readonly>
                         <label for="groupNo">Group</label>
                     </div>
                 </div>

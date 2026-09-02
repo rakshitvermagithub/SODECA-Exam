@@ -13,14 +13,6 @@
         padding-bottom: 3rem;
     }
 
-    .card-minimalist {
-        border: none;
-        border-top: 5px solid var(--bs-primary);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-        border-radius: 0.5rem;
-        background-color: #fff;
-    }
-
     .form-title {
         position: relative;
         padding-bottom: 0.75rem;
@@ -33,7 +25,7 @@
         display: block;
         width: 60px;
         height: 4px;
-        background: var(--bs-primary);
+        background: var(--college-red);
         border-radius: 2px;
         bottom: 0;
         left: 50%;
@@ -45,8 +37,8 @@
         background-color: #e7f1ff;
     }
     .table-submissions th {
-        color: #0d6efd;
-        font-weight: 600;
+        color: var(--college-blue);
+        font-weight: 700;
         border-bottom-width: 1px;
     }
     .table-submissions td {
@@ -83,12 +75,12 @@
 
 <div class="page-wrapper">
     <div class="container">
-        <h3 class="text-center mb-5 form-title">Your Submissions</h3>
+        <h3 class="text-center mb-5 form-title">Submissions <span style="color: var(--college-blue);">{{ selected_academic_session }} {{ selected_academic_term }}</span></h3>
         
-        <div class="card card-minimalist shadow">
-             <div class="card-body p-4">
+        <div class="card card-minimalist mb-2">
+             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover table-submissions">
+                    <table class="table table-hover table-submissions" {% if submissions %}id="submissionsTable"{% endif %}>
                         <thead>
                             <tr>
                                 <th scope="col" style="width: 5%;">#</th>
@@ -175,7 +167,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted p-5">
+                                    <td colspan="6" class="text-center text-muted p-2">
                                         <i class="bi bi-inbox fs-1 d-block mb-3"></i>
                                         You haven't submitted any forms yet.
                                     </td>
@@ -186,6 +178,23 @@
                 </div>
             </div>
         </div>
+
+        {% for session_term in session_term_list %}
+        {% set academic_session = session_term["academic_session"] %}
+        {% set academic_term = session_term["academic_term"] %}
+        {% if academic_session != selected_academic_session or academic_term != selected_academic_term %}
+        <div class="px-4 py-2 bg-white mb-2 border border-secondary-subtle rounded-2" style="color: var(--college-blue);">
+            <form action="/your_submissions" method="post">
+                <div class="d-flex justify-content-between">
+                    <h4>{{ session_term["academic_session"] }} {{ session_term["academic_term"] }}</h4>
+                    <input name="academic_session" type="text" value="{{ session_term['academic_session'] }}" hidden>
+                    <input name="academic_term" type="text" value="{{ session_term['academic_term'] }}" hidden>
+                    <button type="submit" class="btn btn-primary">View</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+        {% endfor %}
     </div>
 </div>
 
@@ -310,6 +319,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 modalBody.innerHTML = '<p class="text-danger text-center py-3">Could not load details. Please try again.</p>';
             });
         });
+    }
+
+    submissionsTable = document.getElementById("submissionsTable")
+    if (submissionsTable) {
+        try { 
+            $('#submissionsTable').DataTable({
+                paging: true,
+                pageLength: 5,       // Disables pagination
+                info: true,         // Hides table info text (e.g. "Showing 1 to N entries")
+                scrollX: true,       // Enables horizontal scrolling
+                scrollCollapse: true,
+                lengthChange: false
+            });
+        } catch (e) {
+            console.error("Error initializing DataTable:", e);
+        }
     }
 });
 </script>

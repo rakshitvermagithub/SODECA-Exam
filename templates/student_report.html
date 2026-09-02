@@ -9,21 +9,32 @@
 <link href="https://cdn.datatables.net/buttons/3.2.5/css/buttons.bootstrap5.css" rel="stylesheet">
 <style>
     :root {
-        --bs-admin-purple: #4f46e5;
-        --bs-admin-purple-rgb: 79, 70, 229;
+        --admin-navy: #1e293b;
+        --admin-navy-light: #334155;
+        --admin-accent: #0385c7;
+        --admin-border: #e2e8f0;
+        --admin-bg-light: #f8fafc;
+        --admin-text-dark: #0f172a;
+        --admin-text-muted: #64748b;
     }
 
     .page-wrapper {
         min-height: calc(100vh - 140px);
-        background-color: #f0f2f5;
-        padding-top: 3rem;
-        padding-bottom: 3rem;
+        background-color: #f1f5f9;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
 
     .form-title-admin {
         position: relative;
         padding-bottom: 0.75rem;
         font-weight: 700;
+        color: var(--admin-navy);
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+        font-size: 1.75rem;
     }
 
     .form-title-admin::after {
@@ -32,80 +43,277 @@
         display: block;
         width: 60px;
         height: 4px;
-        background: var(--bs-admin-purple);
+        background: var(--admin-accent);
         border-radius: 2px;
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
     }
 
-    .card-minimalist-admin {
-        border: none;
-        border-top: 5px solid var(--bs-admin-purple);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-        border-radius: 0.5rem;
+    .form-label {
+        color: var(--admin-navy-light);
     }
-    
+
+    /* ---------- Buttons ---------- */
     .btn-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-accent);
         color: white;
-        font-weight: 500;
+        font-weight: 600;
+        border: none;
     }
     .btn-admin:hover {
-        background-color: #4338ca;
+        background-color: #0369a1;
         color: white;
+        box-shadow: 0 5px 15px rgba(2, 132, 199, 0.3);
     }
     .btn-outline-admin {
-        color: black;
+        color: var(--admin-navy);
         background-color: white;
-        border-color: var(--bs-admin-purple);
+        border-color: var(--admin-border);
+        font-weight: 600;
     }
     .btn-outline-admin:hover {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
+        border-color: var(--admin-navy);
     }
     .btn-more-details {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-accent);
         color: white;
     }
     .btn-more-details:hover {
-        color: black;
-        background-color: white;
-        border-color: var(--bs-admin-purple);
+        color: white;
+        background-color: #0369a1;
+        border-color: #0369a1;
     }
 
-    /* Modal Styling */
+    /* Custom Green Style for Download Excel Button */
+    .btn-excel-green {
+        background-color: #15803d !important;
+        color: #ffffff !important;
+        border-color: #15803d !important;
+        font-weight: 600;
+    }
+    .btn-excel-green:hover {
+        background-color: #166534 !important;
+        border-color: #166534 !important;
+        color: #ffffff !important;
+    }
+
+    /* Fixed Scrollable Container for Unstyled Table (legacy, kept for compatibility) */
+    .table-scroll-container {
+        max-height: 500px;
+        overflow: auto;
+    }
+
+    /* Filter bar trigger buttons - wrap evenly across all screen sizes (legacy, kept for compatibility) */
+    .filter-trigger-btn {
+        flex: 1 1 150px;
+        white-space: nowrap;
+    }
+    @media (max-width: 575.98px) {
+        .filter-trigger-btn {
+            flex: 1 1 100%;
+        }
+    }
+
+    /* ---------- Shared dashboard card shell (filter bar, chart, table) ---------- */
+    .card-dashboard {
+        border: 1px solid var(--admin-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border-radius: 0.5rem;
+        background: white;
+        overflow: visible;   /* was: hidden — this was clipping the dropdown menus */
+    }
+
+    .card-dashboard-body {
+        padding: 1.25rem;
+    }
+
+    /* ---------- Filter bar ---------- */
+    .filter-bar-body {
+        padding: 1.1rem 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.25rem;
+        align-items: flex-end;
+    }
+
+    .filter-field {
+        flex: 0 0 auto;
+        min-width: 130px;
+    }
+
+    .filter-field .form-label {
+        color: var(--admin-navy-light);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.35rem;
+    }
+
+    /* ---------- Row 2: chart + table inside ONE unified card ---------- */
+    .dashboard-panel-header {
+        background-color: var(--admin-bg-light);
+        border-bottom: 1px solid var(--admin-border);
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 2rem;
+    }
+
+    .dashboard-panel-header .panel-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--admin-navy);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        display: flex;
+        align-items: center;
+    }
+
+    .dashboard-panel-body {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch; 
+    }
+
+    .chart-pane {
+        flex: 0 0 33.3333%;
+        max-width: 33.3333%;
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem;
+        border-right: 1px solid var(--admin-border);
+        border-bottom-left-radius: 0.5rem;
+    }
+    .chart-pane .panel-subtitle {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        color: var(--admin-navy);
+        height: 1rem;           /* match .table-toolbar's effective row height */
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .chart-canvas-wrap {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+    }
+
+    .chart-canvas-wrap canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .table-pane {
+        flex: 1 1 0;
+        max-width: 100%;
+        padding: 0;
+        border-bottom-right-radius: 0.5rem;
+    }
+
+    .table-pane .dataTables_wrapper {
+        border-bottom-right-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .table-pane table.dataTable {
+        margin: 0 !important;
+    }
+
+    .table-pane thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    #report-table thead {
+        background-color: var(--admin-navy);
+        color: white;
+    }
+
+    #report-table tbody td {
+        color: var(--admin-text-dark);
+        vertical-align: middle;
+    }
+
+    .table-toolbar {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .chart-pane { min-width: 0; }
+    .table-pane { min-width: 0; }
+    .chart-canvas-wrap { aspect-ratio: 1 / 1; max-width: 100%; max-height: 100%; margin: 0 auto; }
+
+    /* ---------- Responsive: stack chart above table below desktop width ---------- */
+
+    /* Badges */
+    .badge.text-bg-success { background-color: #15803d !important; }
+    .badge.text-bg-danger  { background-color: #b91c1c !important; }
+    .badge.text-bg-warning { background-color: #b45309 !important; color: white !important; }
+
+    /* Modal header */
     .modal-header-admin {
-        background-color: var(--bs-admin-purple);
+        background-color: var(--admin-navy);
         color: white;
     }
     .modal-header-admin .btn-close {
         filter: invert(1) grayscale(100%) brightness(200%);
     }
-    .filter-step { display: none; } 
-    .filter-step.active { display: block; } 
 
-    /* Ensure modal body scrolls */
-    #filterModal .modal-body {
-        overflow-y: auto; 
-        max-height: 65vh; /* Ensure a max height to trigger scroll */
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1199.98px) {
+        .chart-pane {
+            flex: 0 0 100%;
+            max-width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--admin-border);
+            border-bottom-left-radius: 0;
+            height: 260px;
+        }
+        .table-pane {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
     }
 
-    /* Custom Admin Table Style */
-    .table-admin thead {
-        background-color: rgba(var(--bs-admin-purple-rgb), 0.05);
+    @media (max-width: 767.98px) {
+        .page-wrapper {
+            padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .filter-bar-body {
+            gap: 0.75rem 1rem;
+        }
+        .filter-field {
+            min-width: 45%;
+            flex: 1 1 45%;
+        }
+        .dropdown-menu.w-100 {
+            min-width: 100%;
+        }
     }
-    .table-admin th {
-        color: var(--bs-admin-purple);
-        font-weight: 600;
-    }
-    .table-admin td {
-        vertical-align: middle;
-    }
-    
-    #submissionDetailsModalBody {
-        overflow-wrap: break-word;
-        word-wrap: break-word; /* Fallback for older browsers */
+
+    @media (max-width: 575.98px) {
+        .filter-field {
+            min-width: 100%;
+            flex: 1 1 100%;
+        }
     }
 </style>
 {% endblock %}
@@ -114,290 +322,301 @@
 {% include "message.html" %}
 
 <div class="page-wrapper">
-    <div class="container">
-        <h2 class="text-center mb-4 form-title-admin">Student SODECA Report</h2>
-        
-        <div class="text-center mb-4">
-             <button type="button" class="btn btn-admin px-4 py-2" data-bs-toggle="modal" data-bs-target="#filterModal">
-                <i class="bi bi-funnel-fill me-2"></i> Apply Filters
-            </button>
-        </div>
+    <div class="container-fluid px-3 px-lg-4">
 
-        <div class="card card-minimalist-admin">
-             <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-bordered border-secondary-subtle table-hover align-middle table-admin" id="report-table" style="width:100%">
-                        <caption class="caption-top p-3">List of Student's SODECA Records</caption>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Student's Name</th>
-                                <th>Roll Number</th>
-                                <th>Batch</th>
-                                <th>Category</th>
-                                <th>Proof</th>
-                                <th>Proof(G-Drive)</th>
-                                <th>Submitted at</th>
-                                <th>Withdrawn at</th>
-                                <th>More Details</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for data in filtered_data %}
-                            {% set status = data['status'] %}
-                            {% set file_drive_link = data['certificate']%}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ data["student_name"] }}</td>
-                                <td>{{ data["university_roll_no"] }}</td>
-                                <td>{{ data["semester"] }}{{ data["branch"] }}-{{ data["section"] }}-{{ data["class_group"] }}</td>
-                                <td>{{ data["category"] }}</td>
-                                <td>
-                                    <a href="{{ url_for('view_submission', filename=data['certificate']) }}" target="_blank">{{ data['certificate'] }}</a>
-                                </td>
-                                <td><a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-file-earmark-text"></i> G-Drive</td>
-                                <td>{{ data["submitted_at"] }}</td>
-                                <td>{{ data["withdrawn_at"] }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-more-details"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#submissionDetailsModal"
-                                            data-entry-id="{{ data['entry_id'] }}"
-                                            data-form-name="{{ data['category'] }}">
-                                        Open
-                                    </button>
-                                </td>
-                                
-                                {% if status == 'accepted' %}
-                                <td>
-                                    <span class="badge rounded-pill text-bg-success">Accepted</span></td>
-                                </td>
-                                {% elif status == 'rejected' %}
-                                <td>
-                                    <span class="badge rounded-pill text-bg-danger">Rejected</span></td>
-                                </td>
-                                {% elif status == 'pending' %}
-                                <td>
-                                    <span class="badge rounded-pill text-bg-warning">Pending</span></td>
-                                </td>
-                                {% endif %}
-                        
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        {% if session.get('drive_auth_token')%}
-                                            <form action="{{ url_for('upload_to_drive') }}" method="post">
-                                                <input type="hidden" name="entry_id" value="{{ data['entry_id'] }}">
-                                                <input type="hidden" name="semester" value="{{ data['semester'] }}">
-                                                <input type="hidden" name="branch" value="{{ data['branch'] }}">
-                                                <input type="hidden" name="section" value="{{ data['section'] }}">
-                                                <input type="hidden" name="class_group" value="{{ data['class_group'] }}">
-                                                <input type="hidden" name="form_name" value="{{ data['category'] }}">
-                                                <input type="hidden" name="filename" value="{{ data['certificate'] }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-success"
-                                                {% if status != 'pending'%}disabled{% endif %}>Accept</button>
-                                            </form>
-                                        {% else %}
-                                            <!-- Button opens a modal with a button to authorize drive -->
-                                            <button type="submit" class="btn btn-sm btn-outline-success"
-                                            {% if status != 'pending'%}disabled{% endif %}>Accept</button>
+        <!-- Row 1: Filter Bar — full width, boxed like the other panels -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card-dashboard">
+                    <div class="filter-bar-body">
 
-                                        {% endif %}    
-                                        <form action="" method="POST">
-                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" 
-                                                data-bs-target="#rejectionModal" data-entry-id = "{{ data['entry_id'] }}" 
-                                                data-form-name = "{{ data['category'] }}"
-                                                {% if status != 'pending'%}disabled{% endif %}>
-                                                Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                        <!-- 1. Academic Session -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Session</label>
+                            <div class="dropdown">
+                                <button type="button" id="session_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="session_dropdown">
+                                    <li>
+                                        {% if academic_session_list %}
+                                            {% for academic_session in academic_session_list %}
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input section-trigger-input" type="radio" name="academic_sessions" value="{{ academic_session['academic_session'] }}" id="sess_{{ loop.index }}" {% if academic_session['academic_session'] == current_session %}checked{% endif %}>
+                                                    <label class="form-check-label" for="sess_{{ loop.index }}">{{ academic_session["academic_session"] }}</label>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 2. Even/Odd -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Even/Odd</label>
+                            <div class="dropdown">
+                                <button id="even_odd_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="even_odd">
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input section-trigger-input" type="radio" name="academic_terms" value="Odd" id="termOdd">
+                                            <label class="form-check-label small" for="termOdd">Odd</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input section-trigger-input" type="radio" name="academic_terms" value="Even" id="termEven">
+                                            <label class="form-check-label small" for="termEven">Even</label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 3. Form Category -->
+                        <div class="filter-field">
+                            <label class="form-label d-block" for="form_type">Form Category</label>
+                            <div class="dropdown">
+                                <button type="button" id="form_type_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="form_dropdown">
+                                    <li>
+                                        {% for key, value in form_dict.items() %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form_{{ key }}">
+                                                <label class="form-check-label small" for="form_{{ key }}">{{ value }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 5. Participation / Achievement -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Certification Type</label>
+                            <div class="dropdown">
+                                <button id="par_ach_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="certification_type" value="participation" id="typePart">
+                                            <label class="form-check-label small" for="typePart">Participation</label>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="certification_type" value="achievement" id="typeAch">
+                                            <label class="form-check-label small" for="typeAch">Achievement</label>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 4. Event Nature -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Event Nature</label>
+                            <div class="dropdown">
+                                <button id="par_ach_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <span>Select...</span>
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="par_ach">
+                                    {% for option in event_nature_options %}
+                                    <li>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="event_natures[]" value="{{ option['value'] }}" id="{{ option['value'] }}">
+                                            <label class="form-check-label small" for="{{ option['value'] }}">{{ option['label'] }}</label>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 6. Semester -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Semester</label>
+                            <div class="dropdown">
+                                <button type="button" id="semester_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="semester_dropdown">
+                                    {% for sem in [1,2,3,4,5,6,7,8]%}
+                                    <li>
+                                        <div class="col">
+                                            <div class="odd_sem form-check">
+                                                <input class="form-check-input section-trigger-checkboxes" type="checkbox" name="semesters[]" value="{{ sem }}" id="{{ sem }}">
+                                                <label class="form-check-label" for="{{ sem }}"> {{ sem }}</label>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 7. Branch -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Branch</label>
+                            <div class="dropdown">
+                                <button type="button" id="branch_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="branch_dropdown">
+                                    <li>
+                                        {% if branch_options_list %}
+                                            {% for options in branch_options_list %}
+                                                {% set branch = options['branch'] %}
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input section-trigger-checkboxes" type="checkbox" name="branches[]" value="{{ branch }}" id="branchModal_{{ loop.index }}">
+                                                    <label class="form-check-label" for="branchModal_{{ loop.index }}">{{ branch }}</label>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 8. Section -->
+                        <div class="filter-field">
+                            <label class="form-label d-block">Section/ Group</label>
+                            <div class="dropdown">
+                                <button type="button" id="section_btn" class="btn btn-outline-admin btn-sm border w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Select...
+                                </button>
+                                <ul class="dropdown-menu p-2 shadow-sm" id="section_dropdown">
+                                    <li>
+                                        {% if section_options_list %}
+                                            {% for options in section_options_list %}
+                                                {% set section = options['section'] %}
+                                                <div class="col">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="{{ section }}">
+                                                        <label class="form-check-label" for="{{ section }}">{{ section }}</label>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Actions: join the same flex row, wrap only if no room -->
+                        <div class="filter-field">
+                            <button type="button" class="btn btn-admin btn-sm fw-bold" onclick="fetchFilteredData()" id="apply_filter">
+                                <i class="bi bi-funnel-fill me-1"></i> Apply Filter
+                            </button>
+                            <a href="{{ url_for('student_report') }}">
+                                <button type="button" class="btn btn-outline-admin btn-sm fw-bold">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Reset
+                                </button>
+                            </a>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Row 2: Chart + Table inside ONE unified card, separated by a divider -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card-dashboard">
+                    <div class="table-toolbar">
+                        <!-- Havea excel and download proof buttons, don't remove -->
+                    </div>
+                    <div class="dashboard-panel-body">
+                        <div class="chart-pane">
+                            <div class="chart-canvas-wrap" id="chart-container">
+                                <canvas id="categoryPieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="table-pane">
+                            <table id="report-table" class="display nowrap border-0 w-100">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Academic Session</th>
+                                        <th>Academic Term</th>
+                                        <th>Student's Name</th>
+                                        <th>Roll Number</th>
+                                        <th>Batch</th>
+                                        <th>Category</th>
+                                        <th>Proof(G-Drive)</th>
+                                        <th>Status</th>
+                                        <th>More Details</th>
+                                        <th>Submitted at</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
+                                    {% for data in filtered_data %}
+                                    <tr data-certificate="{{ data['certificate'] }}">
+                                        <td>{{ data["entry_id"] }}</td>
+                                        <td>{{ data["academic_session"] }}</td>
+                                        <td>{{ data["academic_term"] }}</td>
+                                        <td>{{ data["student_name"] }}</td>
+                                        <td>{{ data["university_roll_no"] }}</td>
+                                        <td>{{ data["sem"] }}-{{ data["branch"] }}-{{ data["section"] }}</td>
+                                        <td>{{ data["category"] }}</td>
+                                        <td>
+                                            {% if data["google_file_id"] == "pending" %}
+                                                Pending
+                                            {% else %}
+                                            <a href="https://drive.google.com/file/d/{{ data['google_file_id'] }}" target="_blank">
+                                                https://drive.google.com/file/d/{{ data['google_file_id'] }}
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" 
+                                                class="btn btn-outline-admin btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#submissionDetailsModal"
+                                                data-entry-id="{{ data['entry_id'] }}"
+                                                data-form-name="{{ data['category'] }}">
+                                                Open
+                                            </button>
+                                        </td>
+                                        <td>{{ data["submitted_at"] }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
 </div>
 
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    {# Ensures the entire modal dialog allows scrolling of the body #}
-    <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
-        <div class="modal-content">
-            <div class="modal-header modal-header-admin">
-                <h1 class="modal-title fs-5" id="filterModalLabel">Apply Report Filters</h1>
+<!-- Submission details box -->
+<div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content custom-modal">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="submissionDetailsModalLabel">Submission Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{url_for('student_report')}}" id="filterForm">
-                <div class="modal-body p-4">
-                    
-                    <!-- Step 1: Student Filters -->
-                    <div class="filter-step active" id="filterStep1">
-                        <h5 class="fw-semibold mb-4"><i class="bi bi-people me-2"></i>Filter by Student Criteria</h5>
-                        
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label for="roll_number" class="form-label">University Roll Number</label>
-                                <input type="text" class="form-control" name="university_roll_number" id="roll_number" placeholder="e.g., 21ESKCS123">
-                            </div>
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Semester</label>
-                                    <div>
-                                        {% for i in range(3, 9) %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="semesters[]" value="{{ i }}" id="sem{{ i }}"><label class="form-check-label" for="sem{{ i }}">{{ i }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Branch</label>
-                                    <div>
-                                        {% set branches = ['CSE', 'CSE(AI)', 'CSE(DS)', 'CSE(IOT)'] %}
-                                        {% for branch in branches %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="branches[]" value="{{ branch }}" id="branch{{ branch }}"><label class="form-check-label" for="branch{{ branch }}">{{ branch }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Section</label>
-                                    <div>
-                                        {% set sections = ['A', 'B', 'C', 'D', 'E', 'F'] %}
-                                        {% for section in sections %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="sections[]" value="{{ section }}" id="section{{ section }}"><label class="form-check-label" for="section{{ section }}">{{ section }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6"> 
-                                <div class="filter-checkbox-group">
-                                    <label class="form-label">Group</label>
-                                    <div>
-                                        {% set groups = ['G1', 'G2'] %}
-                                        {% for group in groups %}<div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="class_groups[]" value="{{ group }}" id="group{{ group }}"><label class="form-check-label" for="group{{ group }}">{{ group }}</label>
-                                        </div>{% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Step 2: Form Filters -->
-                    <div class="filter-step" id="filterStep2">
-                         <h5 class="fw-semibold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Filter by Form Type</h5>
-                         <div class="d-flex justify-content-end mb-3">
-                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="selectAllForms">
-                                <label class="form-check-label" for="selectAllForms">Select All</label>
-                            </div>
-                         </div>
-                         <div class="row row-cols-1 row-cols-md-3 g-2"> 
-                            {% for key, form in FORM_DEFINITIONS.items() %}
-                            <div class="col">
-                                <div class="form-check fs-6 mb-1 rounded-2">
-                                    <input class="form-check-input" type="checkbox" name="forms[]" value="{{ key }}" id="form-{{ key }}">
-                                    <label class="form-check-label ms-1" for="form-{{ key }}">{{ form["title"] }}</label>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFiltersBtn">Reset All</button>
-                    <div>
-                        <button type="button" class="btn btn-outline-secondary me-2" id="backBtn" style="display: none;">Back</button>
-                        <button type="button" class="btn btn-admin" id="nextBtn">Next</button>
-                        <button type="submit" class="btn btn-admin" id="submitBtn" style="display: none;">Apply Filters</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="submissionDetailsModal" tabindex="-1" aria-labelledby="submissionDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-    
-    <div class="modal-content border-0 shadow-sm" style="border-radius: 0.5rem;">
-      
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="submissionDetailsModalLabel">
-            <i class="bi bi-file-earmark-text me-2"></i>Loading...
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      
-      <div class="modal-body p-4" id="submissionDetailsModalBody">
-        
-        <!-- This is the default loading state that your JS will replace -->
-        <div class="text-center py-4" id="modal-loading-state">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3 text-muted">Loading details...</p>
-        </div>
-        <!-- 
-          Your JavaScript will replace the contents of this modal-body.
-          Any long text it injects will now be forced to wrap.
-        -->
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal to add a note when rejecting an entry -->
-<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-3 border-0 shadow">
-            
-            <!-- Header -->
-            <div class="modal-header bg-primary text-white border-bottom-0">
-                <h5 class="modal-title fw-bold" id="rejectionModalLabel">Add Rejection Note</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-body">
+                <div class="row g-3" id="dynamicModalDetails"></div>
             </div>
 
-            <form action="{{ url_for('reject_entry') }}" method="post" id="rejectionForm">
-                <div class="modal-body">
-                    <!-- Hidden Inputs for logic -->
-                    <input type="hidden" name="entry_id" id="reject_entry_id">
-                    <input type="hidden" name="form_name" id="reject_form_name">
-                    <input type="hidden" name="full_path" id="reject_full_path">
-                
-                    <!-- Standard Label (Simple/Official Style) -->
-                    <div class="mb-1">
-                        <label for="rejected_note" class="form-label text-secondary fw-bold small text-uppercase">Reason for Rejection</label>
-                        <input type="text" class="form-control bg-light" id="rejected_note" name="rejection_note" rows="4" placeholder="Type your note here...">
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="modal-footer border-top-0 pt-0">
-                    <!-- Skip button rejects entry without a reason -->
-                    <button type="button" id="skipAddNote" class="btn btn-link text-decoration-none text-muted">
-                        Skip (Reject without Note)
-                    </button>
-
-                    <!-- Submit Button: Aligned with design language (Primary Blue) -->
-                    <button type="submit" class="btn btn-primary px-4">Submit</button>
-                </div>
-            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border fw-medium" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -411,90 +630,139 @@
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.bootstrap5.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.0/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<script id = "filtered-data" type="application/json">
+    {{ filtered_data|tojson }}
+</script>
+<script src="/static/dynamic_form_rendering.js"></script>
+<script src="/static/filters.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const filterModalElement = document.getElementById('filterModal');
-    let filterModal;
-    if (filterModalElement) {
-        filterModal = new bootstrap.Modal(filterModalElement); 
+
+    function renderCheckboxes(options) {
+        const container = document.getElementById('section_dropdown');
+            
+        // Clear previous contents
+        container.innerHTML = '';
+
+        // Handle empty state gracefully
+        if (!options || options.length === 0) {
+            container.innerHTML = '<li class="p-2 text-muted small">No sections available</li>';
+            return;
+        }
+
+        // Build markup matching your Jinja template structure
+        const itemsHtml = options.map(section => {
+            // Sanitize or format ID to handle special characters or spaces cleanly
+            const safeId = `section_${section.toString().replace(/\s+/g, '_')}`;
+            
+            return `
+                <div class="col">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="sections[]" value="${section}" id="${safeId}">
+                        <label class="form-check-label" for="${safeId}">${section}</label>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Wrap inside a single <li> to mirror your HTML layout
+        container.innerHTML = `<li>${itemsHtml}</li>`;
+    }
+
+    // Global cache map for the session
+    const sectionsCache = new Map();
+    async function fetchDynamicOptions() {
+        // Existing multiple-choice extractions
+        const checkedSemesters = Array.from(document.querySelectorAll('input[name="semesters[]"]:checked')).map(cb => cb.value);
+        const checkedBranches = Array.from(document.querySelectorAll('input[name="branches[]"]:checked')).map(cb => cb.value);
+
+        // New radio extractions using querySelector (returns the single matched element or null)
+        const termRadio = document.querySelector('input[name="academic_terms"]:checked');
+        const sessionRadio = document.querySelector('input[name="academic_sessions"]:checked');
+
+        // Wrap in arrays to match your backend's expected list format, default to empty array if nothing is selected
+        const checkedTerms = termRadio ? [termRadio.value] : [];
+        const checkedSession = sessionRadio ? [sessionRadio.value] : [];
+
+        const payload = {
+            semester: checkedSemesters,
+            academic_session: checkedSession,
+            branch: checkedBranches,
+            academic_term: checkedTerms
+        };
+
+        const cacheKey = JSON.stringify(payload);
+        if (sectionsCache.has(cacheKey)) {
+            renderCheckboxes(sectionsCache.get(cacheKey));
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/get_sections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    semester: checkedSemesters,
+                    branch: checkedBranches,
+                    academic_term: checkedTerms,
+                    academic_session: checkedSession
+                })
+            });
+            
+            if (response.ok) {
+                const sectionsList = await response.json();
+                
+                // Store in cache map
+                sectionsCache.set(cacheKey, sectionsList);
+
+                renderCheckboxes(sectionsList);
+            } else {
+                console.error("Failed to fetch sections");
+            }
+        } catch (error) {
+            console.error("Error during fetch:", error);
+        }
+    }
+
+    const sectionTriggers = document.querySelectorAll('.section-trigger-checkboxes, .section-trigger-input');
+
+    sectionTriggers.forEach(input => {
+        input.addEventListener('change', fetchDynamicOptions)
+    })
+
+    if (typeof updateChart === 'function') {
+        const filtered_data = JSON.parse(document.getElementById('filtered-data').textContent);
+        updateChart(filtered_data);
     }
     
-    const filterForm = document.getElementById('filterForm');
-    const step1 = document.getElementById('filterStep1');
-    const step2 = document.getElementById('filterStep2');
-    const nextBtn = document.getElementById('nextBtn');
-    const backBtn = document.getElementById('backBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const resetBtn = document.getElementById('resetFiltersBtn');
-    const selectAllFormsCheckbox = document.getElementById('selectAllForms');
-    const formCheckboxes = filterForm ? filterForm.querySelectorAll('input[name="forms[]"]') : [];
-    const multiSelects = filterForm ? filterForm.querySelectorAll('select[multiple]') : []; 
+    // --- Check All (dedicated filter modals AND inline dropdowns) ---
+    document.querySelectorAll('.js-check-all').forEach(function(checkAllBox) {
+        const scopeEl = checkAllBox.closest('.modal') || checkAllBox.closest('.dropdown');
+        if (!scopeEl) return;
+        const targetName = checkAllBox.dataset.targetName;
+        const groupCheckboxes = scopeEl.querySelectorAll('input[type="checkbox"][name="' + targetName + '"]');
 
-    // --- Modal Step Navigation ---
-    if(nextBtn && step1 && step2 && backBtn && submitBtn) { 
-        nextBtn.addEventListener('click', function() {
-            step1.classList.remove('active');
-            step2.classList.add('active');
-            nextBtn.style.display = 'none';
-            backBtn.style.display = 'inline-block';
-            submitBtn.style.display = 'inline-block';
+        checkAllBox.addEventListener('change', function() {
+            groupCheckboxes.forEach(function(cb) { cb.checked = checkAllBox.checked; });
         });
-    }
 
-    if (backBtn && step1 && step2 && nextBtn && submitBtn) { 
-        backBtn.addEventListener('click', function() {
-            step2.classList.remove('active');
-            step1.classList.add('active');
-            nextBtn.style.display = 'inline-block';
-            backBtn.style.display = 'none';
-            submitBtn.style.display = 'none';
-        });
-    }
-    
-    if (filterModalElement && step1 && step2 && nextBtn && backBtn && submitBtn) { 
-        filterModalElement.addEventListener('hidden.bs.modal', function () {
-             step2.classList.remove('active');
-             step1.classList.add('active');
-             nextBtn.style.display = 'inline-block';
-             backBtn.style.display = 'none';
-             submitBtn.style.display = 'none';
-        });
-    }
-
-    // --- Filter Logic ---
-    if (resetBtn && filterForm) {
-        resetBtn.addEventListener('click', function() {
-            filterForm.reset();
-            // Clear multiselect dropdowns
-            multiSelects.forEach(select => {
-                 Array.from(select.options).forEach(option => option.selected = false);
-            });
-            if (selectAllFormsCheckbox) {
-                 selectAllFormsCheckbox.checked = false; 
-            }
-        });
-    }
-
-    if (selectAllFormsCheckbox) {
-        selectAllFormsCheckbox.addEventListener('change', function() {
-            formCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+        // Keep the switch in sync if the user unchecks/checks items individually
+        groupCheckboxes.forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                const allChecked = Array.from(groupCheckboxes).every(function(c) { return c.checked; });
+                checkAllBox.checked = allChecked;
             });
         });
-    }
 
-    formCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            if (!this.checked && selectAllFormsCheckbox) {
-                selectAllFormsCheckbox.checked = false;
-            } else if (selectAllFormsCheckbox){
-                const allChecked = Array.from(formCheckboxes).every(cb => cb.checked);
-                selectAllFormsCheckbox.checked = allChecked;
-            }
+        // Reset the switch whenever this modal is closed/reopened cleanly with Reset All
+        scopeEl.addEventListener('hidden.bs.modal', function() {
+            const allChecked = groupCheckboxes.length > 0 && Array.from(groupCheckboxes).every(function(c) { return c.checked; });
+            checkAllBox.checked = allChecked;
         });
     });
 
@@ -502,21 +770,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('report-table')) {
         try { 
             $('#report-table').DataTable({
-                layout: {
-                    topStart: {
-                        buttons: [
-                            { extend: 'copy', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'csv', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'excel', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'pdf', className: 'btn-sm btn-outline-admin' },
-                            { extend: 'print', className: 'btn-sm btn-outline-admin' }
-                        ]
-                    }
-                },
-                scrollX: true,
-                scrollCollapse: true, // Optional, collapses table height if data is small
-
+                paging: false,
+                info: false,         
+                scrollX: true,   
+                scrollY: '500px',
+                scrollCollapse: true,
+                dom: 't'
             });
+
+            const tableInstance = $('#report-table').DataTable();
+            new $.fn.dataTable.Buttons(tableInstance, {
+                buttons: [
+                    { extend: 'excel', text: '<i class="bi bi-file-earmark-spreadsheet-fill"></i> Download Excel', className: 'btn-sm btn-excel-green' },
+                    { text: '<i class="bi bi-file-earmark-arrow-down-fill"></i> Download Proof files', className: 'btn-sm', action: function (e, dt, node, config) { downloadFromCurrentDom(); } }
+                ]
+            });
+            tableInstance.buttons().container().appendTo('.table-toolbar');
         } catch (e) {
             console.error("Error initializing DataTable:", e);
         }
@@ -524,97 +793,84 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const detailsModal = document.getElementById('submissionDetailsModal');
     if (!detailsModal) return;
-    
+
     detailsModal.addEventListener('show.bs.modal', function(event) {
         const button = event.relatedTarget;
         const entryId = button.dataset.entryId;
         const formName = button.dataset.formName;
 
         const modalTitle = detailsModal.querySelector('.modal-title');
-        const modalBody = detailsModal.querySelector('.modal-body');
+        const detailsContainer = detailsModal.querySelector('#dynamicModalDetails');
 
-        // 1. Set loading state
-        modalTitle.textContent = 'Loading Submission Details...';
-        modalBody.innerHTML = `<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>`;
+        modalTitle.textContent = 'Submission Details';
+        detailsContainer.innerHTML = `<div class="col-12 text-center py-4"><div class="spinner-border" role="status" style="color: var(--admin-accent);"><span class="visually-hidden">Loading...</span></div></div>`;
 
-        // 2. Fetch data from the backend
         fetch('/view_details', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                entry_id: entryId,
-                form_name: formName
-            })
+            body: JSON.stringify({ entry_id: entryId, form_name: formName })
         })
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                modalTitle.textContent = 'Error';
-                modalBody.innerHTML = `<p class="text-danger">${data.error}</p>`;
-            } else {
-                // 3. Build the HTML with the frontend filter
-                const details = data.details;
-                modalTitle.textContent = `Details for: ${details.event_title || formName.replace('_', ' ')}`;
-                
-                let html = '<dl class="row">';
-                
-                // Define the keys you DON'T want to show.
-                // Add any column name to this list to hide it from the modal.
-                const keysToHide = [ 
-                    'proof',
-                    'full_path', 
-                    'google_file_id',
-                ];
-
-                for (const [key, value] of Object.entries(details)) {
-                    // If the key is in our hide list, skip this loop iteration
-                    if (keysToHide.includes(key)) {
-                        continue; 
-                    }
-                    
-                    // Format the key for display (e.g., 'event_title' -> 'Event Title')
-                    let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    
-                    html += `<dt class="col-sm-4">${cleanKey}</dt>`;
-                    
-                    // Special formatting for 'status'
-                    if (key === 'status') {
-                        let badgeClass = 'bg-secondary';
-                        if (value === 'approved') badgeClass = 'bg-success';
-                        if (value === 'rejected') badgeClass = 'bg-danger';
-                        if (value === 'pending') badgeClass = 'bg-warning text-dark';
-                        html += `<dd class="col-sm-8"><span class="badge ${badgeClass}">${value}</span></dd>`;
-                    } else {
-                        html += `<dd class="col-sm-8">${value || 'N/A'}</dd>`;
-                    }
-                }
-                
-                html += '</dl>';
-                modalBody.innerHTML = html;
+                detailsContainer.innerHTML = `<div class="col-12"><p class="text-danger mb-0">${data.error}</p></div>`;
+                return;
             }
+
+            const details = data.details;
+            modalTitle.textContent = `Details: ${details.event_title || formName.replace('_', ' ')}`;
+
+            const keysToHide = ['proof', 'full_path', 'google_file_id'];
+            let html = '';
+
+            for (const [key, value] of Object.entries(details)) {
+                if (keysToHide.includes(key)) continue;
+
+                let cleanKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                let valueHtml;
+
+                if (key === 'status') {
+                    let badgeClass = 'bg-secondary';
+                    if (value === 'approved' || value === 'accepted') badgeClass = 'text-bg-success';
+                    if (value === 'rejected') badgeClass = 'text-bg-danger';
+                    if (value === 'pending') badgeClass = 'text-bg-warning';
+                    valueHtml = `<span class="badge rounded-pill ${badgeClass}">${value}</span>`;
+                } else {
+                    valueHtml = value || 'N/A';
+                }
+
+                html += `
+                    <div class="col-md-6">
+                        <div class="data-label">${cleanKey}</div>
+                        <div class="data-value">${valueHtml}</div>
+                    </div>`;
+            }
+
+            detailsContainer.innerHTML = html;
         })
         .catch(error => {
             console.error('Error fetching details:', error);
-            modalTitle.textContent = 'Error';
-            modalBody.innerHTML = '<p class="text-danger">Could not load details. Please try again.</p>';
+            detailsContainer.innerHTML = `<div class="col-12"><p class="text-danger mb-0">Could not load details. Please try again.</p></div>`;
         });
     });
 
+
     // Handle modal data population
     const rejectedModal = document.getElementById('rejectionModal');
-    
-    rejectedModal.addEventListener('show.bs.modal', function(event) {
-        // Get the button that triggered the modal
-        const button = event.relatedTarget;
-        
-        // Extract data from data-* attributes
-        const entry_id = button.getAttribute('data-entry-id');
-        const form_name = button.getAttribute('data-form-name');
-        
-        // Update the modal's hidden input fields
-        rejectedModal.querySelector('#reject_entry_id').value = entry_id;
-        rejectedModal.querySelector('#reject_form_name').value = form_name;
-    });
+    if (rejectedModal) {
+        rejectedModal.addEventListener('show.bs.modal', function(event) {
+            // Get the button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract data from data-* attributes
+            const entry_id = button.getAttribute('data-entry-id');
+            const form_name = button.getAttribute('data-form-name');
+            
+            // Update the modal's hidden input fields
+            rejectedModal.querySelector('#reject_entry_id').value = entry_id;
+            rejectedModal.querySelector('#reject_form_name').value = form_name;
+        });
+    }
 
     const skipBtn = document.getElementById('skipAddNote');
     if (skipBtn) {
@@ -626,7 +882,158 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('rejectionForm').submit();
         });
     }
+
+    // PDF Preview script
+    const bsModal = document.getElementById('pdfPreviewModal');
+    const bsPdfPreview = document.getElementById('bsPdfEmbed');
+    if (bsModal && bsPdfPreview) {
+        bsModal.addEventListener('show.bs.modal', function(event){
+            const trigger = event.relatedTarget;
+            const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+            bsPdfPreview.setAttribute('src', pdfPath);
+        });
+        // Triggered when modal is fully hidden
+        bsModal.addEventListener('hidden.bs.modal', function () {
+            bsPdfPreview.setAttribute('src', '');
+        });
+    }
+
+    // Update button text with selected checkbox counts dynamically
+    function setupFilterCounts() {
+        // 1. Handle Modal Filters
+        document.querySelectorAll('button[data-bs-target]').forEach(button => {
+            const targetId = button.getAttribute('data-bs-target');
+            if (!targetId || !targetId.startsWith('#')) return;
+            
+            const targetModal = document.querySelector(targetId);
+            if (!targetModal || !targetModal.classList.contains('modal')) return;
+            
+            // Store the original button text (e.g., "Select Form")
+            const defaultText = button.textContent.trim();
+            
+            const updateCount = () => {
+                // Select only the options inside the modal body, excluding the Check All toggle
+                const checkedCount = targetModal.querySelectorAll('.modal-body input[type="checkbox"]:checked').length;
+                button.textContent = checkedCount > 0 ? `${defaultText} (${checkedCount})` : defaultText;
+            };
+
+            // Delegate event to capture all checkbox changes, including Check All interactions
+            targetModal.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    setTimeout(updateCount, 0); // Defer to allow external Check All script to update DOM first
+                }
+            });
+            updateCount(); // Run once on load
+        });
+
+        // 2. Handle Dropdown Filters
+        document.querySelectorAll('button[data-bs-toggle="dropdown"]').forEach(button => {
+            const dropdownMenu = button.nextElementSibling;
+            if (!dropdownMenu || !dropdownMenu.classList.contains('dropdown-menu')) return;
+            
+            // Dropdown text is wrapped in a <span>
+            const textSpan = button.querySelector('span');
+            if (!textSpan) return;
+            
+            const defaultText = textSpan.textContent.trim();
+            
+            const updateCount = () => {
+                // Exclude the specific Check All switch class
+                const checkedCount = dropdownMenu.querySelectorAll('input[type="checkbox"]:not(.js-check-all):checked').length;
+                textSpan.textContent = checkedCount > 0 ? `${defaultText} (${checkedCount})` : defaultText;
+            };
+
+            dropdownMenu.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    setTimeout(updateCount, 0);
+                }
+            });
+            updateCount();
+        });
+    }
+    // Holding filter button for few seconds
+    const button = document.getElementById('apply_filter');
+
+    // Add a click event listener to the button
+    button.addEventListener('click', function() {
+        // 1. Instantly disable the button to prevent further clicks
+        button.disabled = true;
+        button.textContent = "Applying filters...";
+
+        // 2. Wait for 2000 milliseconds (2 seconds)
+        setTimeout(function() {
+          // 3. Revoke the restriction by enabling the button again
+          button.disabled = false;
+          button.textContent = "Apply Filter";
+        }, 1000);
+    });
+    setupFilterCounts();
+
+    function getFilteredFileNames() {
+        // Select all table rows inside the tbody (reflects rendered/filtered rows)
+        const rows = document.querySelectorAll('#data-table-body-report tr');
+        const fileNames = [];
+
+        rows.forEach(row => {
+            // Read dataset attribute
+            const fileName = row.dataset.certificate;
+            
+            // Push valid filenames (ignoring empty/missing values)
+            if (fileName && fileName.trim() !== "" && fileName !== "null" && fileName !== "None") {
+                fileNames.push(fileName);
+            }
+        });
+
+        return fileNames;
+    }
+
+    async function downloadFromCurrentDom() {
+        const fileNames = [];
+
+        // Query the actual live DOM rows currently present in the table body
+        const rows = document.querySelectorAll('#report-table tbody tr');
+
+        rows.forEach(row => {
+            const fileName = row.getAttribute('data-certificate');
+            if (fileName && fileName.trim() !== "" && fileName !== "null" && fileName !== "None") {
+                fileNames.push(fileName);
+            }
+        });
+
+        if (fileNames.length === 0) {
+            alert("No proof files found in the current table selection.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/download_proof_files', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filenames: fileNames })
+            });
+
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'proof_files.zip';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error during download:", error);
+            alert("An error occurred while downloading proof files.");
+        }
+    }
+
+    const downloadBtn = document.getElementById('download-zip-btn');
+    
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadFilteredZip);
+    }
 });
 </script>
 {% endblock %}
-
