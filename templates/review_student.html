@@ -583,7 +583,7 @@
                             <td>{{ submission["submitted_at"] }}</td>
                             <td>{{ form_dict[form_name] }}</td>
                             <td>
-                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=submission['certificate']) }}>Click Here</a>
+                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=submission['certificate']) }}>Preview</a>
                             </td>
                             <td><span class="status-pill" 
                             {% if status == 'accepted' %}
