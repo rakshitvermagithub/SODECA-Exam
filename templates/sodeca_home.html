@@ -42,27 +42,25 @@
         font-size: 0.8rem;
         top: 4px;
     }
-    /* --- "JOIN US" Button Styling --- */
     .btn-gradient {
-        background: linear-gradient(135deg, #0d6efd 0%, #0951be 100%);
+        background: var(--college-blue);
         color: #ffffff;
         font-weight: bold;
         border: none;
         padding: 12px 25px;
-        border-radius: 50px;
         margin-left: 10px;
         box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
         transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
     }
     .btn-gradient:hover {
+        background: var(--college-blue);
         color: #ffffff;
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 10px 25px rgba(13, 110, 253, 0.4);
+        transform: translateY(-3px) scale(1.01);
     }
     .btn-gradient:active {
         color: #ffffff;
+        background: var(--college-blue-hover);
         transform: translateY(-1px) scale(0.98);
-        box-shadow: 0 2px 10px rgba(13, 110, 253, 0.2);
     }
 </style>
 {% endblock %}
@@ -85,7 +83,7 @@
                     <div class="card-body p-3 p-md-4">
                         <h4 class="text-center mb-4 form-title">General Instructions</h4>
                         <ul class="instructions-list">
-                            <li>Date of activities/Certificates must be <span class="text-danger fw-bold">from 1 Jan 2025</span> until the SODECA Exam date.</li>
+                            <li>Date of activities/Certificates must be <span class="text-danger fw-bold">from 1 Jan 2026</span> until the SODECA Exam date.</li>
                             <li>Certificates/proofs must be clearly scanned. Only PDF files are allowed.</li>
                             <li>Proofs must be authentic and clearly mention name, date, and signature of the authority.</li>
                             <li>The exam is offline. Attendance is given after verification from the batch counsellor.</li>

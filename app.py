@@ -142,17 +142,26 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+event_nature_options = [
+    {'value': 'hackathon', 'label': 'Hackathon/ Coding'},
+    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
+    {'value': 'dance', 'label': 'Dance'},
+    {'value': 'singing', 'label': 'Singing'},
+    {'value': 'blood_donor', 'label': 'Blood Donation'},
+    {'value': 'other', 'label': 'Other'}
+]
+
 # Form Fields Defined
 FORM_DEFINITIONS = {
     'part_in_comp': {
         'title': 'Participation in Competition/Contest/ Activity',
         'description': [
-            "Certificate of participation for Cultural / Technical (e.g. Hackathon) / Sports / Non Technical events in any Competition/Contest/Activity organized by SKIT or any other Institute.",
-            "It should be a participation certificate for a competition/contest or some significant events",
+            "Certificate of participation for Cultural/ Technical (e.g. Hackathon)/ Sports/ Non-Technical events in any Competition/ Contest/ Activity organized by SKIT or any other Institute.",
+            "It should be a participation certificate for a competition/ contest or some significant events",
             "Event should be organized by SKIT or any other institute and you should represent SKIT.",
             "Personal level participation certificate NOT allowed. Only participation in an activity as an SKIT student is valid.",
             "Participation certificate should mention your name as student of SKIT. for e.g. Ajay Gupta of SKIT participated in xyz event.",
-            "Certificate of completion (For e.g successfully completed an online assesment/course/training etc) is NOT allowed. Certificate for Appearing in or Clearing an online assesment/test is NOT allowed."
+            "Certificate of completion (For e.g successfully completed an online assesment/ course/ training etc) is NOT allowed. Certificate for Appearing in or Clearing an online assesment/ test is NOT allowed."
         ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -164,97 +173,6 @@ FORM_DEFINITIONS = {
                 'options': [
                     {'value': 'participation', 'label': 'Participation'},
                 ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'select',
-                'field_name': 'position',
-                'required': False,
-                # Declarative Dependency Schema
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'select',
-                'field_name': 'award_type',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Name of the Competition/Event/Activity',
@@ -274,8 +192,8 @@ FORM_DEFINITIONS = {
                 'field_name': 'participation_type',
                 'required': True,
                 'options': [
-                    {'value': 'Team', 'label': 'Team'},
-                    {'value': 'Individual', 'label': 'Individual'},
+                    {'value': 'team', 'label': 'Team'},
+                    {'value': 'individual', 'label': 'Individual'},
                 ]
             },
             {
@@ -284,10 +202,10 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_category',
                 'required': True,
                 'options': [
-                    {'value': 'Cultural', 'label': 'Cultural'},
-                    {'value': 'Technical', 'label': 'Technical'},
-                    {'value': 'Sports', 'label': 'Sports'},
-                    {'value': 'Non-Technical', 'label': 'Non-Technical'},
+                    {'value': 'cultural', 'label': 'Cultural'},
+                    {'value': 'technical', 'label': 'Technical'},
+                    {'value': 'sports', 'label': 'Sports'},
+                    {'value': 'non-technical', 'label': 'Non-Technical'},
                 ]
             },
             {
@@ -295,14 +213,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'event_nature',
                 'required': True,
-                'options': [
-                    {'value': 'dance', 'label': 'Dance Comp.'},
-                    {'value': 'singing', 'label': 'Singing Comp.'},
-                    {'value': 'hackathon', 'label': 'Hackathon/ Coding Comp.'},
-                    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
-                    {'value': 'blood_donor', 'label': 'Blood Donor'},
-                    {'value': 'Other', 'label': 'Other'}
-                ]
+                'options': event_nature_options
             },
             {
                 'field_label': 'Event Level',
@@ -311,11 +222,11 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': '<b>College Level:</b> Event within SKIT only.<br><b>University Level:</b> Only RTU affiliated college participated.<br><b>State Level:</b> Different colleges/universities all over Rajasthan participated.<br><b>National Level:</b> Colleges/Universities outside Rajasthan participated.<br><b>International Level:</b> Colleges/Universities outside India participated.',
                 'options': [
-                    {'value': 'College', 'label': 'College'},
-                    {'value': 'University', 'label': 'University'},
-                    {'value': 'State', 'label': 'State'},
-                    {'value': 'National', 'label': 'National'},
-                    {'value': 'International', 'label': 'International'},
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'university', 'label': 'University'},
+                    {'value': 'state', 'label': 'State'},
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'},
                 ]
             },
             {
@@ -324,8 +235,8 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_type',
                 'required': True,
                 'options': [
-                    {'value': 'Intra College', 'label': 'Intra College'},
-                    {'value': 'Inter College', 'label': 'Inter College'},
+                    {'value': 'intra_college', 'label': 'Intra College'},
+                    {'value': 'inter_college', 'label': 'Inter College'},
                 ]
             },
             {
@@ -334,8 +245,9 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_mode',
                 'required': True,
                 'options': [
-                    {'value': 'Online', 'label': 'Online'},
-                    {'value': 'Offline', 'label': 'Offline'},
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'},
                 ]
             },
             {
@@ -400,10 +312,10 @@ FORM_DEFINITIONS = {
     'winner_achievement': {
         'title': 'Winner/Award/ Other Achievement',
         'description':[
-            'Winner/Runner Up/ Consolation/Good Rank or Position/award/prize in some high level Cultural/Technical(e.g. Hackathon)/ Sports/Non Technical competition/contest organized by SKIT or any other Institute/university/organization.',
-            'For e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as google code Jam / Player of the tournament award in state level cricket league etc'
-            'Certificate should mention some Rank/Place/Position in a competition or some high level achievement like man of the match/player of the tournament etc.'
-            'Non Competition certificates for e.g. Certificate of clearing some exam/test/assessment(with some score) but without a rank/position/place is NOT allowed. It should be a certificate for only a "competition/contest" activity.'
+            'Winner/ Runner Up/ Consolation/ Good Rank or Position/ Award/ Prize in some high level Cultural/ Technical(e.g. Hackathon)/ Sports/ Non-Technical competition/ contest organized by SKIT or any other Institute/ University/ Organization.',
+            'For e.g. Winner in Inter College Singing Competition/ Hackathon Runner Up/ 3rd Position in quiz competition/ 450 Rank in international level coding test such as Google Code Jam/ Player of the tournament award in state level cricket league etc',
+            'Certificate should mention some Rank/ Place/ Position in a competition or some high level achievement like man of the match/ player of the tournament etc.',
+            'Non-Competition certificates for e.g. Certificate of clearing some exam/ test/ assessment (with some score) but without a rank/ position/ place is NOT allowed. It should be a certificate for only a "Competition/ Contest" activity.'
             ],
         'enctype': 'multipart/form-data',
         'fields': [
@@ -420,13 +332,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Position/Place/Rank',
                 'field_type': 'select',
                 'field_name': 'position',
-                'required': False,
-                # Declarative Dependency Schema
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'options': [
                     {'value': 'I', 'label': 'I'},
                     {'value': 'II', 'label': 'II'},
@@ -439,12 +345,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
+                'required': True,
                 'placeholder': 'Write NA if position already mentioned',
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
@@ -453,12 +354,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Award Given (Other than Certificate)',
                 'field_type': 'select',
                 'field_name': 'award_type',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'options': [
                     {'value': 'medal', 'label': 'Medal'},
                     {'value': 'trophy', 'label': 'Trophy'},
@@ -472,12 +368,7 @@ FORM_DEFINITIONS = {
                 'field_label': 'Cash Prize/Other Prize (if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
+                'required': True,
                 'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
                 'help_text': 'Write NA if no prize',
                 'field_validation': {'max_length': 150}
@@ -486,24 +377,22 @@ FORM_DEFINITIONS = {
                 'field_label': 'Date of Receiving Award/Certificate',
                 'field_type': 'date',
                 'field_name': 'award_date',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'field_validation': { 'max_date': 'today' }
+            },
+            {
+                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
+                'field_type': 'text',
+                'field_name': 'organizer_details',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
+                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
                 'field_type': 'text',
                 'field_name': 'award_agency_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
+                'required': True,
                 'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
                 'field_validation': { 'max_length': 500 }
             },
@@ -522,10 +411,10 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_category',
                 'required': True,
                 'options': [
-                    {'value': 'Cultural', 'label': 'Cultural'},
-                    {'value': 'Technical', 'label': 'Technical'},
-                    {'value': 'Sports', 'label': 'Sports'},
-                    {'value': 'Non-Technical', 'label': 'Non-Technical'},
+                    {'value': 'cultural', 'label': 'Cultural'},
+                    {'value': 'technical', 'label': 'Technical'},
+                    {'value': 'sports', 'label': 'Sports'},
+                    {'value': 'non-technical', 'label': 'Non-Technical'},
                 ]
             },
             {
@@ -533,14 +422,7 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'event_nature',
                 'required': True,
-                'options': [
-                    {'value': 'dance', 'label': 'Dance Comp.'},
-                    {'value': 'singing', 'label': 'Singing Comp.'},
-                    {'value': 'hackathon', 'label': 'Hackathon/ Coding Comp.'},
-                    {'value': 'workshop', 'label': 'Workshop/ Seminar/ Webinar/ Symposium'},
-                    {'value': 'blood_donor', 'label': 'Blood Donor'},
-                    {'value': 'Other', 'label': 'Other'}
-                ]
+                'options': event_nature_options
             },
             {
                 'field_label': 'Event Level',
@@ -549,11 +431,11 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'help_text': '<b>College Level:</b> Event within SKIT only.<br><b>University Level:</b> Only RTU affiliated college participated.<br><b>State Level:</b> Different colleges/universities all over Rajasthan participated.<br><b>National Level:</b> Colleges/Universities outside Rajasthan participated.<br><b>International Level:</b> Colleges/Universities outside India participated.',
                 'options': [
-                    {'value': 'College', 'label': 'College'},
-                    {'value': 'University', 'label': 'University'},
-                    {'value': 'State', 'label': 'State'},
-                    {'value': 'National', 'label': 'National'},
-                    {'value': 'International', 'label': 'International'},
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'university', 'label': 'University'},
+                    {'value': 'state', 'label': 'State'},
+                    {'value': 'national', 'label': 'National'},
+                    {'value': 'international', 'label': 'International'},
                 ]
             },
             {
@@ -562,8 +444,8 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_type',
                 'required': True,
                 'options': [
-                    {'value': 'Intra College', 'label': 'Intra College'},
-                    {'value': 'Inter College', 'label': 'Inter College'},
+                    {'value': 'intra_college', 'label': 'Intra College'},
+                    {'value': 'inter_college', 'label': 'Inter College'},
                 ]
             },
             {
@@ -577,7 +459,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Name of the team(If it is Hackathon event)',
+                'field_label': 'Name of the team',
                 'field_type': 'text',
                 'field_name': 'team_name',
                 'required': False,
@@ -586,11 +468,10 @@ FORM_DEFINITIONS = {
                     'value': 'team'
                 },
                 'required_if_visible': True,
-                'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 100 }
             },
             {
-                'field_label': 'Name of all team members (If it is Hackathon event)',
+                'field_label': 'Name of all team members',
                 'field_type': 'text',
                 'field_name': 'team_members',
                 'required': False,
@@ -599,7 +480,6 @@ FORM_DEFINITIONS = {
                     'value': 'team'
                 },
                 'required_if_visible': True,
-                'placeholder': 'Write NA if not a Hackathon event',
                 'field_validation': { 'max_length': 500 }
             },
             {
@@ -608,9 +488,18 @@ FORM_DEFINITIONS = {
                 'field_name': 'event_mode',
                 'required': True,
                 'options': [
-                    {'value': 'Online', 'label': 'Online'},
-                    {'value': 'Offline', 'label': 'Offline'},
+                    {'value': 'online', 'label': 'Online'},
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'},
                 ]
+            },
+            {
+                'field_label': 'Event Venue',
+                'field_type': 'text',
+                'field_name': 'venue',
+                'required': True,
+                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
+                'field_validation': { 'min_length': 3, 'max_length': 200 }
             },
             {
                 'field_label': 'From Date',
@@ -628,22 +517,6 @@ FORM_DEFINITIONS = {
                     'max_date': 'today',                     
                     'after_field': 'from_date'  # Must be after from_date
                 }
-            },
-            {
-                'field_label': 'Name, Contact, Email Id & Address of Institution/Organization(Event Organizer)',
-                'field_type': 'text',
-                'field_name': 'organizer_details',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur, info@skit.ac.in, ...',
-                'field_validation': { 'max_length': 500 }
-            },
-            {
-                'field_label': 'Event Venue',
-                'field_type': 'text',
-                'field_name': 'venue',
-                'required': True,
-                'placeholder': 'e.g., SKIT Jaipur / Write online if online',
-                'field_validation': { 'min_length': 3, 'max_length': 200 }
             },
             {
                 'field_label': 'Award Certificate/other proof',
@@ -678,7 +551,6 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                # Declarative Dependency Schema
                 'depends_on': {
                     'field': 'certification_type',
                     'value': 'achievement'
@@ -693,21 +565,20 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
+                'field_label': 'Other Position/Rank/Title(not mentioned in above list)',
                 'field_type': 'text',
                 'field_name': 'other_position_details',
                 'required': False,
                 'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
+                    'field': 'position',
+                    'value': 'other'
                 },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
+                'required_if_visible': True,
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
             {
-                'field_label': 'Award Given (Other than Certificate)',
+                'field_label': 'Award Given(Other than Certificate)',
                 'field_type': 'select',
                 'field_name': 'award_type',
                 'required': False,
@@ -726,7 +597,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_label': 'Cash Prize/Other Prize(if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
@@ -815,99 +686,7 @@ FORM_DEFINITIONS = {
                 'required': True,
                 'options': [
                     {'value': 'participation', 'label': 'Participation'},
-                    {'value': 'achievement', 'label': 'Achievement'}
                 ]
-            },
-            {
-                'field_label': 'Position/Place/Rank',
-                'field_type': 'select',
-                'field_name': 'position',
-                'required': False,
-                # Declarative Dependency Schema
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'I', 'label': 'I'},
-                    {'value': 'II', 'label': 'II'},
-                    {'value': 'III', 'label': 'III'},
-                    {'value': 'consolation', 'label': 'Consolation'},
-                    {'value': 'other', 'label': 'Other Position/Rank/Title'}
-                ]
-            },
-            {
-                'field_label': 'Other Position/Rank/Title (not mentioned in above list)',
-                'field_type': 'text',
-                'field_name': 'other_position_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
-                'help_text': 'e.g., 28th Rank in National Level Coding Test',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Award Given (Other than Certificate)',
-                'field_type': 'select',
-                'field_name': 'award_type',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'options': [
-                    {'value': 'medal', 'label': 'Medal'},
-                    {'value': 'trophy', 'label': 'Trophy'},
-                    {'value': 'cash_prize', 'label': 'Cash Prize'},
-                    {'value': 'scholarship', 'label': 'Scholarship'},
-                    {'value': 'other', 'label': 'Other Prize'},
-                    {'value': 'none', 'label': 'None'}
-                ]
-            },
-            {
-                'field_label': 'Cash Prize/Other Prize (if any)',
-                'field_type': 'text',
-                'field_name': 'prize_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': False,
-                'placeholder': 'e.g., Cash Prize of 2000 Rs / T-Shirt',
-                'help_text': 'Write NA if no prize',
-                'field_validation': {'max_length': 150}
-            },
-            {
-                'field_label': 'Date of Receiving Award/Certificate',
-                'field_type': 'date',
-                'field_name': 'award_date',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'field_validation': { 'max_date': 'today' }
-            },
-            {
-                'field_label': 'Name, Contact Email Id & Address of Agency/Body/Organization Giving Award',
-                'field_type': 'text',
-                'field_name': 'award_agency_details',
-                'required': False,
-                'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
-                },
-                'required_if_visible': True,
-                'placeholder': 'e.g., HDFC Bank, Malviya Nagar Branch, ...',
-                'field_validation': { 'max_length': 500 }
             },
             {
                 'field_label': 'Name of the Company',
@@ -919,12 +698,12 @@ FORM_DEFINITIONS = {
                 'field_validation': { 'max_length': 150 }
             },
             {
-                'field_label': 'Location/Address',
+                'field_label': 'Job Role Offered',
                 'field_type': 'text',
-                'field_name': 'location',
+                'field_name': 'job_role',
                 'required': True,
-                'placeholder': 'e.g., Bengaluru, Karnataka. Write "Online" if mode was online',
-                'field_validation': { 'min_length': 5, 'max_length': 300 }
+                'placeholder': 'e.g. Software Engineer I',
+                'field_validation': { 'max_length': 150 }
             },
             {
                 'field_label': 'Stipend Amount',
@@ -946,6 +725,14 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
+                'field_label': 'Location/Address',
+                'field_type': 'text',
+                'field_name': 'location',
+                'required': True,
+                'placeholder': 'e.g., Bengaluru, Karnataka. Write "Online" if mode was online',
+                'field_validation': { 'min_length': 5, 'max_length': 300 }
+            },
+            {
                 'field_label': 'From Date',
                 'field_type': 'date',
                 'field_name': 'from_date',
@@ -961,12 +748,23 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Mode',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'mode',
                 'required': True,
                 'options': [
                     {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'}
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'}
+                ]
+            },
+            {
+                'field_label': 'Received Offer through',
+                'field_type': 'select',
+                'field_name': 'offer_through',
+                'required': True,
+                'options': [
+                    {'value': 'college', 'label': 'College'},
+                    {'value': 'self', 'label': 'Self'},
                 ]
             },
             {
@@ -1006,7 +804,6 @@ FORM_DEFINITIONS = {
                 'field_type': 'select',
                 'field_name': 'position',
                 'required': False,
-                # Declarative Dependency Schema
                 'depends_on': {
                     'field': 'certification_type',
                     'value': 'achievement'
@@ -1026,11 +823,10 @@ FORM_DEFINITIONS = {
                 'field_name': 'other_position_details',
                 'required': False,
                 'depends_on': {
-                    'field': 'certification_type',
-                    'value': 'achievement'
+                    'field': 'position',
+                    'value': 'other'
                 },
-                'required_if_visible': False,
-                'placeholder': 'Write NA if position already mentioned',
+                'required_if_visible': True,
                 'help_text': 'e.g., 28th Rank in National Level Coding Test',
                 'field_validation': {'max_length': 150}
             },
@@ -1054,7 +850,7 @@ FORM_DEFINITIONS = {
                 ]
             },
             {
-                'field_label': 'Cash Prize/Other Prize (if any)',
+                'field_label': 'Cash Prize/Other Prize(if any)',
                 'field_type': 'text',
                 'field_name': 'prize_details',
                 'required': False,
@@ -1102,7 +898,7 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'National/International',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'conference_level',
                 'required': True,
                 'options': [
@@ -1142,12 +938,13 @@ FORM_DEFINITIONS = {
             },
             {
                 'field_label': 'Mode of Conference',
-                'field_type': 'radio',
+                'field_type': 'select',
                 'field_name': 'mode',
                 'required': True,
                 'options': [
                     {'value': 'online', 'label': 'Online'},
-                    {'value': 'offline', 'label': 'Offline'}
+                    {'value': 'offline', 'label': 'Offline'},
+                    {'value': 'blended', 'label': 'Blended'}
                 ]
             },
             {
@@ -1187,6 +984,15 @@ FORM_DEFINITIONS = {
         ],
         'enctype': 'multipart/form-data',
         'fields': [
+            {
+                'field_label': 'Certification Type',
+                'field_type': 'select',
+                'field_name': 'certification_type',
+                'required': True,
+                'options': [
+                    {'value': 'achievement', 'label': 'Achievement'}
+                ]
+            },
             {
                 'field_label': 'Funding Agency Name',
                 'field_type': 'text',
@@ -2345,6 +2151,19 @@ def fill_form():
     form_to_show = FORM_DEFINITIONS[current_form]
 
     if request.method == "POST":
+        if request.is_json:
+            data = request.get_json() or {}
+            
+            print("Received JSON:", data)
+            if data.get('skip') is True:
+                # Increment index stored in session
+                session['current_form_index'] += 1
+                
+                # Send back redirect URL for the GET request
+                return jsonify({
+                    "success": True,
+                    "redirect_url": url_for('fill_form')  # Triggers GET /fill_form
+                }), 200
 
         # Initialise dict for text and radio inputs
         form_inputs = {}
@@ -2509,19 +2328,41 @@ def fill_form():
     return render_template("fill_form.html", success=False, form_to_show=form_to_show, count=current_form_index, progress_width = percentage, total=total_count)
 
 # View user submissions route
-@app.route("/your_submissions", methods=["GET"])
+@app.route("/your_submissions", methods=["GET", "POST"])
 @login_required
 def your_submissions():
     student_id = session.get("user_id")
+    # Get current session and term
+    curr_settings_rows = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if not curr_settings_rows:
+        flash("System settings not configured yet, please contact Admin", "danger")
+        return redirect(url_for("sodeca_forms"))
+    
+    curr_academic_session = curr_settings_rows[0]["academic_session"]
+    curr_academic_term = curr_settings_rows[0]["academic_term"]
+    selected_academic_session = curr_academic_session
+    selected_academic_term = curr_academic_term 
+
+    session_term_list = db.execute("SELECT DISTINCT academic_session, academic_term FROM batch_structure ORDER BY academic_session DESC, academic_term")
+    if not session_term_list:
+        flash("System settings not configured yet, please contact Admin", "danger")
+        return redirect(url_for("sodeca_forms"))
+
     base_queries = []
-    params = {'sid': student_id}
+    params = {'sid': student_id, 'cas': curr_academic_session, 'cat': curr_academic_term}
+
+    if request.method == "POST":
+        selected_academic_session = request.form.get("academic_session")
+        selected_academic_term = request.form.get("academic_term")
+        params['cas'] = selected_academic_session
+        params['cat'] = selected_academic_term
 
     for key, value in FORM_DEFINITIONS.items():
         base_queries.append(
-                f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS form_title, 
-                certificate, status, submitted_at, withdrawn_at, rejection_note
-                FROM {key} WHERE student_id = :sid"""
-                )
+            f"""SELECT entry_id, '{key}' AS form_name, '{value["title"]}' AS form_title, 
+            certificate, status, submitted_at, withdrawn_at, rejection_note
+            FROM {key} WHERE student_id = :sid AND academic_session = :cas AND academic_term = :cat"""
+        )
     if base_queries:
         complete_query = " UNION ALL ".join(base_queries)
         final_sql = f"{complete_query} ORDER BY submitted_at DESC"
@@ -2534,9 +2375,12 @@ def your_submissions():
             flash("An error occurred while fetching your submissions.", "danger")
             return redirect(url_for('sodeca_forms'))
 
-        # For loops on sessions
-
-    return render_template("your_submissions.html", submissions=submissions)
+    return render_template("your_submissions.html", 
+        submissions=submissions,
+        session_term_list=session_term_list,
+        selected_academic_session=selected_academic_session,
+        selected_academic_term=selected_academic_term
+    )
 
 @app.route("/view_details", methods=["POST"])
 @login_required
@@ -2592,25 +2436,34 @@ def withdraw_entry():
         flash(f"An unexpected error occured, please contact Admin", "danger")
     return redirect(url_for("your_submissions"))
 
-def student_submission_stats(batch_details):
+import sys
+
+def student_submission_stats(batch_details, curr_academic_session, curr_academic_term):
     """
     Fetches ALL students for the batch with 'Smart Sorting' applied.
-    Data is passed to the frontend for client-side JavaScript pagination
-    and Python-side Grand Total calculation.
+    Parameters for session and term are now safely bound to prevent SQL Injection.
     """
-    
-    # 1. Build the Activity Stream
+    if not form_name_list:
+        return []
+
     subqueries = []
+    query_params = []
+
+    # 1. Build parameterized Activity Stream
     for form in form_name_list:
+        # Note: Ensure `form` table names come from a trusted white-list
         subqueries.append(f"""
             SELECT student_id, status, submitted_at 
             FROM {form} 
             WHERE withdrawn_at IS NULL
+            AND academic_session = ?
+            AND academic_term = ?
         """)
-    
+        query_params.extend([curr_academic_session, curr_academic_term])
+
     master_union = " UNION ALL ".join(subqueries)
 
-    # 2. Build the Master Query WITHOUT Limits
+    # 2. Build Master Query with latest_pending_date explicitly selected
     final_sql = f"""
         WITH FormActivities AS (
             {master_union}
@@ -2621,7 +2474,7 @@ def student_submission_stats(batch_details):
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
                 SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) AS accepted_count,
                 SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
-                MAX(CASE WHEN status = 'pending' THEN submitted_at ELSE NULL END) as latest_pending_date
+                MAX(CASE WHEN status = 'pending' THEN submitted_at ELSE NULL END) AS latest_pending_date
             FROM FormActivities
             GROUP BY student_id
         )
@@ -2631,7 +2484,8 @@ def student_submission_stats(batch_details):
             s.university_roll_no,
             COALESCE(c.pending_count, 0) AS pending_count,
             COALESCE(c.accepted_count, 0) AS accepted_count,
-            COALESCE(c.rejected_count, 0) AS rejected_count
+            COALESCE(c.rejected_count, 0) AS rejected_count,
+            c.latest_pending_date
         FROM student_details s
         LEFT JOIN StudentFormCounts c ON s.student_user_id = c.student_id
         WHERE s.semester = ? 
@@ -2643,22 +2497,20 @@ def student_submission_stats(batch_details):
             s.university_roll_no ASC
     """
 
-    # Base parameters for the batch
-    base_params = [
+    # Combine query parameters: [session, term, session, term, ..., semester, branch, section]
+    query_params.extend([
         batch_details["semester"], 
         batch_details["branch"], 
-        batch_details["section"], 
-    ]
+        batch_details["section"]
+    ])
 
     try:
-        # Execute the main query and return the full list of students
-        students = db.execute(final_sql, *base_params)
+        students = db.execute(final_sql, *query_params)
         return students
-        
     except Exception as e:
         print(f"Error fetching student stats: {e}", file=sys.stderr)
         return []
-    
+   
 # Page for the faculty, to check submissions
 # Faculty can do get and post request
 @app.route("/faculty_dashboard", methods=["GET"])
@@ -2666,7 +2518,16 @@ def student_submission_stats(batch_details):
 def faculty_dashboard():
     if request.method == "GET":
 
-        if role(session.get("user_id")) != 'faculty' and role(session.get("user_id")) != 'tester':
+        # Fetch current session and term
+        curr_settings_rows = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+        if not curr_settings_rows:
+            flash("System settings not configured yet, please contact Admin", "danger")
+            return redirect(url_for("sodeca_forms"))
+        
+        curr_academic_session = curr_settings_rows[0]["academic_session"]
+        curr_academic_term = curr_settings_rows[0]["academic_term"]
+
+        if role(session.get("user_id")) != 'faculty':
             return "Access Denied!", 400
         
         # Initialize count of all student's pending, accepted and rejected 
@@ -2682,11 +2543,13 @@ def faculty_dashboard():
         
         # If batch is not assigned by admin
         if not batch:
-            return render_template("faculty_dashboard.html",
-                                batch_is="No Batch Assgined...",
-                                submission_counts=submission_counts,
-                                students=None,
-                                )
+            return render_template(
+                "faculty_dashboard.html",
+                batch_is="No Batch Assgined...",
+                submission_counts=submission_counts,
+                students=None,
+            )
+
         batch_details = batch[0]
         # Extract and sanitize details (defaulting to empty strings/None)
         sem = batch_details.get('semester')
@@ -2711,7 +2574,7 @@ def faculty_dashboard():
             session["batch_details"] = batch_details
     
         # Submission requests stats of individual student in the batch
-        students = student_submission_stats(batch_details)
+        students = student_submission_stats(batch_details, curr_academic_session, curr_academic_term)
         print(students)
         for student in students:
             submission_counts["pending"] += student["pending_count"]
@@ -2760,7 +2623,30 @@ def batch_report():
         return jsonify({'success': True, 'row_values': result, 'sql_col':sql_cols, 'column_name': col_labels})
 
     if request.method == "GET":
-        result = db.execute(f"""SELECT * FROM blood_donor as f
+        union_parts = []
+
+        for form_name in form_name_list:
+            union_parts.append(f"""
+                SELECT '{form_name}' as category, COUNT(*) as cnt
+                FROM {form_name} as f
+                INNER JOIN student_details as s ON f.student_id = s.student_user_id
+                WHERE s.branch=? AND s.semester=? AND s.section=?
+            """)
+
+        union_query = " UNION ALL ".join(union_parts)
+
+        params = []
+        for _ in form_name_list:
+            params.extend([batch_details["branch"], batch_details["semester"], batch_details["section"]])
+
+        count_results = db.execute(union_query, *params)
+
+        category_counts = [
+            {"category": form_dict[row["category"]], "count": row["cnt"]}
+            for row in count_results if row["cnt"] > 0
+        ]
+        print(category_counts)
+        result = db.execute(f"""SELECT * FROM {form_name_list[0]} as f
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
                             WHERE f.withdrawn_at IS NULL 
@@ -2768,7 +2654,12 @@ def batch_report():
                             batch_details["branch"], batch_details["semester"],
                             batch_details["section"])
                 
-        return render_template("batch_report.html", form_dict=form_dict, rows=result)
+        return render_template(
+            "batch_report.html", 
+            form_dict=form_dict, 
+            rows=result, 
+            category_counts=category_counts
+        )
 
 @app.route("/review_student", methods=["GET"])
 @login_required
@@ -2810,26 +2701,39 @@ def review_student():
 
     # Fetch all form submissions without any JOINs
     submissions = []
-    
-    for form in form_name_list:
-        try:
-            # Simple, direct index lookup. Blazingly fast.
-            # We fetch f.* as requested to get all specific details.
-            form_data = db.execute(f"""
-                SELECT *,
-                '{form}' as form_name 
-                FROM {form}
-                WHERE student_id = ? 
-                AND withdrawn_at IS NULL
-                ORDER BY submitted_at DESC
-            """, student_user_id)
-            
-            # Only add to our dictionary if they actually have submissions for this form
-            if form_data:
-                submissions.extend(form_data)
 
-        except Exception as e:
-            print(f"Error fetching data from {form} for student {student_user_id}: {e}", file=sys.stderr)
+    # Fetch current session and term
+    curr_settings_rows = db.execute("SELECT academic_session, academic_term FROM drive_settings")
+    if not curr_settings_rows:
+        flash("System settings not configured yet, please contact Admin", "danger")
+        return redirect(url_for("sodeca_forms"))
+    
+    curr_academic_session = curr_settings_rows[0]["academic_session"]
+    curr_academic_term = curr_settings_rows[0]["academic_term"]
+    
+    query_parts = []
+    params = []
+
+    for form in form_name_list:
+        query_parts.append(f"""
+            SELECT entry_id, '{form}' as form_name, 
+            status, certificate, submitted_at
+            FROM {form}
+            WHERE student_id = ? 
+            AND withdrawn_at IS NULL
+            AND academic_session = ?
+            AND academic_term = ?
+        """)
+        params.extend([student_user_id, curr_academic_session, curr_academic_term])
+
+    full_query = " UNION ALL ".join(query_parts) + " ORDER BY submitted_at DESC"
+
+    try:
+        submissions = db.execute(full_query, *params)
+    except Exception as e:
+        print(f"Error fetching data from {form} for student {student_user_id}: {e}", file=sys.stderr)
+        flash(f"Error: {e}", "danger")
+        return redirect(url_for("faculty_dashboard"))
 
     # Creating data for summary table
     summary_dict = {}
@@ -2846,14 +2750,15 @@ def review_student():
         summary_dict[form_name][status] += 1
         total_dict[status] += 1
 
-    return render_template("review_student.html", 
-                            form_dict=form_dict,                   
-                            summary_dict=summary_dict, 
-                            submissions=submissions, 
-                            total_dict=total_dict,
-                            student_profile=student_profile,
-                            batch_str=batch_str
-                            )
+    return render_template(
+        "review_student.html", 
+        form_dict=form_dict,                   
+        summary_dict=summary_dict, 
+        submissions=submissions, 
+        total_dict=total_dict,
+        student_profile=student_profile,
+        batch_str=batch_str
+    )
 
 @app.route('/view_submission/<path:filename>') 
 @login_required
@@ -2976,26 +2881,19 @@ def upload_to_drive():
         return redirect(request.referrer)
 
     # Get participation and achievement folder ids
-    submission_category = request.form.get('submission_category')
-    if not submission_category:
-        flash("Error: Submission category is null", "danger")
-        return redirect(request.referrer)
-
     submission_folder_id = None
 
-    if (submission_category == "achievement"):
-        achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
-        if (achievement_folder_list):
-            submission_folder_id = achievement_folder_list[0].get("achievement_folder_id")
+    certification_type = request.form.get('certification_type')
+    if certification_type:
+        if (certification_type == "achievement"):
+            achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
+            if (achievement_folder_list):
+                submission_folder_id = achievement_folder_list[0].get("achievement_folder_id")
 
-    elif (submission_category == "participation"):
-        participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
-        if (participation_folder_list):
-            submission_folder_id = participation_folder_list[0].get("participation_folder_id")
-
-    if (not submission_folder_id):
-        flash("Error: Submission category is NULL", "danger")
-        return redirect(request.referrer)
+        elif (certification_type == "participation"):
+            participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
+            if (participation_folder_list):
+                submission_folder_id = participation_folder_list[0].get("participation_folder_id")
     
     try:
         # 1. Safely extract the tokens from your session dictionary
@@ -3034,25 +2932,26 @@ def upload_to_drive():
 
         google_file_id = uploaded_file.get('id')
 
-        # Upload file to either achievement or participation folder
-        media_submission_category = MediaFileUpload(full_path, resumable=False)
-        try:
-            submission_category_file = drive_service.files().create(
-                body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
-            ).execute()
-
-            if not submission_category_file.get('id'):
-                raise Exception("Category folder upload returned no file ID")
-
-        except Exception as category_upload_error:
-            # First upload succeeded but second failed - clean up to avoid an orphaned file
+        if submission_folder_id:
+            # Upload file to either achievement or participation folder
+            media_submission_category = MediaFileUpload(full_path, resumable=False)
             try:
-                drive_service.files().delete(fileId=google_file_id).execute()
-            except Exception as cleanup_error:
-                print(
-                    f"Failed to clean up orphaned file {google_file_id} after category upload failure: {cleanup_error}"
-                )
-            raise
+                submission_category_file = drive_service.files().create(
+                    body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
+                ).execute()
+
+                if not submission_category_file.get('id'):
+                    raise Exception("Category folder upload returned no file ID")
+
+            except Exception as category_upload_error:
+                # First upload succeeded but second failed - clean up to avoid an orphaned file
+                try:
+                    drive_service.files().delete(fileId=google_file_id).execute()
+                except Exception as cleanup_error:
+                    print(
+                        f"Failed to clean up orphaned file {google_file_id} after category upload failure: {cleanup_error}"
+                    )
+                raise
 
         sql_query = f"UPDATE {form_name} SET status = :status, google_file_id = :gfid WHERE entry_id = :sid"
         db.execute(sql_query, status="accepted", gfid=google_file_id, sid=entry_id)
@@ -3218,7 +3117,7 @@ def get_branch_options(academic_session=None, academic_term=None, semester=None)
     print(query)
     return db.execute(query)
 
-def get_section_options(academic_session=None, academic_term=None, semester=None):
+def get_section_options(academic_session=None, academic_term=None, semester=None, branch=None):
     query = "SELECT DISTINCT section FROM batch_structure"
     conditions = []
     
@@ -3231,13 +3130,17 @@ def get_section_options(academic_session=None, academic_term=None, semester=None
         conditions.append(f"academic_term IN ({terms})")
 
     if semester:
-        semesters = ", ".join(f"'{sem}'" for sem in semester)
+        semesters = ", ".join(f"{sem}" for sem in semester)
         conditions.append(f"sem IN ({semesters})")
+
+    if branch:
+        branches = ", ".join(f"'{b}'" for b in branch)
+        conditions.append(f"branch IN ({branches})")
 
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
 
-    query += " ORDER BY branch"
+    query += " ORDER BY section"
 
     print(query)
     return db.execute(query)
@@ -3599,12 +3502,13 @@ def student_report():
     if user_role != 'admin' and user_role != 'coordinator':
         abort(404)
 
-    current_session_row = db.execute("SELECT academic_session FROM drive_settings")
+    current_session_row = db.execute("SELECT academic_session, academic_term FROM drive_settings")
     if not current_session_row:
         flash("Configure batch settings in batch management","warning")
         return redirect(request.referrer)
 
     current_session = current_session_row[0]['academic_session']
+    current_term = current_session_row[0]['academic_term']
 
     # Queries as per the number of forms selected
     base_queries = []
@@ -3649,29 +3553,44 @@ def student_report():
             joined_sections = ",".join(quoted_sections)
             where_params.append(f"f.section IN ({joined_sections})")
 
-        submission_category = received_json_data.get('submission_type_data')
-        print("Submission categories are: ",submission_category)
-        if submission_category:
-            where_params.append(f"f.certification_type IN ('{submission_category}')")
+        certification_type_data = received_json_data.get('certification_type_data')
+        print("Certification type is: ", certification_type_data)
+        if certification_type_data:
+            where_params.append(f"f.certification_type IN ('{certification_type_data}')")
+        
+        event_nature_data = received_json_data.get('event_nature_data')
+        print("Event nature type is: ", event_nature_data)
+        if event_nature_data:
+            quoted_event_nature = [f"'{event_nature}'" for event_nature in event_nature_data]
+            joined_event_nature = ",".join(quoted_event_nature)
+            where_params.append(f"f.event_nature IN ({joined_event_nature})")
 
         # Update where_clause with available inputs 
         where_clause = " AND ".join(where_params) if where_params else "1=1"
 
         forms = received_json_data.get('form_type_data')
-        print("Forms are: ",forms)
-        if forms:
+        print("Forms are: ", forms)
+        
+        if event_nature_data:
+            for form in ['part_in_comp', 'winner_achievement']:
+                base_queries.append(
+                    f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
+                    f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
+                    )
+        elif forms:
             for form in forms:
                 base_queries.append(
                     f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
-                    f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
-                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
+                    f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                    FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
                     )
         else:
             for form in form_name_list:
                 base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no, '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, 
-                f.withdrawn_at, f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
-                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause}"""
+                f.status, f.certificate, f.sem, f.branch, f.section, f.academic_session, f.academic_term
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE {where_clause} AND f.status='accepted'"""
                 )
 
         if base_queries:
@@ -3702,12 +3621,13 @@ def student_report():
         for form in form_name_list:
             base_queries.append(
                 f"""SELECT s.student_name, s.university_roll_no,
-                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.withdrawn_at , f.status, f.certificate,
-                f.sem, f.branch, f.section, f.academic_session, f.academic_term
-                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id WHERE academic_session='{current_session}'"""
+                '{form}' AS category, f.entry_id, f.google_file_id, f.submitted_at, f.status,
+                f.sem, f.branch, f.section, f.academic_session, f.academic_term, f.certificate
+                FROM student_details s INNER JOIN {form} f ON s.student_user_id = f.student_id 
+                WHERE f.academic_session='{current_session}' AND f.academic_term='{current_term}' AND f.status='accepted'"""
                 )
 
-        complete_query = " UNION ALL ".join(base_queries) 
+        complete_query = " UNION ALL ".join(base_queries)
         final_query = f"{complete_query} ORDER BY submitted_at DESC"
         filtered_data = db.execute(final_query)
 
@@ -3723,8 +3643,24 @@ def student_report():
         sem_options_list=sem_options_list,
         branch_options_list=branch_options_list,
         section_options_list=section_options_list,
-        current_session=current_session
+        current_session=current_session,
+        event_nature_options=event_nature_options
     )
+
+@app.route("/api/get_sections", methods=["POST"])
+@login_required
+def admin_get_sections():
+    data = request.get_json()
+
+    semesters = data.get('semester', [])
+    branches = data.get('branch', [])
+    academic_term = data.get('academic_term', [])
+    academic_session = data.get('academic_session', [])
+
+    rows = get_section_options(academic_session, academic_term, semesters, branches)
+
+    section_list = [row['section'] for row in rows]
+    return jsonify(section_list), 200    
 
 @app.route("/download_proof_files", methods=["POST"])
 @login_required
@@ -3810,6 +3746,7 @@ def student_management_page():
                 f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
                 "danger")
             return redirect(url_for("student_management_page"))
+            
         rows_to_insert = df.to_dict(orient="records")
         for data in rows_to_insert:
             email = data.get("email")
@@ -4012,11 +3949,13 @@ def create_drive_structure():
     try:
         # 1. Open the transaction manually
         db.execute("BEGIN TRANSACTION")
-        
+
         # 2. Track what we insert so we don't clear the structure table prematurely
         structures_to_insert = []
         sem_list = set()
         branch_list = set()
+
+        db.execute("DELETE FROM drive_folder_map")
         
         for batch in batch_structure:
             sem = batch["sem"]
@@ -4046,8 +3985,6 @@ def create_drive_structure():
                                     db.execute("""
                                             INSERT INTO drive_folder_map (id, drive_folder_id, semester, branch, section, form_name) 
                                             VALUES (?, ?, ?, ?, ?, ?) 
-                                            ON CONFLICT (id) DO UPDATE SET
-                                                drive_folder_id = excluded.drive_folder_id 
                                         """, folder_map_id, form_folder_id, sem, branch, section, form_name)
 
         # 3. Apply the layout changes at the very end
@@ -4115,49 +4052,6 @@ def update_master_folder():
 
     flash("Master folder link updated!", "success")
     return redirect(url_for("batch_management"))    
-
-@app.route("/dev_management", methods=["GET","POST"])
-@login_required
-def dev_management():
-    # Add an email
-    if request.method == "POST":
-        dev_email = request.form.get("dev_email")
-        if not dev_email:
-            flash("Email is required.", "danger")
-            return redirect(url_for("dev_management"))
-        
-        row = db.execute("SELECT email FROM users WHERE email=?", dev_email)
-        if len(row) == 1:
-            flash("Email already exists as a developer.", "info")
-            return redirect(url_for("dev_management"))
-        
-        try:
-            # Add email in users table and assign role = "dev"
-            db.execute("INSERT INTO users(email, role) VALUES(?,?)", dev_email, "dev")
-            flash(f"Successfully added {dev_email} as a developer", "success")
-
-        except Exception as e:
-            flash(f"An unexpected database error occured.", "danger")
-            print(f"Error at updating dev emails: {e}")
-        
-        return redirect(url_for("dev_management"))
-    else:
-        dev_emails = db.execute("SELECT email FROM users WHERE role='dev'")
-        return render_template("dev_management.html", dev_emails=dev_emails)
-
-@app.route("/remove_dev", methods=["POST"])
-def remove_dev():
-    if request.method == "POST":
-        dev_email = request.form.get("dev_email")
-
-        try:
-            db.execute("DELETE FROM users WHERE email=?", dev_email)
-
-        except Exception as e:
-            flash(f"Removal failed, an unexpected error occured.", "danger")
-            print(f"Error at updating dev emails: {e}")
-
-        return redirect(url_for("dev_management"))
 
 @app.route("/visual_report", methods=["POST"])
 def visual_report():

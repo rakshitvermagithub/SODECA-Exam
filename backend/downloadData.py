@@ -100,9 +100,9 @@ def downloadFormData():
                 FROM {form} f
                 INNER JOIN student_details s ON f.student_id = s.student_user_id
                 WHERE f.withdrawn_at IS NULL 
-                AND s.branch=? AND s.semester=? AND s.section=? AND class_group=?""", 
+                AND s.branch=? AND s.semester=? AND s.section=?""", 
                 batch_details["branch"], batch_details["semester"],
-                batch_details["section"], batch_details["class_group"])
+                batch_details["section"])
             
             # --- POPULATE THE EXCEL SHEET ---
             for row in rows:

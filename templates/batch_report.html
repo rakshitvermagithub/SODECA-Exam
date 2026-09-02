@@ -176,29 +176,8 @@
                     </div>
                 </div>
                 <div class="col-12 col-md-3 d-flex flex-column align-items-center justify-content-center ms-5">
-                    <div class="chart-container" style="background-color: #f8f9fa">
+                    <div class="chart-container" id="chart-container" style="background-color: #f8f9fa">
                         <canvas id="categoryPieChart" style="width: 400px; height: 440px;"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="chartModalLabel">Category Breakdown</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="chart-container">
-                                <div style="position: relative; width: 100%; max-width: 350px; margin: auto;">
-                                    <canvas id="categoryPieChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -224,67 +203,14 @@
                                 </div>
                                 
                                 <div class="row g-2 mt-1">
+                                    {% for form_name, form_title in form_dict.items() %}
                                     <div class="col-12 col-md-6">
                                         <div class="form-check">
-                                            <input type="checkbox" class="form-check-input group-required" id="radio1" name="optradio" value="blood_donor">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio1">Blood Donor</label>
+                                            <input type="checkbox" class="form-check-input group-required" id="radio1" name="optradio" value="{{ form_name }}">
+                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio1">{{ form_title }}</label>
                                         </div>
                                     </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio2" name="optradio" value="part_in_comp">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio2">Participation in Competition/Contest</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio3" name="optradio" value="part_in_work">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio3">Workshop/Seminar/Conference</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio4" name="optradio" value="expert_lecture">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio4">Expert Lecture Attended</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio5" name="optradio" value="event_organized">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio5">Organized an Event</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio6" name="optradio" value="winner_achievement">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio6">Winner/Award/Achievement</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio7" name="optradio" value="internship_stipend">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio7">Internship/Training (Stipend)</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio8" name="optradio" value="paper_presented">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio8">Paper Presented</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio9" name="optradio" value="financial_grant">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio9">Financial Grant Received</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="radio10" name="optradio" value="online_course">
-                                            <label class="form-check-label" style="font-size: 0.9rem;" for="radio10">Coursera / edX Certification</label>
-                                        </div>
-                                    </div>
-                                </div>
+                                    {% endfor %}
                                 <div class="invalid-feedback mt-2">Please select at least one option.</div>
                             </div>
 
@@ -317,6 +243,9 @@
     <script id="my-table-ids" type="application/json">
         {{ form_dict.keys()|list|tojson|safe }}
     </script>
+    <script id="category-counts-data" type="application/json">
+        {{ category_counts|tojson|safe }}
+    </script>
     <script>
         const selectAllUI = document.getElementById('radio');
         const allChildCheckboxes = document.querySelectorAll('input[name="optradio"]');
@@ -331,7 +260,8 @@
             })
         })
         document.addEventListener('DOMContentLoaded', () => {
-            updateChart();
+            const categoryData = JSON.parse(document.getElementById('category-counts-data').textContent);
+            updateChart(categoryData);
         });
         // PDF Preview script
         const bsModal = document.getElementById('pdfPreviewModal');
