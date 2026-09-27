@@ -1502,9 +1502,6 @@ def register():
         # email id
         email = request.form.get("email")
 
-        # Check if email id is of a developer
-        is_dev = check_dev_email(email)
-
         if not email.endswith('@skit.ac.in') and not is_dev:
             flash("Access Denied. You must log in with a valid SKIT email address.", "danger")
             return redirect(url_for("register"))
