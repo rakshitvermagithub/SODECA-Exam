@@ -1948,7 +1948,7 @@ def student_details():
         if next_url and is_safe_url(next_url):
             return redirect(next_url)
     
-        return redirect(url_for("sodeca_forms"))
+        return redirect(url_for("student_details"))
     
     else:
         curr_settings = db.execute("SELECT academic_session, academic_term FROM drive_settings")
@@ -2714,7 +2714,7 @@ def review_student():
     for form in form_name_list:
         query_parts.append(f"""
             SELECT entry_id, '{form}' as form_name, 
-            status, certificate, submitted_at
+            status, certificate, submitted_at, certification_type
             FROM {form}
             WHERE student_id = ? 
             AND withdrawn_at IS NULL
@@ -2881,6 +2881,7 @@ def upload_to_drive():
     submission_folder_id = None
 
     certification_type = request.form.get('certification_type')
+    print(f"Certification type: {certification_type}")
     if certification_type:
         if (certification_type == "achievement"):
             achievement_folder_list = db.execute("SELECT achievement_folder_id FROM drive_settings")
@@ -2891,6 +2892,10 @@ def upload_to_drive():
             participation_folder_list = db.execute("SELECT participation_folder_id FROM drive_settings")
             if (participation_folder_list):
                 submission_folder_id = participation_folder_list[0].get("participation_folder_id")
+    else:
+        flash("No certification type", "danger")
+        print("Error: Blank certification type")
+        return
     
     try:
         # 1. Safely extract the tokens from your session dictionary
@@ -2937,6 +2942,7 @@ def upload_to_drive():
                     body=file_metadata_submission_category, media_body=media_submission_category, fields='id,name'
                 ).execute()
 
+                print(f"Submission Category file id: {submission_category_file.get('id')}")
                 if not submission_category_file.get('id'):
                     raise Exception("Category folder upload returned no file ID")
 

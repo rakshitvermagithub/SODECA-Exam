@@ -552,7 +552,6 @@
                                         <th>Batch</th>
                                         <th>Category</th>
                                         <th>Proof(G-Drive)</th>
-                                        <th>Status</th>
                                         <th>More Details</th>
                                         <th>Submitted at</th>
                                     </tr>
@@ -560,7 +559,7 @@
                                 <tbody id="data-table-body-report" data-drive-auth="{{ 'true' if session.get('drive_auth_token') else 'false' }}" data-upload-url="{{ url_for('upload_to_drive') }}" data-view-file-url="{{ url_for('view_submission', filename='FILENAME_PLACEHOLDER') }}" data-filtered-data="{{ filtered_data|tojson|forceescape }}">
                                     {% for data in filtered_data %}
                                     <tr data-certificate="{{ data['certificate'] }}">
-                                        <td>{{ data["entry_id"] }}</td>
+                                        <td>{{ loop.index }}</td>
                                         <td>{{ data["academic_session"] }}</td>
                                         <td>{{ data["academic_term"] }}</td>
                                         <td>{{ data["student_name"] }}</td>
