@@ -399,7 +399,7 @@ FORM_DEFINITIONS = {
             {
                 'field_label': 'Name of the Competition/Event/Activity',
                 'field_type': 'text',
-                'field_name': 'event_name',
+                'field_name': 'event_title',
                 'required': True,
                 'placeholder': 'e.g., Google Code Jam, Smart India Hackathon',
                 'help_text': 'Exactly as Mentioned in the Certificate.',
