@@ -51,7 +51,7 @@
 <div class="page-wrapper d-flex justify-content-center align-items-center">
     <div class="card shadow p-3" style="max-width: 700px; width: 100%;">
         <div class="card-body">
-            <p class="text-muted mb-4 text-center fs-5">Please verify your details.</p>
+            <p class="text-muted mb-4 text-center fs-5">Please verify your details</p>
 
             <!-- Display Student Details -->
             <div class="row">
@@ -71,14 +71,14 @@
              <div class="row">
                 <div class="col-md-6 mb-3">
                     <div class="form-floating">
-                        <input class="form-control" type="text" id="branch" value="{{ details.branch | default('') }}" disabled readonly>
-                        <label for="branch">Branch</label>
+                        <input class="form-control" type="text" id="semester" value="{{ details.semester | default('') }}" disabled readonly>
+                        <label for="semester">Semester</label>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
                     <div class="form-floating">
-                        <input class="form-control" type="text" id="semester" value="{{ details.semester | default('') }}" disabled readonly>
-                        <label for="semester">Semester</label>
+                        <input class="form-control" type="text" id="branch" value="{{ details.branch | default('') }}" disabled readonly>
+                        <label for="branch">Branch</label>
                     </div>
                 </div>
             </div>
@@ -115,7 +115,7 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="True" id="checkDefault" name="verified_details" required style="width: 1.25em; height: 1.25em;">
                         <label class="form-check-label" for="checkDefault">
-                            <mark>I have verified that the details shown above are correct.<span class="text-danger">*</span></mark>
+                            <mark>I have verified that the above details are correct.<span class="text-danger">*</span></mark>
                         </label>
                     </div>
                 </div>
