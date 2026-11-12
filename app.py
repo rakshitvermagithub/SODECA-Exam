@@ -1690,15 +1690,15 @@ def batch_report():
         data = request.get_json()
         form_id = data.get('form_id')
 
-        result = db.execute(f"""SELECT * FROM {form_id} as f
+        result = db.execute(f"""SELECT f.*, s.university_roll_no, s.student_name FROM {form_id} as f
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
-                            WHERE s.branch=? AND s.semester=? AND s.section=?""",
+                            WHERE s.branch=? AND s.semester=? AND s.section=? AND f.status='accepted'""",
                             batch_details["branch"], batch_details["semester"],
                             batch_details["section"])
 
-        col_labels = ['Entry ID', 'Univ. Roll Num.', 'Student Name', 'Batch Counselor']
-        sql_cols = ['entry_id', 'university_roll_no', 'student_name', 'batch_counselor']
+        col_labels = ['Entry ID', 'Univ. Roll Num.', 'Student Name']
+        sql_cols = ['entry_id', 'university_roll_no', 'student_name']
 
         for field in FORM_DEFINITIONS[form_id]["fields"]:
             col_labels.append(field["field_label"])
@@ -1736,12 +1736,12 @@ def batch_report():
             {"category": form_dict[row["category"]], "count": row["cnt"]}
             for row in count_results if row["cnt"] > 0
         ]
-        print(category_counts)
-        result = db.execute(f"""SELECT * FROM {form_name_list[0]} as f
+
+        result = db.execute(f"""SELECT f.*, s.university_roll_no, s.student_name FROM {form_name_list[0]} as f
                             INNER JOIN student_details as s 
                             ON f.student_id = s.student_user_id
                             WHERE f.withdrawn_at IS NULL 
-                            AND s.branch=? AND s.semester=? AND s.section=?""",
+                            AND s.branch=? AND s.semester=? AND s.section=? AND f.status='accepted'""",
                             batch_details["branch"], batch_details["semester"],
                             batch_details["section"])
                 

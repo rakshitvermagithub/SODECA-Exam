@@ -18,7 +18,7 @@ const noDataAvailableTableStructure = `
      <tr>
         <td class="noDataClass" style="width: 100%">
             <div class="d-flex justify-content-center">
-                No Data Available
+                No entries accepted for this form.
             </div>
         </td> 
      </tr>   
@@ -67,8 +67,8 @@ function updateTable(row_values, sql_col, column_name, table_id) {
             // Check if the current column is the Google File ID
             if (col_val === 'google_file_id' && cell_data != 'pending') {
                 // Wrap the ID in a clickable Google Drive link
-                cell_data = `<a href="https://drive.google.com/file/d/${cell_data}/view" target="_blank" 
-                class="text-primary">Drive link</a>`;
+                cell_data = `<a href="https://drive.google.com/file/d/{{ cell_data }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-file-earmark-text"></i> G-Drive </a>`;
             } else if (cell_data === null || cell_data === undefined) {
                 // Handle null/undefined values to prevent 'null' text in the table
                 cell_data = 'Pending';

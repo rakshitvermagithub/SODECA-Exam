@@ -130,7 +130,6 @@
                     <div class="row g-4">
                         <div class="col-12">
 
-
                             <div class="table-responsive" id="dynamic_table">
                                 <table class="table table-striped table-bordered display nowrap" id="tb_blood_donor" style="width: 100%;">
                                     <thead class="table-dark">
@@ -138,14 +137,12 @@
                                             <th>Entry ID</th>
                                             <th>Univ. Roll Num.</th>
                                             <th>Student Name</th>
-                                            <th>Batch Counselor</th>
                                             <th>Event Title</th>
                                             <th>From Date</th>
                                             <th>To Date</th>
                                             <th>Organizer</th>
                                             <th>Venue</th>
                                             <th>Certificate</th>
-                                            <th>Google_file_id</th>
                                             <th>Status</th>
                                             <th>Submitted At</th>
                                         </tr>
@@ -156,13 +153,11 @@
                                             <td>{{ row_val['entry_id'] }}</td>
                                             <td>{{ row_val['university_roll_no'] }}</td>
                                             <td>{{ row_val['student_name'] }}</td>
-                                            <td>{{ row_val['batch_counselor'] }}</td>
                                             <td>{{ row_val['event_title'] }}</td>
                                             <td>{{ row_val['from_date'] }}</td>
                                             <td>{{ row_val['to_date'] }}</td>
                                             <td>{{ row_val['organizer'] }}</td>
                                             <td>{{ row_val['venue'] }}</td>
-                                            <td><a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=row_val['certificate']) }}>Click Here</a></td>
                                             <td><a href="https://drive.google.com/file/d/{{ row_val['google_file_id'] }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-file-earmark-text"></i> G-Drive </a></td>
                                             <td>{{ row_val['status'] }}</td>
