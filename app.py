@@ -2836,22 +2836,86 @@ def student_management_page():
         df = pd.read_excel(new_data, engine="openpyxl")
 
         df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-        invalid_emails_df = df[~df['email'].str.strip().str.endswith('@skit.ac.in')]
+        required_columns = [
+            'email', 'university_roll_no', 'student_name', 'branch',
+            'semester', 'section'
+        ]
+        missing_columns = [column for column in required_columns if column not in df.columns]
+        if missing_columns:
+            flash(
+                f"Upload Failed: The file is missing these required columns: {', '.join(missing_columns)}",
+                "danger"
+            )
+            return redirect(url_for("student_management_page"))
+
+        df[required_columns] = df[required_columns].replace(r'^\s*$', pd.NA, regex=True)
+        invalid_rows = df[required_columns].isnull().any(axis=1)
+        if invalid_rows.any():
+            row_numbers = (df.index[invalid_rows] + 2).tolist()
+            flash(
+                f"Upload Failed: Required student details are missing on Excel rows: "
+                f"{row_numbers[:10]}{'...' if len(row_numbers) > 10 else ''}.",
+                "danger"
+            )
+            return redirect(url_for("student_management_page"))
+
+        for column in ['email', 'university_roll_no', 'student_name', 'branch', 'section']:
+            df[column] = df[column].astype(str).str.strip()
+        df['email'] = df['email'].str.lower()
+
+        numeric_semester = pd.to_numeric(df['semester'], errors='coerce')
+        invalid_semester = numeric_semester.isnull() | (numeric_semester % 1 != 0)
+        if invalid_semester.any():
+            row_numbers = (df.index[invalid_semester] + 2).tolist()
+            flash(
+                f"Upload Failed: Semester must be a number on Excel rows: "
+                f"{row_numbers[:10]}{'...' if len(row_numbers) > 10 else ''}.",
+                "danger"
+            )
+            return redirect(url_for("student_management_page"))
+        df['semester'] = numeric_semester.astype(int)
+
+        invalid_emails_df = df[~df['email'].str.endswith('@skit.ac.in')]
         if not invalid_emails_df.empty:
             bad_email_list = invalid_emails_df['email'].tolist()
             flash(
                 f"Upload Failed: Found {len(bad_email_list)} invalid emails. All emails must end with @skit.ac.in. Examples: {bad_email_list[:3]}",
                 "danger")
             return redirect(url_for("student_management_page"))
-            
-        rows_to_insert = df.to_dict(orient="records")
+
+        if df['email'].duplicated().any():
+            flash("Upload Failed: The Excel file contains duplicate email addresses.", "danger")
+            return redirect(url_for("student_management_page"))
+
+        existing_emails = db.execute(
+            "SELECT email FROM users WHERE email IN ({})".format(
+                ','.join('?' for _ in df['email'])
+            ),
+            *df['email'].tolist()
+        ) if not df.empty else []
+        if existing_emails:
+            duplicate_emails = [row['email'] for row in existing_emails]
+            flash(
+                f"Upload Failed: These email addresses already exist: {duplicate_emails[:3]}"
+                f"{'...' if len(duplicate_emails) > 3 else ''}",
+                "danger"
+            )
+            return redirect(url_for("student_management_page"))
+
+        rows_to_insert = df[required_columns].to_dict(orient="records")
         for data in rows_to_insert:
-            email = data.get("email")
-            db.execute("""
+            user_id = db.execute("""
                 INSERT INTO users (
                     email
                 ) VALUES (?)
-            """, email)
+            """, data["email"])
+            db.execute("""
+                INSERT INTO student_details (
+                    student_user_id, university_roll_no, student_name,
+                    branch, semester, section
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            """, user_id, data["university_roll_no"], data["student_name"],
+                data["branch"], data["semester"], data["section"])
 
         flash('We are glad to share that your excel file is uploaded successfully!',"success")
         return redirect(url_for('student_management_page'))
