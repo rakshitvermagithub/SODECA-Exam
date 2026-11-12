@@ -57,7 +57,7 @@ def downloadFormData():
 
         # 2. Dynamically fetch all columns from student_details (Excluding student_user_id)
         student_col_info = db.execute("SELECT name FROM pragma_table_info('student_details')")        
-        student_cols = [c['name'] for c in student_col_info if c['name'] != 'student_user_id']
+        student_cols = [c['name'] for c in student_col_info if c['name'] != 'student_user_id' and c['name'] != 'semester' and c['name'] != 'branch' and c['name'] != 'section']
 
         # 3. Loop through the forms the admin selected
         for form in selected_forms:
@@ -68,7 +68,7 @@ def downloadFormData():
             # Dynamically fetch all columns from this specific form
             # Excluding entry_id & student_id (handled manually), and withdrawn_at (per your rules)
             form_col_info = db.execute(f"SELECT name FROM pragma_table_info('{form}')")
-            excluded_cols = ['entry_id', 'student_id', 'withdrawn_at', 'certificate', 'full_path']
+            excluded_cols = ['entry_id', 'student_id', 'withdrawn_at', 'certificate', 'full_path', 'rejection_note']
             form_cols = [c['name'] for c in form_col_info if c['name'] not in excluded_cols]
 
             # --- BUILD THE HEADER ROW ---
@@ -100,7 +100,7 @@ def downloadFormData():
                 FROM {form} f
                 INNER JOIN student_details s ON f.student_id = s.student_user_id
                 WHERE f.withdrawn_at IS NULL 
-                AND s.branch=? AND s.semester=? AND s.section=?""", 
+                AND s.branch=? AND s.semester=? AND s.section=? AND f.status='accepted'""", 
                 batch_details["branch"], batch_details["semester"],
                 batch_details["section"])
             
