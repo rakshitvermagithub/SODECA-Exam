@@ -544,18 +544,21 @@
                             <th>
                                 <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
                             </th>
-                            <th onclick="sortTable(0)" style="cursor: pointer;">
-                                Time <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-0"></i>
-                            </th>
                             <th onclick="sortTable(1)" style="cursor: pointer;">
                                 Form Category <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-1"></i>
                             </th>
-                            <th>Proof</th>
-                            <th onclick="sortTable(3)" style="cursor: pointer;">
-                                <span class="header-status-pill">Status</span><i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-3"></i>
+                            <th onclick="sortTable(2)" style="cursor: pointer;">
+                                Certification Type <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-2"></i>
+                            </th>
+                            <th>Certificate</th>
+                            <th onclick="sortTable(4)" style="cursor: pointer;">
+                                <span class="header-status-pill">Status</span><i class="bi bi-arrow-down-up sort-icon ms-2" id="sort-icon-4"></i>
                             </th>
                             <th>Details</th>
                             <th>Actions</th>
+                            <th onclick="sortTable(7)" style="cursor: pointer;">
+                                Submitted at <i class="bi bi-arrow-down-up sort-icon ms-1" id="sort-icon-7"></i>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -580,26 +583,29 @@
                             <td></td>
                             {% endif %}
 
-                            <td>{{ submission["submitted_at"] }}</td>
                             <td>{{ form_dict[form_name] }}</td>
+                            <td>{{ submission['certification_type'] }}</td>
                             <td>
-                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file = {{ url_for('view_submission', filename=submission['certificate']) }}>Preview</a>
+                                <a href="#pdfPreviewModal" data-bs-toggle="modal" data-file="{{ url_for('view_submission', filename=submission['certificate']) }}">
+                                    {{submission['certificate']}}
+                                </a>
                             </td>
                             <td><span class="status-pill" 
-                            {% if status == 'accepted' %}
+                                {% if status == 'accepted' %}
                                 style="color: #28a745; border-color: #28a745;"
-                            {% elif status == 'rejected' %}
+                                {% elif status == 'rejected' %}
                                 style="color: #dc3545; border-color: #dc3545;"
                             {% else %} 
                                 style="color: #d39e00; border-color: #d39e00;"
-                            {% endif %}>{{ submission["status"] }}</span></td>
-
+                                {% endif %}>{{ submission["status"] }}</span></td>
+                                
                             <td>
                                 <button class="btn-details" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#entryDetailsModal"
                                         data-entry-id="{{ submission.entry_id }}"
-                                        data-form-name="{{ form_name }}">
+                                        data-form-name="{{ form_name }}"
+                                        data-form-title="{{ form_dict[form_name] }}">
                                     Details
                                 </button>
                             </td>
@@ -617,9 +623,9 @@
                                         <button type="submit" class="btn-action-accept" id="btnAcceptEntry" title="Accept"><i class="bi bi-check-lg"></i></button>
                                     </form>
                                     <button type="button" 
-                                            class="btn-action-custom btn-action-reject" 
-                                            onclick="openRejectionModal('{{ entry_id }}', '{{ form_name }}')" 
-                                            title="Reject">
+                                    class="btn-action-custom btn-action-reject" 
+                                    onclick="openRejectionModal('{{ entry_id }}', '{{ form_name }}')" 
+                                    title="Reject">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
@@ -627,6 +633,7 @@
                                 <span class="text-muted small">Processed</span>
                                 {% endif %}
                             </td>
+                            <td>{{ submission["submitted_at"] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -742,11 +749,13 @@
         let rows = document.getElementById('tableBody').getElementsByTagName('tr');
 
         for (let i = 0; i < rows.length; i++) {
-            let timeCol = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
-            let formCol = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-            let statusCol = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
+            let cells = rows[i].getElementsByTagName('td');
+            let searchableColumns = [1, 2, 3, 4, 7];
+            let searchableText = searchableColumns
+                .map(columnIndex => cells[columnIndex]?.textContent.toLowerCase() || '')
+                .join(' ');
 
-            if (timeCol.includes(filter) || formCol.includes(filter) || statusCol.includes(filter)) {
+            if (searchableText.includes(filter)) {
                 rows[i].style.display = "";
             } else {
                 rows[i].style.display = "none";
@@ -771,8 +780,8 @@
 
         let activeIcon = document.getElementById('sort-icon-' + columnIndex);
 
-        // --- Custom Categorization Logic for Status (Index 3) ---
-        if (columnIndex === 3) {
+        // --- Custom Categorization Logic for Status (Index 4) ---
+        if (columnIndex === 4) {
             let activeStatus = statusCycle[currentStatusIndex];
             
             // Advance cycle for the next click
@@ -782,8 +791,8 @@
             activeIcon.classList.add('bi-arrow-down', 'active'); // Using down arrow to show grouping
 
             rows.sort((a, b) => {
-                let valA = a.getElementsByTagName("td")[columnIndex].textContent.trim();
-                let valB = b.getElementsByTagName("td")[columnIndex].textContent.trim();
+                let valA = a.getElementsByTagName("td")[columnIndex]?.textContent.trim() || '';
+                let valB = b.getElementsByTagName("td")[columnIndex]?.textContent.trim() || '';
                 
                 // Pull rows matching the active status to the top
                 if (valA === activeStatus && valB !== activeStatus) return -1;
@@ -804,8 +813,8 @@
             activeIcon.classList.add(dir === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down', 'active');
 
             rows.sort((a, b) => {
-                let valA = a.getElementsByTagName("td")[columnIndex].textContent.trim();
-                let valB = b.getElementsByTagName("td")[columnIndex].textContent.trim();
+                let valA = a.getElementsByTagName("td")[columnIndex]?.textContent.trim() || '';
+                let valB = b.getElementsByTagName("td")[columnIndex]?.textContent.trim() || '';
 
                 if (valA < valB) return dir === 'asc' ? -1 : 1;
                 if (valA > valB) return dir === 'asc' ? 1 : -1;
@@ -826,6 +835,8 @@ if (detailsModal) {
         const button = event.relatedTarget;
         const entryId = button.getAttribute('data-entry-id');
         const formName = button.getAttribute('data-form-name');
+        const formTitle = button.getAttribute('data-form-title');
+        document.getElementById('entryDetailsModalLabel').textContent = formTitle || 'Submission Details';
 
         const dynamicContainer = document.getElementById('dynamicModalDetails');
         
@@ -864,7 +875,9 @@ if (detailsModal) {
             dynamicContainer.innerHTML = '';
 
             const hiddenColumns = [
-                'student_id', 'withdrawn_at', 'status', 'certificate', 'full_path'
+                'student_id', 'withdrawn_at', 'status', 'certificate', 
+                'full_path', 'academic_term', 'academic_session', 'branch',
+                'section', 'sem', 'entry_id', 'google_file_id', 'certification_type'
             ];
 
             for (const [key, value] of Object.entries(detailsObj)) {
@@ -1077,15 +1090,26 @@ if (detailsModal) {
     }
     // PDF Preview script
     const bsModal = document.getElementById('pdfPreviewModal');
-    const bsPdfPreview = document.getElementById('bsPdfEmbed');
+    let bsPdfPreview = document.getElementById('bsPdfEmbed');
+
+    function createPdfPreview() {
+        const freshPdfPreview = document.createElement('embed');
+        freshPdfPreview.id = 'bsPdfEmbed';
+        freshPdfPreview.type = 'application/pdf';
+        freshPdfPreview.style.cssText = 'width: 100%; height: 100%;';
+        bsPdfPreview.replaceWith(freshPdfPreview);
+        bsPdfPreview = freshPdfPreview;
+    }
+
     bsModal.addEventListener('show.bs.modal', function(event){
         const trigger = event.relatedTarget;
         const pdfPath = trigger.getAttribute('data-file') + '#view=Fit';
+        createPdfPreview();
         bsPdfPreview.setAttribute('src', pdfPath);
     });
     // Triggered when modal is fully hidden
     bsModal.addEventListener('hidden.bs.modal', function () {
-        bsPdfPreview.setAttribute('src', '');
+        bsPdfPreview.removeAttribute('src');
     });
 </script>
 {% endblock %}
