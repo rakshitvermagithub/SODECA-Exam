@@ -87,21 +87,26 @@
         background-color: #e7f1ff; 
     }
 
-    /* --- NEW: Custom Popover Styling --- */
-    :root {
-        --bs-popover-border-radius: 0.5rem;
-        --bs-popover-header-bg: #f8f9fa;
-        --bs-popover-border-color: #dee2e6;
-        --bs-popover-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    /* --- Requirements Modal Styling --- */
+    #requirementsModal .modal-body {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 2.5rem 1.5rem 1.5rem;
     }
-    
-    .popover-body {
-        max-height: 250px; /* Set a max height */
-        overflow-y: auto;  /* Add scrollbar if content overflows */
-    }
-    .popover-body ul {
+
+    #requirementsModal .modal-body ul {
         padding-left: 1.25rem;
         font-size: 0.9rem;
+    }
+
+    .requirements-modal-close {
+        z-index: 1;
+        transition: opacity 0.15s ease, filter 0.15s ease;
+    }
+
+    .requirements-modal-close:hover {
+        opacity: 0.75;
+        filter: invert(19%) sepia(92%) saturate(3668%) hue-rotate(343deg) brightness(84%) contrast(91%);
     }
     
     /* --- Summary Box Enhancements --- */
@@ -238,19 +243,16 @@
                                 </div>
                             </div>
 
-                            <div class="form-help-trigger" 
-                                 data-bs-toggle="popover" 
-                                 data-bs-trigger="hover focus"
-                                 data-bs-placement="top"
-                                 data-bs-html="true"
-                                 data-bs-content-id="#popover-content-{{ key }}"
-                                type="button">
+                            <button class="form-help-trigger border-0 w-100 text-start"
+                                 type="button"
+                                 data-bs-toggle="modal"
+                                 data-bs-target="#requirementsModal"
+                                 data-bs-content-id="#requirements-content-{{ key }}">
                                 <i class="fas fa-info-circle me-2"></i><span style="color: var(--college-red)">View Requirements</span>
-                            </div>
+                            </button>
 
-                            <!-- This is the hidden content for the popover -->
-                            <div class="d-none" id="popover-content-{{ key }}">
-                                <ul class="mb-0">
+                            <div class="d-none" id="requirements-content-{{ key }}">
+                                <ul class="fs-6" style="padding-left: 1.25rem;">
                                     {% for req in form["description"] %}
                                         <li>{{ req }}</li>
                                     {% endfor %}
@@ -284,6 +286,17 @@
     </div>
 </div>
 
+<div class="modal fade" id="requirementsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <button type="button" class="btn-close requirements-modal-close position-absolute top-0 end-0 m-3"
+                    id="requirementsModalClose"
+                    data-bs-dismiss="modal" aria-label="Close requirements"></button>
+            <div class="modal-body" id="requirementsModalBody"></div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block script %}
@@ -295,57 +308,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const noSelectionText = '<span class="text-muted" id="no-selection-text">No forms selected yet.</span>';
     const selections = {};
 
-    // --- Popover Initialization ---
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    const popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        
-        // Initialize popover with all options set in JS
-        const popover = new bootstrap.Popover(popoverTriggerEl, {
-            html: true,
-            trigger: 'manual', // We will handle show/hide manually
-            placement: popoverTriggerEl.dataset.bsPlacement,
-            content: function () {
-                const contentId = popoverTriggerEl.getAttribute('data-bs-content-id');
-                const contentEl = document.querySelector(contentId);
-                return contentEl ? contentEl.innerHTML : 'Loading...';
-            }
-        });
+    const requirementsModal = document.getElementById('requirementsModal');
+    const requirementsModalBody = document.getElementById('requirementsModalBody');
+    const requirementsModalClose = document.getElementById('requirementsModalClose');
 
-        // --- Logic to keep popover open on hover ---
-        let leaveTimeout;
-
-        // When mouse enters the trigger, show the popover
-        popoverTriggerEl.addEventListener('mouseenter', function () {
-            clearTimeout(leaveTimeout);
-            popover.show();
-        });
-
-        // When mouse leaves the trigger, set a delay before hiding
-        popoverTriggerEl.addEventListener('mouseleave', function () {
-            leaveTimeout = setTimeout(() => {
-                const popoverBody = document.querySelector('.popover:hover');
-                if (!popoverBody) {
-                    popover.hide();
-                }
-            }, 100); 
-        });
-        
-        popoverTriggerEl.addEventListener('shown.bs.popover', function () {
-            const popoverBody = document.getElementById(popoverTriggerEl.getAttribute('aria-describedby'));
-            if (!popoverBody) return;
-
-            popoverBody.addEventListener('mouseenter', function () {
-                clearTimeout(leaveTimeout);
-            });
-
-            popoverBody.addEventListener('mouseleave', function () {
-                popover.hide();
-            });
-        });
-
-        return popover;
+    requirementsModal.addEventListener('show.bs.modal', function (event) {
+        const contentId = event.relatedTarget.getAttribute('data-bs-content-id');
+        const contentElement = document.querySelector(contentId);
+        requirementsModalBody.innerHTML = contentElement ? contentElement.innerHTML : '';
     });
-    // --- End Popover Initialization ---
+
+    requirementsModalClose.addEventListener('click', function () {
+        bootstrap.Modal.getOrCreateInstance(requirementsModal).hide();
+    });
 
     function updateSummary() {
         summaryDiv.innerHTML = selectionTitle; 
@@ -391,9 +366,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Check constraints
-            if (currentTotal >= 5) {
+            if (currentTotal >= 10) {
                 alert('You can only submit a maximum of 5 forms at once.');
-            } else if (selections[formId].count >= 5) {
+            } else if (selections[formId].count >= 10) {
                 alert('You can only select a maximum of 5 forms per category.');
             } else {
                 selections[formId].count++;
