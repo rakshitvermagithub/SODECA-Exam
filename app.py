@@ -2994,17 +2994,25 @@ def update_drive_master_folder():
         flash("Google drive error", "danger")
         return redirect(url_for("batch_management"))
 
-
     academic_session = request.form.get("academic_session")
     academic_term = request.form.get("academic_term")
     folder_name = request.form.get("folder_name")
-    # Create a new master folder or just return the existing folder's id
-    master_folder_id = get_or_create_folder(service, folder_name)
-    if (master_folder_id):
-        master_folder_link = f"https://drive.google.com/drive/folders/{master_folder_id}"
+
+    # Check if request has the master folder link
+    master_folder_link = request.form.get("master_folder_link")
+    if master_folder_link:
+        master_folder_id = get_folder_id(master_folder_link)
+        if not master_folder_id:
+            flash("Please provide a valid Google Drive folder link.", "danger")
+            return redirect(url_for("batch_management"))
     else:
-        flash("Error: Creating/Updating Master drive folder", "danger")
-        return redirect(url_for("batch_management"))
+        # Create a new master folder or just return the existing folder's id
+        master_folder_id = get_or_create_folder(service, folder_name)
+        if (master_folder_id):
+            master_folder_link = f"https://drive.google.com/drive/folders/{master_folder_id}"
+        else:
+            flash("Error: Creating/Updating Master drive folder", "danger")
+            return redirect(url_for("batch_management"))
 
     # Create folders named participations and achievement
     participation_folder_id = get_or_create_folder(service, "participation", master_folder_id)
