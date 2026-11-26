@@ -243,10 +243,10 @@ db.execute("""
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        master_folder_link TEXT, master_folder_id TEXT,
-        participation_folder_link TEXT, participation_folder_id TEXT,
-        achievement_folder_link TEXT, achievement_folder_id TEXT,
         academic_session TEXT, academic_term TEXT,
+        master_folder_path TEXT, master_folder_link TEXT, master_folder_id TEXT,
+        participation_folder_path TEXT, participation_folder_link TEXT, participation_folder_id TEXT,
+        achievement_folder_path TEXT, achievement_folder_link TEXT, achievement_folder_id TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
