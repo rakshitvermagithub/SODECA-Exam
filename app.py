@@ -53,6 +53,10 @@ DRIVE_CLIENT_SECRET = app.config["DRIVE_CLIENT_SECRET"]
 SENDER_EMAIL = app.config["SENDER_EMAIL"]
 SENDER_PASSWORD = app.config["SENDER_PASSWORD"]
 
+# Create a data directory if it doesn't exist
+data_dir = os.path.join(app.root_path, 'data')
+os.makedirs(data_dir, exist_ok=True)
+
 # --- UNIFIED OAUTH 2.0 SETUP (USING AUTHLIB ONLY) ---
 oauth = OAuth(app)
 
@@ -72,7 +76,6 @@ google_drive_client = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'https://www.googleapis.com/auth/drive.file'},
 )
-MASTER_DRIVE_FOLDER_ID = app.config["MASTER_DRIVE_FOLDER"]
 
 # --- General App Configuration ---
 UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
@@ -235,18 +238,18 @@ db.execute("""
 # Create a table to store and map drive folder ids
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
-    drive_folder_id TEXT UNIQUE NOT NULL, branch TEXT NOT NULL, 
-    semester TEXT NOT NULL, section TEXT NOT NULL, 
-    form_name TEXT NOT NULL) 
+    drive_folder_id TEXT UNIQUE,
+    branch TEXT NOT NULL, semester TEXT NOT NULL,
+    section TEXT NOT NULL, form_name TEXT NOT NULL) 
     """)
 # Create a table to store sodeca drive master folder link and academic session
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
-        master_folder_link TEXT, master_folder_id TEXT,
-        participation_folder_link TEXT, participation_folder_id TEXT,
-        achievement_folder_link TEXT, achievement_folder_id TEXT,
         academic_session TEXT, academic_term TEXT,
+        master_folder_name TEXT, master_folder_link TEXT, master_folder_id TEXT,
+        participation_folder_name TEXT, participation_folder_link TEXT, participation_folder_id TEXT,
+        achievement_folder_name TEXT, achievement_folder_link TEXT, achievement_folder_id TEXT,
         updated_on TIMESTAMP NOT NULL DEFAULT (datetime('now', '+5 hours', '+30 minutes')) 
     ) 
 """)
@@ -2963,10 +2966,204 @@ def addEmail():
 
     return redirect(url_for('student_management_page'))
 
+@app.route("/update_system_settings", methods=["POST"])
+@login_required
+def update_system_settings():
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+
+    academic_session = request.form.get("academic_session")
+    academic_term = request.form.get("academic_term")
+    master_folder_name = request.form.get("master_folder_name")
+
+    master_folder_path = os.path.join(data_dir, master_folder_name)
+    if os.path.exists(master_folder_path):
+        flash(f"Master folder named {master_folder_name} already exists.", "danger")
+        print(f"Master folder named {master_folder_name} already exists at: {master_folder_path}")
+        return redirect(url_for("batch_management"))
+
+    os.makedirs(master_folder_path)
+    print(f"Successfully created master folder at: {data_dir}")
+
+    # Create participation and achievement folders inside the master folder
+    participation_folder_name = "participation"
+    achievement_folder_name = "achievement"
+    participation_folder_path = os.path.join(master_folder_path, participation_folder_name)
+    achievement_folder_path = os.path.join(master_folder_path, achievement_folder_name)
+
+    try:
+        os.makedirs(participation_folder_path, exist_ok=True)
+        os.makedirs(achievement_folder_path, exist_ok=True)
+    
+    # Update details in drive_settings table
+        db.execute("""
+            INSERT INTO drive_settings (id, academic_session, academic_term, master_folder_name, 
+            participation_folder_name, achievement_folder_name, updated_on) 
+            VALUES (1, ?, ?, ?, ?, ?, datetime('now', '+5 hours', '+30 minutes')) 
+            ON CONFLICT (id) DO UPDATE SET
+                academic_session = excluded.academic_session,
+                academic_term = excluded.academic_term,
+                master_folder_name = excluded.master_folder_name,
+                participation_folder_name = excluded.participation_folder_name,
+                achievement_folder_name = excluded.achievement_folder_name,
+                master_folder_id = NULL,
+                participation_folder_id = NULL,
+                achievement_folder_id = NULL,
+                master_folder_link = NULL,
+                participation_folder_link = NULL,
+                achievement_folder_link = NULL,
+                updated_on = datetime('now', '+5 hours', '+30 minutes')
+        """, academic_session, academic_term, master_folder_name, 
+        participation_folder_name, achievement_folder_name)
+
+        print("System settings updated")
+        flash("System settings updated!", "success")
+    except Exception as e:
+        print(f"db error: {e}")
+        flash(f"Database error: {e}", "danger")
+
+    return redirect("batch_management")
+
+def get_or_create_local_folder(parent_path, folder_name):
+    folder_name = folder_name.replace('/', '_')
+
+    folder_path = os.path.join(parent_path, folder_name)
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+            print(f"Created local folder: {folder_path}")
+        except Exception as e:
+            print(f"Error creating local folder {folder_path}: {e}")
+            return None
+    return folder_path
+
+@app.route("/update_batch_structure", methods=["POST"])
+@login_required
+def update_batch_structure():
+    user_role = session.get("user_role")
+    if user_role != "admin" and user_role != "coordinator":
+        abort(404)
+    
+    # Get batch structure inputs
+    raw_batch_structure = request.form.get("structure_json")
+    # Guard against None or empty string before parsing
+    if not raw_batch_structure:
+        return "Missing structure configuration payload", 400
+    try:
+        batch_structure = json.loads(raw_batch_structure)
+    except Exception as e:
+        print(f"Error parsing JSON: {e}")
+        flash("Malformed configuration layout JSON received", "danger")
+        return redirect(url_for("batch_management"))
+    
+    curr_master_folder_path = ""
+    curr_academic_session = ""
+    curr_academic_term = ""
+
+    curr_system_settings = db.execute("SELECT academic_session, academic_term, master_folder_name FROM drive_settings WHERE id=1")
+    if curr_system_settings:
+        curr_system = curr_system_settings[0]
+        curr_master_folder_name = curr_system["master_folder_name"]
+        master_folder_path = os.path.join(data_dir, curr_master_folder_name)
+        if not curr_master_folder_name or not os.path.exists(master_folder_path):
+            flash("Kindly create the master folder before updating the structure", "warning")
+            return redirect(url_for("batch_management"))
+
+        curr_academic_session = curr_system['academic_session']
+        curr_academic_term = curr_system['academic_term']
+    else:
+        flash("Please create the master folder, before updating batch structure", "warning")
+        return redirect("batch_management")
+
+    # Update the batch_structure table
+    try:
+        # Open the transaction manually
+        db.execute("BEGIN TRANSACTION")
+
+        structures_to_insert = []
+        sem_list = set()
+        branch_list = set()
+
+        db.execute("DELETE FROM drive_folder_map")
+        
+        for batch in batch_structure:
+            
+            sem = batch["sem"]
+            sem_folder_path = get_or_create_local_folder(master_folder_path, str(sem))
+            
+            if sem_folder_path:
+                branch = batch["branch"]
+                branch_folder_path = get_or_create_local_folder(sem_folder_path, branch)
+
+                if branch_folder_path:
+                    section_list = [s.strip() for s in batch["section"].split(',') if s.strip()]
+                    
+                    for section in section_list:
+                        section_folder_path = get_or_create_local_folder(branch_folder_path, section)
+
+                        if section_folder_path:
+                            structures_to_insert.append((sem, branch, section))
+                            sem_list.add(sem)
+                            branch_list.add(branch)
+
+                            for form_name, form_title in form_dict.items():
+                                form_folder_path = get_or_create_local_folder(section_folder_path, form_title)
+
+                                if form_folder_path:
+                                    folder_map_id = f"{sem}_{branch}_{section}_{form_name}"
+
+                                    db.execute("""
+                                            INSERT INTO drive_folder_map (id, semester, branch, section, form_name) 
+                                            VALUES (?, ?, ?, ?, ?) 
+                                        """, folder_map_id, sem, branch, section, form_name)
+
+        # Update the batch_structure table
+        if structures_to_insert:
+            # Delete any pre-existing structure for the same session and term
+            db.execute("""
+                DELETE FROM batch_structure WHERE academic_session = ? AND academic_term = ?
+            """, curr_academic_session, curr_academic_term)
+            # Apply the new structure
+            for item in structures_to_insert:
+                db.execute("""
+                    INSERT INTO batch_structure (sem, branch, section, academic_session, academic_term)
+                    VALUES (?, ?, ?, ?, ?)
+                """, item[0], item[1], item[2], curr_academic_session, curr_academic_term)
+
+        if sem_list and branch_list:
+            db.execute("DELETE FROM batch_structure_summary")
+            sem_list_str = ",".join(str(s) for s in sorted(sem_list))
+            branch_list_str = ",".join(sorted(branch_list))
+
+            db.execute("""
+                    INSERT INTO batch_structure_summary (id, sem_list, branch_list, updated_on)
+                    VALUES (1, ?, ?, datetime('now', '+5 hours', '+30 minutes'))
+                    ON CONFLICT (id) DO UPDATE SET
+                        sem_list = excluded.sem_list,
+                        branch_list = excluded.branch_list,
+                        updated_on = excluded.updated_on
+                """, sem_list_str, branch_list_str)
+
+        # 4. Commit everything if loops completed flawlessly
+        db.execute("COMMIT")
+        flash("Batch structure created successfully. Kindly sync with Google Drive.", "success")
+
+    except Exception as e:
+        # Roll back all changes instantly if an unhandled error/crash happens inside the transaction
+        print(f"Structure creation failed: {e}")
+        flash(f"An error occurred: {e}", "danger")
+        try:
+            db.execute("ROLLBACK")
+        except Exception:
+            pass
+
+    return redirect(url_for("batch_management"))
+    
 @app.route('/update_drive_settings', methods=["POST"])
 @login_required
 @drive_auth_required
-def update_drive_master_folder():
+def update_drive_settings():
     user_role = session.get("user_role")
     if user_role != "admin" and user_role != "coordinator":
         abort(404)
@@ -2994,17 +3191,25 @@ def update_drive_master_folder():
         flash("Google drive error", "danger")
         return redirect(url_for("batch_management"))
 
-
     academic_session = request.form.get("academic_session")
     academic_term = request.form.get("academic_term")
     folder_name = request.form.get("folder_name")
-    # Create a new master folder or just return the existing folder's id
-    master_folder_id = get_or_create_folder(service, folder_name)
-    if (master_folder_id):
-        master_folder_link = f"https://drive.google.com/drive/folders/{master_folder_id}"
+
+    # Check if request has the master folder link
+    master_folder_link = request.form.get("master_folder_link")
+    if master_folder_link:
+        master_folder_id = get_folder_id(master_folder_link)
+        if not master_folder_id:
+            flash("Please provide a valid Google Drive folder link.", "danger")
+            return redirect(url_for("batch_management"))
     else:
-        flash("Error: Creating/Updating Master drive folder", "danger")
-        return redirect(url_for("batch_management"))
+        # Create a new master folder or just return the existing folder's id
+        master_folder_id = get_or_create_folder(service, folder_name)
+        if (master_folder_id):
+            master_folder_link = f"https://drive.google.com/drive/folders/{master_folder_id}"
+        else:
+            flash("Error: Creating/Updating Master drive folder", "danger")
+            return redirect(url_for("batch_management"))
 
     # Create folders named participations and achievement
     participation_folder_id = get_or_create_folder(service, "participation", master_folder_id)
@@ -3188,31 +3393,6 @@ def create_drive_structure():
             pass
 
     return redirect(url_for('super_admin'))
-
-@app.route("/update_master_folder", methods=["POST"])
-@login_required
-def update_master_folder():
-    user_role = session.get("user_role")
-    if user_role != "admin" and user_role != "coordinator":
-        abort(404)
-
-    folder_link = request.form.get("new_master_link")
-    if not folder_link:
-        flash("Please paste the drive folder link.")
-        return redirect("/batch_management")
-    
-    folder_id = get_folder_id(folder_link)
-
-    db.execute("""
-        INSERT INTO drive_settings (id, master_folder_link, master_folder_id)
-        VALUES (1, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET 
-        master_folder_link = excluded.master_folder_link,
-        master_folder_id = excluded.master_folder_id
-    """, folder_link, folder_id)
-
-    flash("Master folder link updated!", "success")
-    return redirect(url_for("batch_management"))    
 
 @app.route("/visual_report", methods=["POST"])
 def visual_report():
