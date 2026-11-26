@@ -72,7 +72,6 @@ google_drive_client = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'https://www.googleapis.com/auth/drive.file'},
 )
-MASTER_DRIVE_FOLDER_ID = app.config["MASTER_DRIVE_FOLDER"]
 
 # --- General App Configuration ---
 UPLOAD_FOLDER = app.config["UPLOAD_FOLDER"]
@@ -3196,31 +3195,6 @@ def create_drive_structure():
             pass
 
     return redirect(url_for('super_admin'))
-
-@app.route("/update_master_folder", methods=["POST"])
-@login_required
-def update_master_folder():
-    user_role = session.get("user_role")
-    if user_role != "admin" and user_role != "coordinator":
-        abort(404)
-
-    folder_link = request.form.get("new_master_link")
-    if not folder_link:
-        flash("Please paste the drive folder link.")
-        return redirect("/batch_management")
-    
-    folder_id = get_folder_id(folder_link)
-
-    db.execute("""
-        INSERT INTO drive_settings (id, master_folder_link, master_folder_id)
-        VALUES (1, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET 
-        master_folder_link = excluded.master_folder_link,
-        master_folder_id = excluded.master_folder_id
-    """, folder_link, folder_id)
-
-    flash("Master folder link updated!", "success")
-    return redirect(url_for("batch_management"))    
 
 @app.route("/visual_report", methods=["POST"])
 def visual_report():
