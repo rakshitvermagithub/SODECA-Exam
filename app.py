@@ -238,7 +238,7 @@ db.execute("""
 # Create a table to store and map drive folder ids
 db.execute("""
     CREATE TABLE IF NOT EXISTS drive_folder_map (id TEXT PRIMARY KEY NOT NULL,
-    local_folder_path TEXT, drive_folder_id TEXT UNIQUE,
+    drive_folder_id TEXT UNIQUE,
     branch TEXT NOT NULL, semester TEXT NOT NULL,
     section TEXT NOT NULL, form_name TEXT NOT NULL) 
     """)
@@ -3087,25 +3087,20 @@ def update_batch_structure():
 
         db.execute("DELETE FROM drive_folder_map")
         
-        # Relative local path
-        relative_folder_path = curr_master_folder_name
-
         for batch in batch_structure:
+            
             sem = batch["sem"]
             sem_folder_path = get_or_create_local_folder(master_folder_path, str(sem))
-            relative_folder_path = os.path.join(relative_folder_path, str(sem))
             
             if sem_folder_path:
                 branch = batch["branch"]
                 branch_folder_path = get_or_create_local_folder(sem_folder_path, branch)
-                relative_folder_path = os.path.join(relative_folder_path, branch)
 
                 if branch_folder_path:
                     section_list = [s.strip() for s in batch["section"].split(',') if s.strip()]
                     
                     for section in section_list:
                         section_folder_path = get_or_create_local_folder(branch_folder_path, section)
-                        relative_folder_path = os.path.join(relative_folder_path, section)
 
                         if section_folder_path:
                             structures_to_insert.append((sem, branch, section))
@@ -3114,15 +3109,14 @@ def update_batch_structure():
 
                             for form_name, form_title in form_dict.items():
                                 form_folder_path = get_or_create_local_folder(section_folder_path, form_title)
-                                relative_folder_path = os.path.join(relative_folder_path, form_title)
 
                                 if form_folder_path:
                                     folder_map_id = f"{sem}_{branch}_{section}_{form_name}"
 
-                                    # db.execute("""
-                                    #         INSERT INTO drive_folder_map (id, local_folder_path, semester, branch, section, form_name) 
-                                    #         VALUES (?, ?, ?, ?, ?, ?) 
-                                    #     """, folder_map_id, form_folder_path, sem, branch, section, form_name)
+                                    db.execute("""
+                                            INSERT INTO drive_folder_map (id, semester, branch, section, form_name) 
+                                            VALUES (?, ?, ?, ?, ?) 
+                                        """, folder_map_id, sem, branch, section, form_name)
 
         # Update the batch_structure table
         if structures_to_insert:
