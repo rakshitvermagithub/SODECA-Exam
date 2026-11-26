@@ -65,6 +65,34 @@
         color: white;
     }
 
+    .btn-google-drive {
+        background-color: #ffffff;
+        color: #3c4043;
+        border: 1px solid #dadce0;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-google-drive:hover {
+        background-color: #f8f9fa;
+        border-color: #dadce0;
+        color: #3c4043;
+        box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3);
+    }
+    .btn-google-drive:active {
+        background-color: #f1f3f4;
+    }
+    .btn-google-drive:focus-visible {
+        outline: 2px solid #4285f4;
+        outline-offset: 2px;
+    }
+    .google-drive-logo {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
+
     /* Row 1: Drive block */
     .drive-row-block .form-control[readonly] {
         background-color: var(--admin-bg-light);
@@ -217,7 +245,7 @@
                         {% set academic_term = drive_settings.get("academic_term") if drive_settings else None %}
                         {% set academic_session = drive_settings.get("academic_session") if drive_settings else None %}
                         
-                        <form action="/update_drive_settings" method="post" id="driveSettingsForm">
+                        <form action="{{ url_for('update_system_settings') }}" method="post" id="driveSettingsForm">
                             <div class="row g-3 align-items-end">
                                 
                                 <!-- 1. Session Select -->
@@ -244,7 +272,7 @@
                                 <!-- 3. Folder Name (Read-Only Input / Preview Display) -->
                                 <div class="col-12 col-md-3">
                                     <label for="folder_name_preview" class="form-label fw-semibold small text-uppercase tracking-wider text-muted mb-2">Folder Name</label>
-                                    <input type="text" class="form-control py-2 font-monospace bg-light" id="folder_name_preview" name="folder_name" readonly placeholder="Session Term">
+                                    <input type="text" class="form-control py-2 font-monospace bg-light" id="folder_name_preview" name="master_folder_name" readonly placeholder="Session Term">
                                 </div>
 
                                 <!-- 4. + New Master Folder & Current Master Folder Buttons (Stacked) -->
@@ -258,9 +286,18 @@
                                                 Current Master Folder
                                             </button>
                                         </a>
+                                        {% else %}
+                                        <button type="button" class="btn btn-google-drive px-4 py-2 d-none" id="syncStructureBtn">
+                                            <svg class="google-drive-logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                                                <path fill="#ffba00" d="M16.8 5h9.6L12.6 29.1H3L16.8 5Z"/>
+                                                <path fill="#0066da" d="M21.6 5h9.6L45 29.1h-9.6L21.6 5Z"/>
+                                                <path fill="#00ac47" d="M3 29.1h42L40.4 37H7.5L3 29.1Z"/>
+                                            </svg>
+                                            <span>Sync with Drive</span>
+                                        </button>
                                         {% endif %}
                                         <!-- New Master Folder Button -->
-                                        <button type="button" class="btn btn-admin w-100 py-2 d-flex align-items-center justify-content-center gap-1" data-bs-toggle="modal" data-bs-target="#newMasterFolderModal">
+                                        <button type="submit" class="btn btn-admin w-100 py-2 d-flex align-items-center justify-content-center gap-1">
                                             <i class="bi bi-plus-lg"></i> New Master Folder
                                         </button>
                                     </div>
@@ -268,33 +305,13 @@
                             </div>
                         </form>
 
-                        <div class="modal fade" id="newMasterFolderModal" tabindex="-1" aria-labelledby="newMasterFolderModalLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="newMasterFolderModalLabel">New Master Folder</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <label for="master_folder_link" class="form-label">Use an existing master folder(optional)</label>
-                                        <input type="url" class="form-control" id="master_folder_link" name="master_folder_link" form="driveSettingsForm" placeholder="Paste Google Drive folder link">
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-admin" form="driveSettingsForm">
-                                            <i class="bi bi-folder-plus me-1"></i> Generate Master Folder
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- ================= MAIN STRUCTURE FORM ================= -->
-        <form action="/create_drive_structure" method="post" id="structureForm">
+        <form action="{{ url_for('update_batch_structure') }}" method="post" id="structureForm">
             <input type="hidden" name="structure_json" id="structureJsonInput">
 
             <!-- ================= ROW 2: BASE CONFIG BLOCK ================= -->
@@ -373,7 +390,7 @@
 
             <div class="text-center mt-4 mb-5" id="submitStructureWrapper">
                 <button type="submit" class="btn btn-admin px-4 py-2 d-none" id="submitStructureBtn">
-                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Save Structure & Sync Drive
+                    <i class="bi bi-save-fill me-2"></i>Save Structure
                 </button>
             </div>
         </form>
@@ -479,6 +496,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const container = document.getElementById('semesterBlocksContainer');
     const submitBtn = document.getElementById('submitStructureBtn');
+    const syncBtn = document.getElementById('syncStructureBtn');
     const academicSessionInput = document.getElementById('academicSession');
     const checkboxContainer = document.getElementById('semesterCheckboxContainer');
 
@@ -580,6 +598,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function refreshSubmitVisibility() {
         const hasRows = container.querySelector('.section-pair-row') !== null;
         submitBtn.classList.toggle('d-none', !hasRows);
+        syncBtn.classList.toggle('d-none', !hasRows);
     }
 
     function buildBranchBlock(sem, branch, priorRows) {
